@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 15 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
-- 90 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 19 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
+- 159 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -36,3 +36,11 @@ Se probaron en navegador de escritorio el tablero, historial, búsqueda, asignac
 No se probó un teléfono físico. La actualización visual entre dos sesiones de usuarios reales y la restauración completa en un entorno separado siguen siendo comprobaciones complementarias; los conflictos de escritura sí se comprobaron con conexiones PostgreSQL independientes.
 
 Los controles automáticos de publicación ayudan a detectar archivos privados y credenciales, pero no sustituyen la revisión del contenido. No se deben añadir al repositorio los libros originales, PDFs con datos personales ni secretos.
+
+## Perfiles, usuarios e interfaz (0.3.0)
+
+Las pruebas añadidas comprueban acceso granular, unión de perfiles, ausencia de herencia básica al revocar perfiles personalizados, restricciones de tablas y snapshots, permisos de acciones, exportación, respaldo, auditoría, nombres duplicados, códigos, versiones nulas, perfiles del sistema protegidos, eliminación/restauración y protección del último administrador. Dos conexiones actualizando la misma versión de un perfil producen un guardado y un conflicto.
+
+En la vista temporal se creó un perfil, se seleccionaron permisos en el árbol y se asignó a un usuario ficticio mediante las pestañas. Se comprobó que la interfaz rechaza eliminar al último administrador y muestra la explicación en el diálogo. Se revisó el formulario con aproximadamente 450 píxeles CSS de ancho, sin desbordamiento horizontal general; no se utilizó un teléfono físico. No se enviaron invitaciones ni recuperaciones a destinatarios adicionales durante estas pruebas.
+
+La actualización de la base alojada conservó el acceso administrativo y los registros existentes: se comparó su huella completa antes y después, sin diferencias. Las verificaciones no crearon cuentas ni perfiles personalizados ficticios en el entorno operativo. Las pruebas del envío de correos de la puesta en marcha anterior no equivalen a probar un alta real adicional en esta actualización.

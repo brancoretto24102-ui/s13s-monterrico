@@ -61,3 +61,15 @@ El encabezado, periodo, fecha local de generación, hash de plantilla, revisión
 `get_snapshot` devuelve el historial completo mediante un agregado JSON en una única respuesta, evitando el límite habitual de mil filas del API de tablas. Se probó con más de mil registros. Esto no fija un máximo de historial, pero antes de llegar a decenas o cientos de miles de registros conviene paginar consultas interactivas y generar snapshots de exportación separados, conservando consistencia. Las cuotas de almacenamiento y transferencia siguen siendo las del proveedor.
 
 La tabla de auditoría se pagina en la interfaz. Los respaldos completos y el formulario deben descargarse en equipos autorizados: una vez descargados, su protección también depende de quien conserva esos archivos.
+
+## Perfiles y usuarios (0.3.0)
+
+`profiles` continúa representando cuentas de Auth. `access_profiles` representa conjuntos de permisos y `user_access_profiles` sus vínculos, separados de las fichas operativas de conductores. El catálogo de permisos contiene únicamente acciones implementadas. Los perfiles del sistema están protegidos y los personalizados usan una papelera recuperable.
+
+`get_access_context` devuelve únicamente la cuenta actual y sus permisos efectivos. `get_users`, `get_access_profiles`, `manage_user` y `manage_access_profile` se reservan a administradores activos. Los RPC públicos conservan `SECURITY INVOKER`; las implementaciones privilegiadas siguen en el esquema privado. Las tablas nuevas tienen RLS y no permiten escritura directa del cliente.
+
+Para cuentas básicas se conservan las reglas de Administrador, Editor y Lector. Para cuentas personalizadas se usa la unión de los perfiles vinculados activos; si todos se desactivan, no hay herencia de permisos básicos. Las comprobaciones consultan la base actual y no claims JWT obsoletos ni metadatos del usuario. El administrador conserva acceso completo y la protección del último administrador se aplica bajo un bloqueo común de seguridad.
+
+El snapshot y las políticas de tablas filtran los datos según el acceso efectivo. Un perfil de Conductores no recibe por ese motivo el historial de asignaciones. Los nombres del historial, las reglas de fechas y el motor PDF se conservan. Los cambios concurrentes de ficha de usuario o perfil requieren la versión vigente. Se rechazan también versiones nulas al completar asignaciones o editar territorios.
+
+La función de invitaciones comprueba identidad y administrador activo, valida perfiles y alias, crea la cuenta inicialmente inactiva y aplica el acceso en una transacción. Si falla esa configuración, informa que la invitación ya fue enviada y conserva la cuenta inactiva para revisión. Los enlaces de recuperación usan el correo de Auth obtenido por identificador, no una dirección arbitraria del formulario; el resultado aceptado se registra en auditoría. No se almacenan contraseñas de usuarios en las tablas de la aplicación.

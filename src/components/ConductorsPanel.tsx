@@ -11,6 +11,10 @@ import {
   RefreshCw,
 } from "lucide-react";
 import Modal from "./Modal";
+import DataPager from "./DataPager";
+import { can, csvDownload } from "../lib/permissions";
+import type { Profile } from "../lib/types";
+import { Download } from "lucide-react";
 import "./ConductorsPanel.css";
 import { rpc } from "../lib/client";
 import { normalizeName } from "../lib/dates";
@@ -51,6 +55,7 @@ const success: Record<ConductorAction, string> = {
 
 export default function ConductorsPanel({
   demo,
+  profile,
   demoRows,
   demoAssignments,
   revision,
@@ -58,12 +63,20 @@ export default function ConductorsPanel({
   onChanged,
 }: {
   demo: boolean;
+  profile: Profile;
   demoRows: Conductor[];
   demoAssignments: Assignment[];
   revision: string;
   onDemoChange: (rows: Conductor[]) => void;
   onChanged: () => Promise<void>;
 }) {
+  const [page, setPage] = useState(1),
+    [size, setSize] = useState(10);
+  const allowed = (action: ConductorAction) =>
+    can(
+      profile,
+      `conductors.${action === "update" ? "edit" : action === "activate" || action === "deactivate" ? "state" : action === "restore" ? "delete" : action}`,
+    );
   const [stored, setStored] = useState<ConductorRecord[]>([]);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
@@ -137,6 +150,7 @@ export default function ConductorsPanel({
     if (!busy) setForm(null);
   }, [busy]);
   function open(action: ConductorAction, current?: ConductorRecord) {
+    if (!allowed(action)) return;
     setError("");
     setMessage("");
     setName(current?.display_name ?? "");
@@ -145,7 +159,7 @@ export default function ConductorsPanel({
   }
   async function save(event: React.FormEvent) {
     event.preventDefault();
-    if (!form || busy) return;
+    if (!form || busy || !allowed(form.action)) return;
     setBusy(true);
     setError("");
     try {
@@ -189,6 +203,12 @@ export default function ConductorsPanel({
       setBusy(false);
     }
   }
+  const currentPage = Math.min(
+    page,
+    Math.max(1, Math.ceil(visible.length / size)),
+  );
+  const pageRows = visible.slice((currentPage - 1) * size, currentPage * size);
+  useEffect(() => setPage(1), [query, filter]);
   return (
     <>
       <div className="page-heading conductor-heading">
@@ -197,9 +217,36 @@ export default function ConductorsPanel({
           <h1>Conductores</h1>
           <p>Crea y administra los conductores de Monterrico.</p>
         </div>
-        <button className="primary" onClick={() => open("create")}>
-          <Plus size={18} /> Nuevo conductor
-        </button>
+        <div className="button-row">
+          {can(profile, "conductors.export") && (
+            <button
+              className="export-button"
+              onClick={() =>
+                csvDownload(
+                  "conductores.csv",
+                  ["Código", "Nombre", "Estado", "Asignaciones", "Pendientes"],
+                  visible.map((r) => [
+                    conductorCode(r.code),
+                    r.display_name,
+                    conductorStatus(r),
+                    r.assignments_count,
+                    r.open_assignments,
+                  ]),
+                )
+              }
+            >
+              <Download size={15} />
+              Exportar
+            </button>
+          )}
+          <button
+            className="primary"
+            disabled={!allowed("create")}
+            onClick={() => open("create")}
+          >
+            <Plus size={18} /> Nuevo conductor
+          </button>
+        </div>
       </div>
       <div className="conductor-stats" aria-label="Resumen del maestro">
         <article>
@@ -295,7 +342,7 @@ export default function ConductorsPanel({
                 </tr>
               </thead>
               <tbody>
-                {visible.map((row) => (
+                {pageRows.map((row) => (
                   <tr key={row.id}>
                     <td>
                       <strong>{row.display_name}</strong>
@@ -331,6 +378,7 @@ export default function ConductorsPanel({
                         {row.deleted_at ? (
                           <button
                             className="secondary"
+                            disabled={!allowed("restore")}
                             onClick={() => open("restore", row)}
                           >
                             <RotateCcw size={15} /> Restaurar
@@ -340,12 +388,14 @@ export default function ConductorsPanel({
                             <button
                               className="secondary"
                               aria-label={`Editar a ${row.display_name}`}
+                              disabled={!allowed("update")}
                               onClick={() => open("update", row)}
                             >
                               <Pencil size={15} /> Editar
                             </button>
                             <button
                               className="secondary"
+                              disabled={!allowed("activate")}
                               onClick={() =>
                                 open(
                                   row.active ? "deactivate" : "activate",
@@ -363,6 +413,7 @@ export default function ConductorsPanel({
                             <button
                               className="secondary conductor-delete"
                               aria-label={`Eliminar a ${row.display_name}`}
+                              disabled={!allowed("delete")}
                               onClick={() => open("delete", row)}
                             >
                               <Trash2 size={15} /> Eliminar
@@ -407,6 +458,13 @@ export default function ConductorsPanel({
             </div>
           )
         )}
+        <DataPager
+          total={visible.length}
+          page={currentPage}
+          size={size}
+          onPage={setPage}
+          onSize={setSize}
+        />
         <div className="table-footer">
           <span>
             {visible.length}{" "}

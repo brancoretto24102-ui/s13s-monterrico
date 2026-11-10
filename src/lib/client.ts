@@ -41,11 +41,22 @@ export async function rpc<T>(
   if (!supabase) throw new Error("Falta conectar la base de datos.");
   const { data, error } = await supabase.rpc(fn, args);
   if (error) {
+    if (
+      error.code === "23505" &&
+      ["manage_access_profile", "manage_user"].includes(fn)
+    )
+      throw new Error(
+        fn === "manage_user"
+          ? "Ese alias ya está utilizado por otra cuenta."
+          : "Ya existe un perfil con esa descripción.",
+      );
     if (error.code === "40001")
       throw new Error(
         fn === "manage_conductor"
           ? "Otro administrador actualizó este conductor. Revisa la lista y vuelve a abrir el formulario."
-          : "Otro usuario actualizó el registro o la selección. Se actualizarán los datos; revisa el formulario antes de volver a guardar.",
+          : ["manage_user", "manage_access_profile"].includes(fn)
+            ? "Otro administrador actualizó el registro. Revisa la lista y vuelve a abrir el formulario."
+            : "Otro usuario actualizó el registro o la selección. Se actualizarán los datos; revisa el formulario antes de volver a guardar.",
       );
     throw new Error(error.message);
   }
@@ -57,13 +68,7 @@ export async function getProfile(): Promise<Profile | null> {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) return null;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("id", user.id)
-    .single();
-  if (error) throw error;
-  return data;
+  return rpc<Profile | null>("get_access_context");
 }
 export const loadSnapshot = () => rpc<Snapshot>("get_snapshot");
 export function downloadBlob(blob: Blob, name: string) {

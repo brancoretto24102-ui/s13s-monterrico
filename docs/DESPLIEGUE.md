@@ -1,6 +1,6 @@
 # Publicación bajo control del propietario
 
-**Instalación actual:** las cuatro migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La cuenta administrativa y las 820 asignaciones históricas ya están activas; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
+**Instalación actual:** las cinco migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La cuenta administrativa y las 820 asignaciones históricas ya están activas; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
 
 ## Control de cambios
 
@@ -18,6 +18,7 @@ Crear el proyecto en el plan Free de una cuenta controlada por el propietario. E
 2. `supabase/migrations/20261110041146_s13s_private_storage_realtime.sql`
 3. `supabase/migrations/20261110042222_s13s_api_hardening.sql`
 4. `supabase/migrations/20261110064656_s13s_conductors_master.sql`
+5. `supabase/migrations/20261110212440_s13s_access_profiles_users.sql`
 
 Puede usarse Supabase CLI con migraciones o el editor SQL del panel. Las migraciones son para un proyecto limpio. No deben reejecutarse contra tablas existentes como si fueran comandos idempotentes de mantenimiento. El esquema `private` no debe añadirse a los esquemas expuestos por la API. Se revoca ejecución pública de las funciones; solo los RPC permitidos se conceden a `authenticated`.
 
@@ -41,9 +42,9 @@ commit;
 
 El comando genera auditoría. Comprobar que se actualizó exactamente un perfil. No existe una cuenta, contraseña ni administrador predeterminado en el código.
 
-## Correo de esta instalación
+## Correo
 
-Gmail SMTP ya está activo: `smtp.gmail.com`, puerto `465`, TLS implícito. La credencial se introdujo de forma privada por el propietario y se conserva en el panel de Supabase. Se comprobó la persistencia tras recargar y el envío de recuperación al propietario. Ver [operación del correo](CORREO.md).
+Configurar el servicio SMTP autorizado en el panel privado de Auth. Las credenciales pertenecen al entorno del proveedor y nunca al código público. Revisar sus límites antes de incorporar usuarios. Ver [operación del correo](CORREO.md).
 
 ## Invitaciones administrativas
 
@@ -120,3 +121,7 @@ Información consultada en fuentes oficiales el 09/11/2026:
 Son cuotas del proveedor, no una garantía contractual de costo perpetuo. Supervisar uso y exportar respaldos periódicos; no activar servicios pagados para resolver límites sin autorización. Si se pausa, reactivarlo desde el panel y verificar integridad/acceso. No se han añadido automatismos de actividad artificial.
 
 Fuentes: [GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/creating-a-github-pages-site), [cuotas Supabase](https://supabase.com/docs/guides/platform/billing-on-supabase), [Realtime](https://supabase.com/docs/guides/realtime/limits), [pausa](https://supabase.com/docs/guides/platform/free-project-pausing), [correo de Auth](https://supabase.com/docs/guides/auth/auth-smtp), [funciones autenticadas](https://supabase.com/docs/guides/functions/auth).
+
+## Actualización 0.3.0
+
+Aplicar únicamente la migración de Perfiles y Usuarios si las cuatro anteriores ya están instaladas; no repetirla si figura en el historial. Publicar también la versión actualizada de la función `invite-user`, manteniendo su verificación JWT y configuración privada. Esta versión conserva el acceso por correo y los perfiles básicos, añade perfiles personalizados y permite solicitar enlaces de recuperación desde Usuarios. No invita a ninguna persona automáticamente.

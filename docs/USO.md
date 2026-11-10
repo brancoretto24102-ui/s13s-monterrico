@@ -28,7 +28,7 @@ Las observaciones son independientes del historial oficial. Una corrección hist
 
 ## Maestro de conductores
 
-El administrador encuentra el maestro en **Administración → Conductores**. Puede crear y editar fichas, activarlas o dejarlas inactivas, eliminarlas a Papelera y restaurarlas. Cada ficha tiene un código independiente; dos personas con el mismo nombre no se fusionan. Las operaciones requieren motivo y quedan en auditoría.
+El administrador o una cuenta con los permisos correspondientes encuentra el maestro en **Configuración → Maestros → Conductores**. Puede crear y editar fichas, activarlas o dejarlas inactivas, eliminarlas a Papelera y restaurarlas. Cada ficha tiene un código independiente; dos personas con el mismo nombre no se fusionan. Las operaciones requieren motivo y quedan en auditoría.
 
 Un conductor inactivo o en Papelera no está disponible en el selector para nuevas asignaciones. Su historial y sus asignaciones pendientes se conservan y pueden completarse. Restaurar devuelve la ficha a estado inactivo; activarla permite seleccionarla otra vez. Eliminar no borra definitivamente los datos.
 
@@ -53,3 +53,7 @@ El resumen descargable permite comprobar asignaciones, filas, páginas, territor
 En Usuarios se gestionan rol, estado y exportación; cada cambio requiere motivo. El último administrador activo no se puede desactivar ni degradar. Las invitaciones necesitan el servicio de correo correctamente configurado.
 
 En Configuración se guarda la plantilla privada, se descargan respaldos y se agregan territorios. La descripción/activación de un territorio se administra desde su detalle. El número no se cambia ni se reutiliza. Un territorio con asignación abierta debe completarse antes de desactivarlo.
+
+## Perfiles y cuentas de acceso
+
+En **Seguridad → Maestros → Perfiles** se crean los perfiles personalizados mediante un árbol de permisos. En **Seguridad → Maestros → Usuarios** se asignan a las cuentas desde la pestaña Perfiles web. Ver la [guía completa](PERFILES_Y_USUARIOS.md). La vista de ejemplo permite probar estas pantallas sin enviar correos ni guardar usuarios reales.

@@ -25,16 +25,21 @@ import {
   X,
   UsersRound,
 } from "lucide-react";
+import AppSidebar, {
+  firstView,
+  viewAllowed,
+  viewInfo,
+  type AppView,
+} from "./components/AppSidebar";
+import SecurityPanel, { initialDemoSecurity } from "./components/SecurityPanel";
+import DataPager from "./components/DataPager";
+import { can } from "./lib/permissions";
 import Access from "./components/Access";
 import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
 import ImportPanel from "./components/ImportPanel";
 import ConductorsPanel from "./components/ConductorsPanel";
-import {
-  AuditPanel,
-  SettingsPanel,
-  UsersPanel,
-} from "./components/AdminPanels";
+import { AuditPanel, SettingsPanel } from "./components/AdminPanels";
 import { getProfile, loadSnapshot, rpc, supabase } from "./lib/client";
 import { demoProfile, demoSnapshot } from "./lib/demo";
 import {
@@ -51,32 +56,12 @@ import type {
   Snapshot,
   Territory,
 } from "./lib/types";
-type View =
-  | "overview"
-  | "territories"
-  | "export"
-  | "import"
-  | "audit"
-  | "users"
-  | "conductors"
-  | "settings";
+type View = AppView;
 type Action = {
   kind: "assign" | "complete" | "correct" | "observe";
   territory: Territory;
   assignment?: Assignment;
 };
-const navItems = [
-  { id: "overview" as View, label: "Vista general", icon: LayoutDashboard },
-  { id: "territories" as View, label: "Territorios", icon: Map },
-  { id: "export" as View, label: "Formulario S-13-S", icon: FileText },
-];
-const adminItems = [
-  { id: "conductors" as View, label: "Conductores", icon: UsersRound },
-  { id: "import" as View, label: "Importar historial", icon: Upload },
-  { id: "audit" as View, label: "Auditoría", icon: History },
-  { id: "users" as View, label: "Usuarios", icon: Users },
-  { id: "settings" as View, label: "Configuración", icon: Settings },
-];
 const empty: Snapshot = {
   territories: [],
   assignments: [],
@@ -101,13 +86,21 @@ export default function App() {
     [action, setAction] = useState<Action | null>(null),
     [busy, setBusy] = useState(false),
     [observations, setObservations] = useState<any[]>([]);
+  const [collapsed, setCollapsed] = useState(false);
+  const [creatingTerritory, setCreatingTerritory] = useState(false);
+  const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
+  const [territoryPage, setTerritoryPage] = useState(1),
+    [territorySize, setTerritorySize] = useState(20);
   const epoch = useRef(0);
+  const accessSignature = useRef("");
   const today = todayLima();
   const [year, setYear] = useState(
     +today.slice(0, 4) - (+today.slice(5, 7) < 9 ? 1 : 0),
   );
-  const canEdit =
-    profile?.role === "administrador" || profile?.role === "editor";
+  const canAssign = can(profile, "territories.assign");
+  const canComplete = can(profile, "territories.complete");
+  const canCorrect =
+    can(profile, "territories.correct") || can(profile, "territories.void");
   const isAdmin = profile?.role === "administrador";
   const clear = useCallback(() => {
     epoch.current++;
@@ -143,6 +136,19 @@ export default function App() {
       if (current !== epoch.current) return;
       setProfile(p);
       setSnapshot(data);
+      setView((v) => (viewAllowed(p, v) ? v : firstView(p)));
+      const signature = JSON.stringify([
+        p.active,
+        p.role,
+        p.permissions,
+        p.can_export,
+      ]);
+      if (accessSignature.current && accessSignature.current !== signature) {
+        setAction(null);
+        setDetail(null);
+        setObservations([]);
+      }
+      accessSignature.current = signature;
       setSync("live");
     } catch (e) {
       if (current === epoch.current) {
@@ -286,8 +292,11 @@ export default function App() {
     setSync("demo");
     setLoading(false);
     setView("overview");
+    setDemoSecurity(initialDemoSecurity());
   }
   function navigate(v: View) {
+    if (!viewAllowed(profile, v)) return;
+    setTerritoryPage(1);
     setView(v);
     setMenu(false);
     setDetail(null);
@@ -473,7 +482,16 @@ export default function App() {
       </div>
     );
   function territoryTable(limit?: number) {
-    const list = limit ? filtered.slice(0, limit) : filtered;
+    const currentPage = Math.min(
+      territoryPage,
+      Math.max(1, Math.ceil(filtered.length / territorySize)),
+    );
+    const list = limit
+      ? filtered.slice(0, limit)
+      : filtered.slice(
+          (currentPage - 1) * territorySize,
+          currentPage * territorySize,
+        );
     return (
       <div className="table-wrap">
         <table className="territory-table">
@@ -545,102 +563,39 @@ export default function App() {
     );
   }
   return (
-    <div className="app-shell">
-      <aside className={`sidebar ${menu ? "is-open" : ""}`}>
-        <div className="brand">
-          <span className="brand-mark">
-            <MapPinned size={25} />
-          </span>
-          <span>
-            Territorios<small>MONTERRICO</small>
-          </span>
-          <button
-            className="mobile-close icon"
-            aria-label="Cerrar menú"
-            onClick={() => setMenu(false)}
-          >
-            <X />
-          </button>
-        </div>
-        <div className="workspace-label">ESPACIO DE TRABAJO</div>
-        <nav aria-label="Navegación principal">
-          {navItems.map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={view === id ? "active" : ""}
-              onClick={() => navigate(id)}
-            >
-              <Icon size={19} />
-              {label}
-              {id === "territories" && (
-                <small>{snapshot.territories.length}</small>
-              )}
-            </button>
-          ))}
-          {isAdmin && (
-            <>
-              <span className="nav-section">ADMINISTRACIÓN</span>
-              {adminItems.map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  className={view === id ? "active" : ""}
-                  onClick={() => navigate(id)}
-                >
-                  <Icon size={19} />
-                  {label}
-                </button>
-              ))}
-            </>
-          )}
-        </nav>
-        <div className="sidebar-bottom">
-          <div className="private-label">
-            <ShieldCheck size={17} />
-            <span>
-              Registro privado<small>Solo usuarios autorizados</small>
-            </span>
-          </div>
-          <div className="user-card">
-            <span className="avatar">
-              {profile.display_name.slice(0, 1).toUpperCase()}
-            </span>
-            <span>
-              {profile.display_name}
-              <small>{profile.role}</small>
-            </span>
-            <button
-              className="icon"
-              aria-label="Cerrar sesión"
-              onClick={() => void logout()}
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
-        </div>
-      </aside>
-      {menu && (
-        <button
-          className="sidebar-scrim"
-          aria-label="Cerrar menú"
-          onClick={() => setMenu(false)}
-        />
-      )}
+    <div
+      className={`app-shell enterprise-shell ${collapsed ? "sidebar-collapsed" : ""}`}
+    >
+      <AppSidebar
+        profile={profile}
+        view={view}
+        menu={menu}
+        onClose={() => setMenu(false)}
+        navigate={navigate}
+        logout={() => void logout()}
+      />
       <div className="main-shell">
         <header className="topbar">
           <div>
             <button
-              className="mobile-menu icon"
-              aria-label="Abrir menú"
-              onClick={() => setMenu(true)}
+              className="menu-toggle icon"
+              aria-label="Mostrar u ocultar menú"
+              onClick={() => {
+                if (window.matchMedia("(max-width: 850px)").matches)
+                  setMenu(!menu);
+                else setCollapsed(!collapsed);
+              }}
             >
               <Menu size={22} />
             </button>
             <span className="breadcrumb">
-              Monterrico <ChevronRight size={14} />{" "}
-              {selected
-                ? `Territorio ${selected.territory_number}`
-                : [...navItems, ...adminItems].find((n) => n.id === view)
-                    ?.label}
+              <span>{viewInfo[view].section}</span>
+              <ChevronRight size={13} />
+              <strong>
+                {selected
+                  ? `Territorio ${selected.territory_number}`
+                  : viewInfo[view].label}
+              </strong>
             </span>
           </div>
           <div className="topbar-right">
@@ -662,6 +617,12 @@ export default function App() {
             >
               <RefreshCw size={16} />
             </button>
+            <span className="top-user">
+              <span>
+                <strong>MONTERRICO</strong>
+                <small>{profile.display_name}</small>
+              </span>
+            </span>
             <span className="avatar top-avatar">
               {profile.display_name.slice(0, 1).toUpperCase()}
             </span>
@@ -728,7 +689,8 @@ export default function App() {
                       Historial de asignaciones{" "}
                       <span className="count">{selectedHistory.length}</span>
                     </h2>
-                    {canEdit &&
+                    {((openFor(selected.id) && canComplete) ||
+                      (!openFor(selected.id) && canAssign)) &&
                       selected.active &&
                       (openFor(selected.id) ? (
                         <button
@@ -800,7 +762,7 @@ export default function App() {
                               </small>
                             )}
                           </div>
-                          {isAdmin && (
+                          {canCorrect && (
                             <button
                               className="text-button"
                               onClick={() =>
@@ -825,7 +787,7 @@ export default function App() {
                       <MessageSquare size={18} />
                       Observaciones
                     </h2>
-                    {canEdit && (
+                    {can(profile, "territories.observe") && (
                       <button
                         className="icon"
                         aria-label="Agregar observación"
@@ -851,7 +813,7 @@ export default function App() {
                   ) : (
                     <p className="muted">Sin observaciones registradas.</p>
                   )}
-                  {isAdmin && (
+                  {can(profile, "territories.edit") && (
                     <details className="territory-admin">
                       <summary>Administrar territorio</summary>
                       <p className="small muted">
@@ -869,14 +831,14 @@ export default function App() {
             </>
           ) : (
             <>
-              {view === "overview" && (
+              {view === "overview" && can(profile, "territories.view") && (
                 <>
                   <div className="page-heading">
                     <div>
                       <span className="eyebrow">
                         REGISTRO DE ASIGNACIÓN DE TERRITORIOS
                       </span>
-                      <h1>Todo en su lugar.</h1>
+                      <h1>Resumen de territorios</h1>
                       <p>
                         Una vista clara del trabajo y los territorios de
                         Monterrico.
@@ -884,7 +846,7 @@ export default function App() {
                     </div>
                     <button
                       className="primary"
-                      disabled={!canEdit}
+                      disabled={!canAssign}
                       onClick={() => {
                         navigate("territories");
                         setFilter("available");
@@ -1053,7 +1015,7 @@ export default function App() {
                   </div>
                 </>
               )}
-              {view === "territories" && (
+              {view === "territories" && can(profile, "territories.view") && (
                 <>
                   <div className="page-heading">
                     <div>
@@ -1064,9 +1026,20 @@ export default function App() {
                         territorio.
                       </p>
                     </div>
-                    <span className="soft-tag">
-                      {snapshot.territories.length} territorios
-                    </span>
+                    <div className="button-row">
+                      <span className="soft-tag">
+                        {snapshot.territories.length} territorios
+                      </span>
+                      {can(profile, "territories.create") && (
+                        <button
+                          className="primary"
+                          onClick={() => setCreatingTerritory(true)}
+                        >
+                          <Plus size={16} />
+                          Nuevo territorio
+                        </button>
+                      )}
+                    </div>
                   </div>
                   <section className="panel territory-panel">
                     <TerritoryFilters
@@ -1076,27 +1049,47 @@ export default function App() {
                       setFilter={setFilter}
                     />
                     {territoryTable()}
-                    <div className="table-footer">
-                      {filtered.length} territorios encontrados
-                    </div>
+                    <DataPager
+                      total={filtered.length}
+                      page={territoryPage}
+                      size={territorySize}
+                      onPage={setTerritoryPage}
+                      onSize={setTerritorySize}
+                    />
                   </section>
                 </>
               )}
-              {view === "export" && (
+              {view === "export" && can(profile, "reports.view") && (
                 <ExportPanel
                   snapshot={snapshot}
                   demo={demo}
-                  canExport={isAdmin || profile.can_export}
+                  canExport={can(profile, "reports.export")}
                 />
               )}
-              {view === "import" && isAdmin && (
-                <ImportPanel demo={demo} onImported={refresh} />
+              {view === "import" && can(profile, "imports.view") && (
+                <ImportPanel
+                  demo={demo}
+                  onImported={refresh}
+                  canImport={can(profile, "imports.execute")}
+                />
               )}
-              {view === "audit" && isAdmin && <AuditPanel demo={demo} />}
-              {view === "users" && isAdmin && <UsersPanel demo={demo} />}
-              {view === "conductors" && isAdmin && (
+              {view === "audit" && can(profile, "audit.view") && (
+                <AuditPanel demo={demo} />
+              )}
+              {(view === "users" || view === "access-profiles") && isAdmin && (
+                <SecurityPanel
+                  kind={view === "users" ? "users" : "profiles"}
+                  demo={demo}
+                  demoData={demoSecurity}
+                  onDemoChange={setDemoSecurity}
+                  onChanged={refresh}
+                  revision={snapshot.revision}
+                />
+              )}
+              {view === "conductors" && can(profile, "conductors.view") && (
                 <ConductorsPanel
                   demo={demo}
+                  profile={profile}
                   demoRows={snapshot.conductors ?? []}
                   demoAssignments={snapshot.assignments}
                   revision={snapshot.revision}
@@ -1125,6 +1118,16 @@ export default function App() {
               )}
             </>
           )}
+          {!viewAllowed(profile, view) && (
+            <section className="panel empty-inline">
+              <ShieldCheck size={25} />
+              <h2>No tienes accesos activos</h2>
+              <p>
+                Solicita al administrador que revise los perfiles asignados a tu
+                cuenta.
+              </p>
+            </section>
+          )}
           <footer className="content-footer">
             <span>Monterrico · Registro S-13-S</span>
             <span>
@@ -1134,6 +1137,35 @@ export default function App() {
           </footer>
         </main>
       </div>
+      {creatingTerritory && can(profile, "territories.create") && (
+        <Modal
+          title={`Nuevo territorio · ${Math.max(0, ...snapshot.territories.map((t) => t.territory_number)) + 1}`}
+          onClose={() => setCreatingTerritory(false)}
+        >
+          <p className="small muted">
+            El número se genera después del mayor existente. No se reutilizan
+            números.
+          </p>
+          <TerritorySettings
+            territory={{
+              id: "",
+              territory_number:
+                Math.max(
+                  0,
+                  ...snapshot.territories.map((t) => t.territory_number),
+                ) + 1,
+              active: true,
+              description: "",
+              version: 0,
+            }}
+            demo={demo}
+            onDone={async () => {
+              await refresh();
+              setCreatingTerritory(false);
+            }}
+          />
+        </Modal>
+      )}
       {action && (
         <ActionModal
           action={action}
@@ -1141,6 +1173,8 @@ export default function App() {
           message={notice}
           onClose={closeAction}
           onSave={saveAction}
+          canCorrect={can(profile, "territories.correct")}
+          canVoid={can(profile, "territories.void")}
           conductors={snapshot.conductors ?? []}
           names={[
             ...new Set(
@@ -1201,6 +1235,8 @@ function TerritoryFilters({
   );
 }
 function ActionModal({
+  canCorrect,
+  canVoid,
   action,
   busy,
   message,
@@ -1209,6 +1245,8 @@ function ActionModal({
   names,
   conductors,
 }: {
+  canCorrect: boolean;
+  canVoid: boolean;
   action: Action;
   busy: boolean;
   message: string;
@@ -1225,7 +1263,7 @@ function ActionModal({
       action.kind === "complete" ? todayLima() : (a?.completed_at ?? ""),
     ),
     [reason, setReason] = useState(""),
-    [voided, setVoided] = useState(false),
+    [voided, setVoided] = useState(!canCorrect && canVoid),
     [body, setBody] = useState("");
   useEffect(() => {
     if (personId) {
@@ -1236,7 +1274,7 @@ function ActionModal({
   const titles = {
     assign: "Asignar territorio",
     complete: "Marcar como completado",
-    correct: "Corrección administrativa",
+    correct: canCorrect ? "Corrección administrativa" : "Anulación de registro",
     observe: "Agregar observación",
   };
   return (
@@ -1319,7 +1357,10 @@ function ActionModal({
                     required
                     maxLength={200}
                     value={name}
-                    readOnly={action.kind === "assign" && !!personId}
+                    readOnly={
+                      (action.kind === "assign" && !!personId) ||
+                      (action.kind === "correct" && !canCorrect)
+                    }
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Escribe o selecciona un nombre"
                   />
@@ -1335,6 +1376,7 @@ function ActionModal({
                     type="date"
                     required
                     max={todayLima()}
+                    disabled={action.kind === "correct" && !canCorrect}
                     value={date}
                     onChange={(e) => setDate(e.target.value)}
                   />
@@ -1352,6 +1394,7 @@ function ActionModal({
                 Fecha de finalización
                 <input
                   type="date"
+                  disabled={action.kind === "correct" && !canCorrect}
                   required={action.kind === "complete"}
                   min={date}
                   max={todayLima()}
@@ -1380,14 +1423,16 @@ function ActionModal({
                     placeholder="Explica qué se corrige y por qué"
                   />
                 </label>
-                <label className="checkbox">
-                  <input
-                    type="checkbox"
-                    checked={voided}
-                    onChange={(e) => setVoided(e.target.checked)}
-                  />
-                  Anular este registro conservando su auditoría
-                </label>
+                {canVoid && (
+                  <label className="checkbox">
+                    <input
+                      type="checkbox"
+                      checked={voided}
+                      onChange={(e) => setVoided(e.target.checked)}
+                    />
+                    Anular este registro conservando su auditoría
+                  </label>
+                )}
               </>
             )}
           </>

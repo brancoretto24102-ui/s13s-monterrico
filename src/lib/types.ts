@@ -6,6 +6,33 @@ export interface Profile {
   active: boolean;
   can_export: boolean;
   version: number;
+  permissions?: string[];
+  code?: number;
+  username?: string | null;
+  access_mode?: "base" | "custom";
+  deleted_at?: string | null;
+}
+export interface AccessProfile {
+  id: string;
+  code: number;
+  name: string;
+  system_key: Role | null;
+  active: boolean;
+  deleted_at: string | null;
+  permissions: string[];
+  version: number;
+  created_at: string;
+  updated_at: string;
+  users_count: number;
+}
+export interface ManagedUser extends Profile {
+  code: number;
+  username: string | null;
+  email: string | null;
+  created_at: string;
+  last_sign_in_at: string | null;
+  access_mode: "base" | "custom";
+  access_profile_ids: string[];
 }
 export interface Territory {
   id: string;

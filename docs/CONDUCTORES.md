@@ -1,6 +1,6 @@
 # Maestro de conductores
 
-Disponible para el rol **administrador** en **Administración → Conductores**.
+Disponible en **Configuración → Maestros → Conductores**. El administrador tiene acceso completo; una cuenta con perfiles personalizados solo ve y utiliza las acciones autorizadas.
 
 | Acción          | Resultado                                                        |
 | --------------- | ---------------------------------------------------------------- |

@@ -11,9 +11,11 @@ import { rpc } from "../lib/client";
 import type { ImportPreview } from "../lib/types";
 export default function ImportPanel({
   demo,
+  canImport = true,
   onImported,
 }: {
   demo: boolean;
+  canImport?: boolean;
   onImported: () => Promise<void>;
 }) {
   const [preview, setPreview] = useState<ImportPreview | null>(null),
@@ -200,7 +202,12 @@ export default function ImportPanel({
             <button
               className="primary"
               disabled={
-                busy || !ack || !!errors.length || !preview.rows.length || demo
+                busy ||
+                !ack ||
+                !!errors.length ||
+                !preview.rows.length ||
+                demo ||
+                !canImport
               }
               onClick={() => void commit()}
             >
