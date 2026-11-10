@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import {
   Database,
   ChevronDown,
@@ -96,6 +97,23 @@ export default function AppSidebar({
   navigate: (v: AppView) => void;
   logout: () => void;
 }) {
+  const [scrollbarActive, setScrollbarActive] = useState(false);
+  const scrollbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(
+    () => () => {
+      if (scrollbarTimer.current) clearTimeout(scrollbarTimer.current);
+    },
+    [],
+  );
+  function showScrollbar() {
+    if (scrollbarTimer.current) clearTimeout(scrollbarTimer.current);
+    setScrollbarActive(true);
+    scrollbarTimer.current = setTimeout(() => setScrollbarActive(false), 1200);
+  }
+  function hideScrollbar() {
+    if (scrollbarTimer.current) clearTimeout(scrollbarTimer.current);
+    setScrollbarActive(false);
+  }
   const item = (id: AppView, Icon = Map) =>
     viewAllowed(profile, id) && (
       <button
@@ -131,7 +149,16 @@ export default function AppSidebar({
             <X size={20} />
           </button>
         </div>
-        <nav aria-label="Navegación principal">
+        <nav
+          aria-label="Navegación principal"
+          className={scrollbarActive ? "is-scroll-active" : undefined}
+          onPointerEnter={showScrollbar}
+          onPointerMove={showScrollbar}
+          onPointerLeave={hideScrollbar}
+          onScroll={showScrollbar}
+          onFocusCapture={showScrollbar}
+          onKeyDownCapture={showScrollbar}
+        >
           {item("overview", Home)}
           {config.some((v) => viewAllowed(profile, v)) && (
             <section className="nav-module">

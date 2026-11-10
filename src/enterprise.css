@@ -157,9 +157,32 @@ body {
   border: 2px solid #e7f5eaa0;
 }
 .enterprise-shell .sidebar nav {
+  --sidebar-scroll-thumb: transparent;
   overflow-y: auto;
   flex: 1;
   padding: 0 0 14px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-scroll-thumb) transparent;
+  scrollbar-gutter: stable;
+}
+.enterprise-shell .sidebar nav.is-scroll-active {
+  --sidebar-scroll-thumb: #33883d;
+}
+@supports not (scrollbar-color: auto) {
+  .enterprise-shell .sidebar nav::-webkit-scrollbar {
+    width: 7px;
+  }
+  .enterprise-shell .sidebar nav::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .enterprise-shell .sidebar nav::-webkit-scrollbar-thumb {
+    background: var(--sidebar-scroll-thumb);
+    border-radius: 8px;
+  }
+  .enterprise-shell .sidebar nav::-webkit-scrollbar-button {
+    display: none;
+    height: 0;
+  }
 }
 .enterprise-shell .sidebar nav button {
   color: #eaf7ec;
