@@ -1,0 +1,4 @@
+# Keep the platform JWT check and verify again with Auth.getUser inside the
+# function before checking the administrator's active database profile.
+[functions.invite-user]
+verify_jwt = true

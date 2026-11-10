@@ -1,0 +1,15 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+private/
+.pg-test/
+test-results/
+*.xlsx
+*.pdf
+*.csv
+*.zip
+*.log
+*.tsbuildinfo
+.DS_Store
