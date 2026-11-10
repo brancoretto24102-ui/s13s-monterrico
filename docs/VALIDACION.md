@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 19 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
-- 159 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 22 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
+- 169 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -46,3 +46,9 @@ En la vista temporal se creó un perfil, se seleccionaron permisos en el árbol 
 La actualización de la base alojada conservó el acceso administrativo y los registros existentes: se comparó su huella completa antes y después, sin diferencias. Las verificaciones no crearon cuentas ni perfiles personalizados ficticios en el entorno operativo. Las pruebas del envío de correos de la puesta en marcha anterior no equivalen a probar un alta real adicional en esta actualización.
 
 Se comprobó también el inicio de sesión en la versión publicada, la carga de los listados de Usuarios y Perfiles y la apertura del formulario Nuevo perfil con su árbol de accesos. Se canceló el formulario sin crear datos de prueba en el entorno operativo.
+
+## Asignación desde el maestro (0.4.0)
+
+Se comprueban selección obligatoria, búsqueda por nombre y código, homónimos independientes y exclusión de fichas inactivas o eliminadas. El RPC rechaza nombres libres, identidades inexistentes y personas sin ficha en el maestro. Un perfil autorizado a asignar recibe las opciones activas sin requerir permisos para administrar el maestro.
+
+Una prueba con dos conexiones mantiene una desactivación sin confirmar, observa que la asignación espera el bloqueo y luego confirma la desactivación: la asignación se rechaza sin crear registros. La incorporación inicial de fichas se realiza en la base privada con auditoría; no cambia las asignaciones históricas ni se publica su contenido.

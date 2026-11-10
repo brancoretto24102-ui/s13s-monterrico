@@ -110,6 +110,33 @@ export async function testConductors(clients: {
     "select version from territories where id=$1",
     [another],
   );
+  const noCatalogPerson = crypto.randomUUID();
+  await root.query(
+    "insert into people(id,display_name,normalized_name) values($1,'Persona sin ficha','persona sin ficha')",
+    [noCatalogPerson],
+  );
+  for (const personId of [null, crypto.randomUUID(), noCatalogPerson]) {
+    await deny(
+      editor,
+      "select assign_territory($1,$2,'Persona sin ficha','2026-04-01',$3)",
+      [another, anotherVersion, personId],
+      /conductor activo del maestro/,
+    );
+  }
+  await deny(
+    editor,
+    "select assign_territory($1,$2,'Nombre libre','2026-04-01')",
+    [another, anotherVersion],
+    /conductor activo del maestro/,
+  );
+  check(
+    await scalar(
+      root,
+      "select count(*) from assignments where territory_id=$1",
+      [another],
+    ),
+    "0",
+  );
   await deny(
     editor,
     "select assign_territory($1,$2,'Nombre de otra persona','2026-04-01',$3)",
@@ -202,6 +229,12 @@ export async function testConductors(clients: {
   check(
     [deleted.active, !!deleted.deleted_at, deleted.version],
     [false, true, 5],
+  );
+  await deny(
+    editor,
+    "select assign_territory($1,$2,$3,'2026-04-01',$4)",
+    [another, anotherVersion, deleted.display_name, deleted.person_id],
+    /inactivo o eliminado/,
   );
   check(
     await scalar(
@@ -340,5 +373,48 @@ export async function testConductors(clients: {
     /identidad/,
   );
   check((await get(second)).active, true);
+  // A concurrent deactivation must finish before an assignment can validate
+  // that same conductor. Wait for the observed database lock, not a fixed delay.
+  const lockTerritory = (
+    await root.query("select * from territories where territory_number=81")
+  ).rows[0];
+  const editorPid = await scalar(editor, "select pg_backend_pid()");
+  await admin.query("begin");
+  try {
+    await mutate(admin, second, 1, "", "deactivate");
+    const waiting = editor.query(
+      "select assign_territory($1,$2,$3,'2026-04-01',$4)",
+      [
+        lockTerritory.id,
+        lockTerritory.version,
+        homonym.display_name,
+        homonym.person_id,
+      ],
+    );
+    const rejection = assert.rejects(waiting, /inactivo o eliminado/);
+    let blocked = false;
+    for (let attempt = 0; attempt < 50 && !blocked; attempt++) {
+      blocked = !!(await scalar(
+        root,
+        "select cardinality(pg_blocking_pids($1))>0",
+        [editorPid],
+      ));
+      if (!blocked) await new Promise((resolve) => setTimeout(resolve, 20));
+    }
+    check(blocked, true);
+    await admin.query("commit");
+    await rejection;
+    checks++;
+  } finally {
+    await admin.query("rollback");
+  }
+  check(
+    await scalar(
+      root,
+      "select count(*) from assignments where territory_id=$1",
+      [lockTerritory.id],
+    ),
+    "0",
+  );
   return checks;
 }

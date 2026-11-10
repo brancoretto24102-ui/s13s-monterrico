@@ -15,10 +15,12 @@ Buscar por nombre o código y filtrar Todos, Activos, Inactivos o Papelera. El l
 
 Cada operación requiere un motivo, de 8 a 2000 caracteres; el alta propone uno editable. Los cambios quedan en Auditoría. Si otro administrador modifica la misma ficha primero, el sistema rechaza la versión anterior y refresca el listado para revisarlo antes de reintentar.
 
-Al asignar un territorio, elegir una ficha activa en **Conductor registrado (opcional)** o conservar **Nombre manual**. Una ficha seleccionada se valida de nuevo en el servidor al guardar. Desactivar o eliminar un conductor no impide completar sus asignaciones anteriores.
+Al asignar un territorio, es obligatorio elegir una ficha activa en **Nombre del conductor** e indicar la **Fecha de Inicio**. El selector permite buscar por nombre o código y muestra una lista de altura limitada con desplazamiento vertical. Escribir un nombre solo filtra la lista: hay que seleccionar una ficha para habilitar Guardar. Si no hay fichas activas, crear o activar una en el maestro.
+
+El servidor vuelve a comprobar que la ficha existe, está activa y no se encuentra en Papelera. No se admiten nombres libres ni personas sin ficha del maestro, incluso desde clientes anteriores. La asignación guarda la identidad y una copia del nombre vigente. Desactivar o eliminar un conductor no impide completar sus asignaciones anteriores.
 
 No se fusionan personas por tener el mismo nombre: revisar el código antes de crear o seleccionar una ficha. Una advertencia de nombre similar permite comprobar si es otra persona o una ficha ya existente. Los códigos pueden tener saltos y no se reutilizan.
 
-El maestro comienza sin fichas importadas automáticamente. El historial del Excel se conserva tal como fue validado. La eliminación usa una papelera recuperable para mantener las referencias y la auditoría; no existe una función de purga definitiva en la aplicación.
+La carga inicial del maestro se realiza expresamente con los nombres existentes, evitando repetir fichas por cambios de mayúsculas o espacios. Las variantes de nombre distintas se mantienen separadas. Esta incorporación no vincula ni modifica las asignaciones antiguas: el historial del Excel se conserva tal como fue validado. Las siguientes importaciones históricas no crean fichas automáticamente. La eliminación usa una papelera recuperable para mantener las referencias y la auditoría; no existe una función de purga definitiva en la aplicación.
 
 La vista de ejemplo permite probar temporalmente el maestro con datos ficticios. Se reinicia al salir o recargar y no guarda fichas en Supabase.

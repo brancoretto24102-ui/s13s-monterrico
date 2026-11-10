@@ -36,10 +36,23 @@ export function demoSnapshot(): Snapshot {
           },
         ],
   );
+  const conductors = Array.from({ length: 24 }, (_, i) => ({
+    id: `demo-conductor-${i + 1}`,
+    code: i + 1,
+    person_id: `demo-person-${i + 1}`,
+    display_name: `Conductor de ejemplo ${String(i + 1).padStart(2, "0")}`,
+    active: true,
+    deleted_at: null,
+    version: 1,
+  }));
   return {
+    conductors,
     territories,
     assignments,
-    people: [],
+    people: conductors.map((c) => ({
+      id: c.person_id,
+      display_name: c.display_name,
+    })),
     revision: new Date().toISOString(),
   };
 }

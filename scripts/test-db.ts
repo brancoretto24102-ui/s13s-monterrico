@@ -102,15 +102,25 @@ try {
     ),
     /permiso/,
   );
+  const conductorId = crypto.randomUUID();
+  await admin.query(
+    "select manage_conductor($1,0,'Conductor sintético de asignaciones','create','Alta para comprobar asignaciones')",
+    [conductorId],
+  );
+  const personId = await value(
+    root,
+    "select person_id from conductors where id=$1",
+    [conductorId],
+  );
   // Two independent PostgreSQL connections, competing for the same row lock.
   const requests = await Promise.allSettled([
     ed1.query(
-      "select assign_territory($1,1,'Persona de prueba A','2026-01-01')",
-      [t],
+      "select assign_territory($1,1,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      [t, personId],
     ),
     ed2.query(
-      "select assign_territory($1,1,'Persona de prueba B','2026-01-01')",
-      [t],
+      "select assign_territory($1,1,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      [t, personId],
     ),
   ]);
   assert.equal(requests.filter((r) => r.status === "fulfilled").length, 1);
@@ -125,7 +135,10 @@ try {
     await root.query("select * from assignments where territory_id=$1", [t])
   ).rows[0];
   await denied(
-    ed1.query("select assign_territory($1,2,'Prueba C','2026-01-02')", [t]),
+    ed1.query(
+      "select assign_territory($1,2,'Conductor sintético de asignaciones','2026-01-02',$2)",
+      [t, personId],
+    ),
     /Conflicto/,
   );
   await denied(
@@ -135,13 +148,16 @@ try {
   await ed1.query("select complete_assignment($1,1,2,'2026-01-01')", [a.id]);
   checks++;
   await denied(
-    ed1.query("select assign_territory($1,3,'Prueba C','2026-01-01')", [t]),
+    ed1.query(
+      "select assign_territory($1,3,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      [t, personId],
+    ),
     /retroactiva/,
   );
   const next = await value(
     ed1,
-    "select assign_territory($1,3,'Prueba C','2026-01-02')",
-    [t],
+    "select assign_territory($1,3,'Conductor sintético de asignaciones','2026-01-02',$2)",
+    [t, personId],
   );
   checks++;
   await denied(

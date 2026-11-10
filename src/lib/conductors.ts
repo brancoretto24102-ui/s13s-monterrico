@@ -1,4 +1,34 @@
 import type { Conductor, ConductorAction } from "./types";
+import { normalizeName } from "./dates";
+
+export function assignableConductors(rows: Conductor[], query = "") {
+  const search = normalizeName(query.trim());
+  return rows
+    .filter(
+      (row) =>
+        row.active &&
+        !row.deleted_at &&
+        (!search ||
+          normalizeName(
+            `${row.display_name} ${conductorCode(row.code)}`,
+          ).includes(search)),
+    )
+    .sort(
+      (a, b) =>
+        a.display_name.localeCompare(b.display_name, "es") || a.code - b.code,
+    );
+}
+
+export function requireAssignableConductor(
+  rows: Conductor[],
+  personId: string,
+) {
+  const selected = rows.find(
+    (row) => row.person_id === personId && row.active && !row.deleted_at,
+  );
+  if (!selected) throw new Error("Seleccione un conductor activo del maestro.");
+  return selected;
+}
 
 export function conductorCode(code: number) {
   return `C-${String(code).padStart(4, "0")}`;

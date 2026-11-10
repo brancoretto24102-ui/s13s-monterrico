@@ -19,7 +19,7 @@ El administrador puede activar o retirar la exportación de editores y lectores.
 ## Trabajo diario
 
 1. Abrir Territorios, buscar un número o responsable y revisar su estado.
-2. Entrar al detalle y elegir Asignar si está disponible. Seleccionar un conductor activo del maestro o usar Nombre manual; indicar la fecha.
+2. Entrar al detalle y elegir Asignar si está disponible. Seleccionar un conductor activo del maestro en **Nombre del conductor** e indicar la **Fecha de Inicio**. Buscar por nombre o código; desplazar la lista para ver más opciones. Si no aparece, registrarlo o activarlo en el maestro antes de asignar.
 3. Para completar, abrir el territorio asignado, indicar la fecha de finalización y confirmar.
 4. La finalización puede ser el mismo día de asignación. Una nueva asignación debe comenzar en un día posterior al cierre anterior.
 5. Si otra persona guardó primero, revisar los datos actualizados antes de reintentar. El sistema conserva el primer cambio confirmado.

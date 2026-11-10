@@ -39,6 +39,8 @@ import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
 import ImportPanel from "./components/ImportPanel";
 import ConductorsPanel from "./components/ConductorsPanel";
+import ConductorSelect from "./components/ConductorSelect";
+import { requireAssignableConductor } from "./lib/conductors";
 import { AuditPanel, SettingsPanel } from "./components/AdminPanels";
 import { getProfile, loadSnapshot, rpc, supabase } from "./lib/client";
 import { demoProfile, demoSnapshot } from "./lib/demo";
@@ -319,6 +321,13 @@ export default function App() {
     setNotice("");
     try {
       const { kind, territory: t, assignment: a } = action;
+      const conductor =
+        kind === "assign"
+          ? requireAssignableConductor(
+              snapshot.conductors ?? [],
+              values.personId,
+            )
+          : null;
       if (demo) {
         if (kind === "observe") {
           setObservations((prev) => [
@@ -337,21 +346,11 @@ export default function App() {
               "El territorio cambió. Abre el formulario de nuevo.",
             );
           if (kind === "assign") {
-            if (
-              values.personId &&
-              !(snapshot.conductors ?? []).some(
-                (c) =>
-                  c.person_id === values.personId && c.active && !c.deleted_at,
-              )
-            )
-              throw new Error(
-                "El conductor ya no está disponible. Revisa el maestro.",
-              );
             records.push({
               id: crypto.randomUUID(),
               territory_id: t.id,
-              person_id: values.personId || null,
-              assigned_name_snapshot: values.name,
+              person_id: conductor!.person_id,
+              assigned_name_snapshot: conductor!.display_name,
               assigned_at: values.date,
               completed_at: null,
               version: 1,
@@ -399,9 +398,9 @@ export default function App() {
           await rpc("assign_territory", {
             p_territory_id: t.id,
             p_expected_version: t.version,
-            p_name: values.name,
+            p_name: conductor!.display_name,
             p_assigned_at: values.date,
-            p_person_id: values.personId || null,
+            p_person_id: conductor!.person_id,
           });
         if (kind === "complete")
           await rpc("complete_assignment", {
@@ -500,7 +499,7 @@ export default function App() {
               <th>Territorio</th>
               <th>Estado</th>
               <th>Responsable</th>
-              <th>Fecha de asignación</th>
+              <th>Fecha de Inicio</th>
               <th>Acción</th>
             </tr>
           </thead>
@@ -1311,67 +1310,37 @@ function ActionModal({
           <>
             {action.kind !== "complete" && (
               <>
-                {action.kind === "assign" && (
+                {action.kind === "assign" ? (
+                  <ConductorSelect
+                    conductors={conductors}
+                    value={personId}
+                    disabled={busy}
+                    onChange={(id, displayName) => {
+                      setPersonId(id);
+                      setName(displayName);
+                    }}
+                  />
+                ) : (
                   <label>
-                    Conductor registrado (opcional)
-                    <select
-                      value={personId}
-                      onChange={(e) => {
-                        const id = e.target.value;
-                        setPersonId(id);
-                        setName(
-                          conductors.find((c) => c.person_id === id)
-                            ?.display_name ?? "",
-                        );
-                      }}
-                    >
-                      <option value="">Nombre manual</option>
-                      {personId &&
-                        !conductors.some((c) => c.person_id === personId) && (
-                          <option value={personId} disabled>
-                            Conductor no disponible
-                          </option>
-                        )}
-                      {conductors
-                        .filter((c) => c.active && !c.deleted_at)
-                        .map((c) => (
-                          <option key={c.id} value={c.person_id}>
-                            {c.display_name} · C-
-                            {String(c.code).padStart(4, "0")}
-                          </option>
-                        ))}
-                    </select>
-                    {personId &&
-                      !conductors.some((c) => c.person_id === personId) && (
-                        <span className="error">
-                          El conductor ya no está disponible. Revisa la
-                          selección.
-                        </span>
-                      )}
+                    Nombre del responsable
+                    <input
+                      list="responsibles"
+                      required
+                      maxLength={200}
+                      value={name}
+                      readOnly={!canCorrect}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Escribe o selecciona un nombre"
+                    />
+                    <datalist id="responsibles">
+                      {names.map((n) => (
+                        <option key={n} value={n} />
+                      ))}
+                    </datalist>
                   </label>
                 )}
                 <label>
-                  Nombre del responsable
-                  <input
-                    list="responsibles"
-                    required
-                    maxLength={200}
-                    value={name}
-                    readOnly={
-                      (action.kind === "assign" && !!personId) ||
-                      (action.kind === "correct" && !canCorrect)
-                    }
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Escribe o selecciona un nombre"
-                  />
-                  <datalist id="responsibles">
-                    {names.map((n) => (
-                      <option key={n} value={n} />
-                    ))}
-                  </datalist>
-                </label>
-                <label>
-                  Fecha de asignación
+                  Fecha de Inicio
                   <input
                     type="date"
                     required
@@ -1451,7 +1420,16 @@ function ActionModal({
           >
             Cancelar
           </button>
-          <button className="primary" disabled={busy}>
+          <button
+            className="primary"
+            disabled={
+              busy ||
+              (action.kind === "assign" &&
+                !conductors.some(
+                  (c) => c.person_id === personId && c.active && !c.deleted_at,
+                ))
+            }
+          >
             {busy
               ? "Guardando…"
               : action.kind === "correct"

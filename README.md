@@ -16,7 +16,7 @@ Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, 
 - Formulario oficial: cuatro asignaciones por fila, veinte filas por página, continuaciones, cierres al corte, última finalización histórica y encabezado con raya de ancho medido en cada página.
 - Búsqueda, filtros, historial, observaciones y actualización por Realtime con comprobación cada 30 segundos como respaldo.
 - Respaldo completo JSON y exportación CSV administrativa; los datos nunca se guardan en el repositorio ni en localStorage.
-- Maestro de conductores para administradores: crear, editar, activar/desactivar, eliminar a papelera y restaurar. Código único, motivo y auditoría; selección opcional al asignar territorios. Los cronogramas quedan para la segunda etapa.
+- Maestro de conductores para administradores: crear, editar, activar/desactivar, eliminar a papelera y restaurar. Código único, motivo y auditoría; selección obligatoria de una ficha activa al asignar territorios. Los cronogramas quedan para la segunda etapa.
 
 ## Ejecución local
 
@@ -68,7 +68,7 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
 
-La versión 0.3.0 incorpora [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md), permisos por módulo y acción, y un menú modular inspirado en la referencia visual proporcionada. El maestro de conductores se encuentra en Configuración → Maestros. La validación incluye 19 pruebas unitarias y 159 comprobaciones PostgreSQL.
+La versión 0.4.0 exige seleccionar conductores activos del maestro, con búsqueda y lista desplazable; el formulario muestra **Fecha de Inicio**. Se conservan las reglas del PDF y el historial previo. También incorpora [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md), permisos por módulo y acción, y un menú modular inspirado en la referencia visual proporcionada. El maestro de conductores se encuentra en Configuración → Maestros. La validación incluye 22 pruebas unitarias y 169 comprobaciones PostgreSQL.
 
 Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 

@@ -227,10 +227,20 @@ export async function testAccess({
   const t = (
     await root.query("select * from territories where territory_number=82")
   ).rows[0];
+  const conductorPerson = await scalar(
+    root,
+    "select person_id from conductors where id=$1",
+    [conductor],
+  );
+  ok(
+    (await scalar(custom, "select get_snapshot()")).conductors.some(
+      (c: any) => c.person_id === conductorPerson,
+    ),
+  );
   const assignment = await scalar(
     custom,
-    "select assign_territory($1,$2,'Prueba granular','2026-01-01')",
-    [t.id, t.version],
+    "select assign_territory($1,$2,'Conductor sintético granular','2026-01-01',$3)",
+    [t.id, t.version, conductorPerson],
   );
   ok(!!assignment);
   await denied(
