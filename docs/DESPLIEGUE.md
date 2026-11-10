@@ -40,6 +40,10 @@ commit;
 
 El comando genera auditoría. Comprobar que se actualizó exactamente un perfil. No existe una cuenta, contraseña ni administrador predeterminado en el código.
 
+## Correo de esta instalación
+
+Gmail SMTP ya está activo: `smtp.gmail.com`, puerto `465`, TLS implícito. La credencial se introdujo de forma privada por el propietario y se conserva en el panel de Supabase. Se comprobó la persistencia tras recargar y el envío de recuperación al propietario. Ver [operación del correo](CORREO.md).
+
 ## Invitaciones administrativas
 
 Desplegar `supabase/functions/invite-user/index.ts` como Edge Function `invite-user`. Su comprobación decisiva es `auth.getUser()` y la consulta del rol activo en la base. El secreto administrativo solo existe en el entorno de la función.

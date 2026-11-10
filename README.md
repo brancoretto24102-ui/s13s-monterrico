@@ -7,7 +7,7 @@ Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, 
 ## Funciones implementadas
 
 - 82 territorios iniciales, ampliables sin reutilizar números. Historial sin máximo de asignaciones por territorio.
-- Acceso con correo/contraseña; recuperación; invitaciones administrativas mediante Edge Function, sujetas a configurar correo.
+- Acceso con correo/contraseña; recuperación por correo comprobada hasta el envío; invitaciones administrativas mediante Edge Function y SMTP privado configurado.
 - Administrador, editor y lector; permiso específico para exportar. RLS en todas las tablas privadas y almacenamiento privado del PDF original.
 - Operaciones SQL transaccionales, bloqueo por territorio y versiones optimistas. Nunca se sobrescribe una modificación concurrente silenciosamente.
 - Cierre el mismo día permitido; nueva asignación estrictamente posterior al cierre; comprobación del predecesor y sucesor en correcciones.
@@ -68,7 +68,7 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
 
-Consultar [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
+Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 
 ## Privacidad y costos
 

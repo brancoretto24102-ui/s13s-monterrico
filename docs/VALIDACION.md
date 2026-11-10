@@ -6,6 +6,12 @@ Validación local inicial realizada el 09/11/2026. La puesta en marcha se comple
 
 Se inició sesión por contraseña en el sitio publicado. Se generó y descargó el PDF hasta el 10/11/2026: 250 asignaciones, 101 filas, seis páginas y 931 campos correctos. Coinciden las palabras con la referencia aprobada, actualizando explícitamente solo la fecha de actualidad del encabezado; no hay píxeles cambiados fuera de las zonas previstas. Se descargó el respaldo JSON desde la web y se conciliaron nuevamente sus 820 registros. Ver [resultado agregado](production-qa-2026-11-10.json) y [estado actual](ESTADO_DESPLIEGUE.md).
 
+## Correo SMTP
+
+El 10/11/2026 se activó Gmail SMTP con TLS en el puerto 465. El propietario introdujo personalmente la contraseña de aplicación. La configuración permaneció activa al recargar y el panel confirmó que el secreto estaba guardado y oculto.
+
+Se solicitó un correo de recuperación para la cuenta administrativa autorizada. Auth registró el envío correctamente; antes de la prueba no había fecha de recuperación enviada. Después permanecen una cuenta y 820 asignaciones. La entrega en la bandeja y el cambio completo de contraseña requieren comprobación del destinatario. Esta prueba se limita al envío.
+
 ## Reglas y PostgreSQL
 
 - 15 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
@@ -48,7 +54,7 @@ Compilación TypeScript/Vite y pruebas unitarias completadas. Las dependencias d
 
 ## Comprobaciones con futuras incorporaciones
 
-- Configurar SMTP para invitaciones y recuperación de destinatarios generales, o crear las cuentas de forma controlada desde el panel del propietario. No hay cuentas adicionales autorizadas.
+- Incorporar solo destinatarios autorizados y comprobar su recepción con el SMTP ya configurado. No hay cuentas adicionales autorizadas.
 - Comprobar correo de recuperación y el flujo de invitación con cada nuevo usuario.
 - Verificar actualización visual entre dos sesiones reales editando simultáneamente. El bloqueo de la base ya se comprobó con dos conexiones independientes.
 - Revisar teléfonos físicos y ejecutar un simulacro de restauración en un entorno separado.

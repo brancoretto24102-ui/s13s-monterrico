@@ -34,12 +34,22 @@
       "fieldDifferences": 0
     },
     "responsiveCssWidth": 449,
-    "horizontalDocumentOverflow": false
+    "horizontalDocumentOverflow": false,
+    "smtp": {
+      "configured": true,
+      "provider": "Gmail SMTP",
+      "host": "smtp.gmail.com",
+      "port": 465,
+      "transport": "TLS",
+      "configurationPersistedAfterReload": true,
+      "recoveryEmailAcceptedForOwner": true,
+      "inboxDeliveryConfirmed": false
+    }
   },
   "limits": {
     "physicalPhoneTested": false,
     "twoSignedInBrowsersEditingProductionTested": false,
     "productionRestoreExecuted": false,
-    "generalRecipientSmtpConfigured": false
+    "generalRecipientSmtpConfigured": true
   }
 }

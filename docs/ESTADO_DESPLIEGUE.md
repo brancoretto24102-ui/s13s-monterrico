@@ -26,6 +26,8 @@ La cuenta administrativa autorizada está activa. Se comprobó el inicio de sesi
 - URL de Auth y redirección exacta de Pages configuradas. Autorregistro y acceso anónimo desactivados; confirmación de correo y cambio seguro de contraseña activados; longitud mínima de 12 caracteres.
 - Plantilla original guardada como `template/S-13_S.pdf` en `s13s-private`, con acceso público desactivado. La descarga privada funcionó durante la generación desde la web.
 - Edge Function `invite-user` desplegada con verificación JWT y comprobación de administrador activo. No se dio acceso a otras personas.
+- SMTP privado de Gmail activo con TLS en el puerto 465. El propietario introdujo la contraseña de aplicación directamente en el panel; la configuración se comprobó después de recargar.
+- Prueba de recuperación al correo del propietario aceptada y registrada en Auth el 10/11/2026. Se mantiene una cuenta y 820 asignaciones. Ver [configuración del correo](CORREO.md).
 
 ## Verificaciones realizadas
 
@@ -41,10 +43,10 @@ Ver [evidencia de validación](VALIDACION.md) y [resultado agregado de la compro
 
 ## Límites y siguientes incorporaciones
 
-- Las invitaciones y recuperación por correo para destinatarios generales necesitan SMTP propio por las restricciones del correo incorporado de Supabase. No se contrató un proveedor ni se enviaron invitaciones a terceros. El acceso por contraseña también permite cuentas creadas de forma controlada desde el panel del propietario, sin correo automático.
+- El SMTP propio ya está configurado con la cuenta Gmail autorizada. Las invitaciones y recuperaciones utilizan ese servicio y sus cuotas. No se contrató un servicio de pago ni se dio acceso a destinatarios adicionales.
 - Antes de incorporar personas, el administrador debe determinar sus identidades, roles y permiso de exportación. No compartir la cuenta inicial.
 - El asesor de Auth informa que la comprobación de contraseñas filtradas no está habilitada; el panel ofrece ese control en Pro. Se conservó el plan gratuito y la política mínima de 12 caracteres. Los controles de RLS, privilegios y Storage se verificaron sin fallos. [Referencia del control](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
-- Recuperación por correo, dos sesiones reales editando simultáneamente y funcionamiento en teléfonos físicos quedan para la comprobación con los usuarios que se incorporen. El bloqueo concurrente ya se verificó con conexiones PostgreSQL independientes.
+- La recepción en el buzón, el cambio completo de contraseña por recuperación, dos sesiones reales editando simultáneamente y teléfonos físicos se comprobarán con los usuarios que se incorporen. El envío de recuperación por SMTP y el bloqueo con conexiones PostgreSQL independientes ya se verificaron.
 - El respaldo descargable incluye datos y auditoría; Auth y la plantilla se conservan por separado. No se ejecutó una restauración sobre producción.
 
 La operación básica está habilitada. Los insumos y resultados privados permanecen fuera de GitHub.
