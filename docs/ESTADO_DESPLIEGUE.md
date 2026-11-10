@@ -26,3 +26,5 @@ Consultar la [guía del maestro](CONDUCTORES.md), el [manual de uso](USO.md) y l
 ## Interfaz modular y accesos
 
 La versión 0.3.0 añade menú lateral verde con grupos desplegables y pantallas independientes de Perfiles y Usuarios. Los perfiles definen acciones de los módulos y las cuentas pueden recibir varios perfiles personalizados. La guía pública describe funciones y validaciones sin incluir identificadores privados de infraestructura ni información de personas.
+
+Se comprobó también el inicio de sesión en la versión publicada, la carga de los listados de Usuarios y Perfiles y la apertura del formulario Nuevo perfil con su árbol de accesos. Se canceló el formulario sin crear datos de prueba en el entorno operativo.
