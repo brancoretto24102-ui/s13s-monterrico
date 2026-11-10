@@ -23,11 +23,13 @@ import {
   WifiOff,
   Menu,
   X,
+  UsersRound,
 } from "lucide-react";
 import Access from "./components/Access";
 import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
 import ImportPanel from "./components/ImportPanel";
+import ConductorsPanel from "./components/ConductorsPanel";
 import {
   AuditPanel,
   SettingsPanel,
@@ -42,7 +44,13 @@ import {
   todayLima,
 } from "./lib/dates";
 import { sequenceErrors } from "./lib/report";
-import type { Assignment, Profile, Snapshot, Territory } from "./lib/types";
+import type {
+  Assignment,
+  Conductor,
+  Profile,
+  Snapshot,
+  Territory,
+} from "./lib/types";
 type View =
   | "overview"
   | "territories"
@@ -50,6 +58,7 @@ type View =
   | "import"
   | "audit"
   | "users"
+  | "conductors"
   | "settings";
 type Action = {
   kind: "assign" | "complete" | "correct" | "observe";
@@ -62,6 +71,7 @@ const navItems = [
   { id: "export" as View, label: "Formulario S-13-S", icon: FileText },
 ];
 const adminItems = [
+  { id: "conductors" as View, label: "Conductores", icon: UsersRound },
   { id: "import" as View, label: "Importar historial", icon: Upload },
   { id: "audit" as View, label: "Auditoría", icon: History },
   { id: "users" as View, label: "Usuarios", icon: Users },
@@ -163,6 +173,11 @@ export default function App() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "territories" },
+        () => void refresh(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "conductors" },
         () => void refresh(),
       )
       .on(
@@ -283,6 +298,7 @@ export default function App() {
   }
   async function saveAction(values: {
     name: string;
+    personId: string;
     date: string;
     completed: string;
     reason: string;
@@ -311,16 +327,27 @@ export default function App() {
             throw new Error(
               "El territorio cambió. Abre el formulario de nuevo.",
             );
-          if (kind === "assign")
+          if (kind === "assign") {
+            if (
+              values.personId &&
+              !(snapshot.conductors ?? []).some(
+                (c) =>
+                  c.person_id === values.personId && c.active && !c.deleted_at,
+              )
+            )
+              throw new Error(
+                "El conductor ya no está disponible. Revisa el maestro.",
+              );
             records.push({
               id: crypto.randomUUID(),
               territory_id: t.id,
+              person_id: values.personId || null,
               assigned_name_snapshot: values.name,
               assigned_at: values.date,
               completed_at: null,
               version: 1,
             });
-          else
+          } else
             records = records.flatMap((x) =>
               x.id !== a!.id
                 ? [x]
@@ -329,6 +356,11 @@ export default function App() {
                   : [
                       {
                         ...x,
+                        person_id:
+                          kind === "correct" &&
+                          values.name.trim() !== x.assigned_name_snapshot
+                            ? null
+                            : x.person_id,
                         assigned_name_snapshot:
                           kind === "correct"
                             ? values.name
@@ -360,6 +392,7 @@ export default function App() {
             p_expected_version: t.version,
             p_name: values.name,
             p_assigned_at: values.date,
+            p_person_id: values.personId || null,
           });
         if (kind === "complete")
           await rpc("complete_assignment", {
@@ -1061,6 +1094,28 @@ export default function App() {
               )}
               {view === "audit" && isAdmin && <AuditPanel demo={demo} />}
               {view === "users" && isAdmin && <UsersPanel demo={demo} />}
+              {view === "conductors" && isAdmin && (
+                <ConductorsPanel
+                  demo={demo}
+                  demoRows={snapshot.conductors ?? []}
+                  demoAssignments={snapshot.assignments}
+                  revision={snapshot.revision}
+                  onChanged={refresh}
+                  onDemoChange={(conductors) =>
+                    setSnapshot((current) => ({
+                      ...current,
+                      conductors,
+                      people: conductors
+                        .filter((c) => c.active && !c.deleted_at)
+                        .map((c) => ({
+                          id: c.person_id,
+                          display_name: c.display_name,
+                        })),
+                      revision: new Date().toISOString(),
+                    }))
+                  }
+                />
+              )}
               {view === "settings" && isAdmin && (
                 <SettingsPanel
                   demo={demo}
@@ -1086,6 +1141,7 @@ export default function App() {
           message={notice}
           onClose={closeAction}
           onSave={saveAction}
+          conductors={snapshot.conductors ?? []}
           names={[
             ...new Set(
               snapshot.assignments.map((a) => a.assigned_name_snapshot),
@@ -1151,6 +1207,7 @@ function ActionModal({
   onClose,
   onSave,
   names,
+  conductors,
 }: {
   action: Action;
   busy: boolean;
@@ -1158,9 +1215,11 @@ function ActionModal({
   onClose: () => void;
   onSave: (v: any) => Promise<void>;
   names: string[];
+  conductors: Conductor[];
 }) {
   const a = action.assignment;
   const [name, setName] = useState(a?.assigned_name_snapshot ?? ""),
+    [personId, setPersonId] = useState(""),
     [date, setDate] = useState(a?.assigned_at ?? todayLima()),
     [completed, setCompleted] = useState(
       action.kind === "complete" ? todayLima() : (a?.completed_at ?? ""),
@@ -1168,6 +1227,12 @@ function ActionModal({
     [reason, setReason] = useState(""),
     [voided, setVoided] = useState(false),
     [body, setBody] = useState("");
+  useEffect(() => {
+    if (personId) {
+      const selected = conductors.find((c) => c.person_id === personId);
+      if (selected) setName(selected.display_name);
+    }
+  }, [personId, conductors]);
   const titles = {
     assign: "Asignar territorio",
     complete: "Marcar como completado",
@@ -1182,7 +1247,15 @@ function ActionModal({
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          void onSave({ name, date, completed, reason, voided, body });
+          void onSave({
+            name,
+            personId,
+            date,
+            completed,
+            reason,
+            voided,
+            body,
+          });
         }}
       >
         {action.kind === "observe" ? (
@@ -1200,6 +1273,45 @@ function ActionModal({
           <>
             {action.kind !== "complete" && (
               <>
+                {action.kind === "assign" && (
+                  <label>
+                    Conductor registrado (opcional)
+                    <select
+                      value={personId}
+                      onChange={(e) => {
+                        const id = e.target.value;
+                        setPersonId(id);
+                        setName(
+                          conductors.find((c) => c.person_id === id)
+                            ?.display_name ?? "",
+                        );
+                      }}
+                    >
+                      <option value="">Nombre manual</option>
+                      {personId &&
+                        !conductors.some((c) => c.person_id === personId) && (
+                          <option value={personId} disabled>
+                            Conductor no disponible
+                          </option>
+                        )}
+                      {conductors
+                        .filter((c) => c.active && !c.deleted_at)
+                        .map((c) => (
+                          <option key={c.id} value={c.person_id}>
+                            {c.display_name} · C-
+                            {String(c.code).padStart(4, "0")}
+                          </option>
+                        ))}
+                    </select>
+                    {personId &&
+                      !conductors.some((c) => c.person_id === personId) && (
+                        <span className="error">
+                          El conductor ya no está disponible. Revisa la
+                          selección.
+                        </span>
+                      )}
+                  </label>
+                )}
                 <label>
                   Nombre del responsable
                   <input
@@ -1207,6 +1319,7 @@ function ActionModal({
                     required
                     maxLength={200}
                     value={name}
+                    readOnly={action.kind === "assign" && !!personId}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Escribe o selecciona un nombre"
                   />

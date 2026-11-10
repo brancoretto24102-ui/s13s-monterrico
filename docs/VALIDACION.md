@@ -15,20 +15,30 @@ Se solicitó un correo de recuperación para la cuenta administrativa autorizada
 ## Reglas y PostgreSQL
 
 - 15 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
-- 43 comprobaciones con PostgreSQL 18.6 real: permisos, RLS, anonimato, perfil inactivo, rechazo de escalamiento de rol, cierre el mismo día, reasignación inválida, corrección con conflicto, versiones, auditoría inmutable, último administrador, importación atómica y deduplicación, crecimiento del catálogo, respaldo, más de mil registros y acceso privado al PDF.
+- 90 comprobaciones con PostgreSQL 18.6 real: permisos, RLS, anonimato, perfil inactivo, rechazo de escalamiento de rol, cierre el mismo día, reasignación inválida, corrección con conflicto, versiones, auditoría inmutable, último administrador, importación atómica y deduplicación, crecimiento del catálogo, respaldo, más de mil registros y acceso privado al PDF.
 - Dos conexiones PostgreSQL independientes intentaron asignar el mismo territorio con la misma versión: una confirmó y la otra recibió `40001`. No se simuló el bloqueo únicamente en JavaScript.
 - Prueba separada con el historial real: 820 asignaciones importadas y comparadas campo por campo; 82 territorios; repetición del archivo con cero duplicados; una entrada de auditoría para la corrección aprobada de T64.
 
 El esquema Auth/Storage de las pruebas se emula para ejecutar las migraciones y políticas en PostgreSQL. Esto verifica SQL, privilegios y bloqueos, pero no equivale a una prueba del servicio Supabase alojado.
 
+## Maestro de conductores (0.2.0)
+
+Las comprobaciones SQL incluyen altas idempotentes, homónimos con códigos independientes, edición, activación/desactivación, papelera/restauración, motivos, auditoría, respaldo, metadatos inmutables, prohibición de borrado físico y permisos de administrador. Editor, lector, anónimo y perfil inactivo no pueden gestionar el maestro.
+
+Dos conexiones administrativas actualizan la misma versión del conductor: una confirma y otra recibe `40001`. Se rechazan versiones nulas u obsoletas y selecciones de conductores que dejaron de estar activos. Se comprueba la conservación de los nombres históricos, la finalización de asignaciones anteriores y la desvinculación de la ficha cuando una corrección cambia manualmente el nombre del responsable.
+
+En navegador, con datos ficticios temporales: crear, editar, desactivar, eliminar, filtrar Papelera, restaurar a inactivo, activar, buscar por código y seleccionar al asignar un territorio. El maestro muestra el recuento de esa asignación y su estado pendiente. Estas pruebas no insertaron fichas ficticias en producción.
+
+La cuarta migración se aplicó al proyecto alojado. Un snapshot autorizado devuelve las 820 asignaciones; su huella completa antes y después de la migración coincide. El maestro sigue vacío. Los RPC públicos usan `SECURITY INVOKER`, el anónimo no tiene ejecución y la revisión de seguridad no añadió avisos nuevos. Las comprobaciones de PDF descritas en este documento corresponden a la puesta en marcha anterior; el motor PDF no se modificó en esta actualización.
+
 ## Conciliaciones históricas
 
-| Filtro | Asignaciones | Territorios con asignaciones | Filas | Páginas |
-|---|---:|---:|---:|---:|
-| Excepción 02/07/2025–31/08/2026 | 739 | 80 | 217 | 11 |
-| Año de servicio 2025-2026 | 580 | 80 | 179 | 9 |
-| Año de servicio 2026-2027, datos disponibles | 81 | 52 | 82 | 5 |
-| 01/06/2026–09/11/2026 | 250 | 77 | 101 | 6 |
+| Filtro                                       | Asignaciones | Territorios con asignaciones | Filas | Páginas |
+| -------------------------------------------- | -----------: | ---------------------------: | ----: | ------: |
+| Excepción 02/07/2025–31/08/2026              |          739 |                           80 |   217 |      11 |
+| Año de servicio 2025-2026                    |          580 |                           80 |   179 |       9 |
+| Año de servicio 2026-2027, datos disponibles |           81 |                           52 |    82 |       5 |
+| 01/06/2026–09/11/2026                        |          250 |                           77 |   101 |       6 |
 
 Coinciden exactamente con los cuatro baselines de la especificación, tanto desde el importador como desde el snapshot de PostgreSQL. No se codifican como límites de la aplicación.
 

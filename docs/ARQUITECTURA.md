@@ -6,18 +6,19 @@ Desde la tercera migración, los RPC de `public` usan `SECURITY INVOKER` y llama
 
 ## Entidades
 
-| Tabla | Propósito |
-|---|---|
-| `territories` | Número único, estado y versión de todo el territorio |
-| `people` | Identidad separada y nombre normalizado, preparada para ampliación |
-| `assignments` | Registro normalizado, snapshot del nombre, DATE, versiones y procedencia |
-| `profiles` | Rol, estado y exportación por usuario de Auth |
-| `audit_log` | Usuario, hora UTC, antes/después y motivo |
-| `import_batches` | SHA-256 del archivo, responsable, resultados y conciliación |
-| `territory_observations` | Observaciones independientes del formulario |
-| `conductors`, `meeting_schedule` | Base para programación en segunda etapa |
+| Tabla                    | Propósito                                                                |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `territories`            | Número único, estado y versión de todo el territorio                     |
+| `people`                 | Identidad separada y nombre normalizado, preparada para ampliación       |
+| `assignments`            | Registro normalizado, snapshot del nombre, DATE, versiones y procedencia |
+| `profiles`               | Rol, estado y exportación por usuario de Auth                            |
+| `audit_log`              | Usuario, hora UTC, antes/después y motivo                                |
+| `import_batches`         | SHA-256 del archivo, responsable, resultados y conciliación              |
+| `territory_observations` | Observaciones independientes del formulario                              |
+| `conductors`             | Ficha del maestro: código único, persona, estado, papelera y versión     |
+| `meeting_schedule`       | Base para programación en segunda etapa                                  |
 
-Un nombre histórico no se cambia cuando se amplía la ficha de la persona. Los registros importados conservan snapshot aunque no haya correspondencia inequívoca con un `person_id`; no se fusionan homónimos como si fueran necesariamente la misma persona. En el MVP, los responsables se seleccionan a partir de nombres usados en el historial.
+Un nombre histórico no se cambia cuando se amplía la ficha de la persona. Los registros importados conservan snapshot aunque no haya correspondencia inequívoca con un `person_id`; no se fusionan homónimos como si fueran necesariamente la misma persona. El formulario permite seleccionar un conductor activo identificado por UUID o escribir un nombre manual; las sugerencias históricas no identifican automáticamente a personas.
 
 ## Mutaciones y simultaneidad
 
@@ -27,7 +28,17 @@ El RPC de importación bloquea territorios en orden estable y ejecuta todo el lo
 
 Los usuarios de la aplicación no tienen INSERT/UPDATE/DELETE directos. Solo los RPC expresamente concedidos pueden mutar datos. Los propietarios y administradores de infraestructura conservan, por definición, control sobre PostgreSQL; la inmutabilidad de auditoría se impone a las sesiones de la aplicación y mediante trigger, no pretende impedir que el dueño de la infraestructura cambie su propio esquema.
 
-Realtime publica invalidaciones de `territories` y del perfil propio. No publica nombres ni eventos DELETE de asignaciones. El navegador vuelve a pedir un snapshot autorizado y consistente; además comprueba cada 30 segundos y al recuperar el foco. La comprobación de permisos en cada operación mantiene la protección aunque el navegador tenga información anterior. Los registros privados se limpian al salir o al detectar desactivación.
+Realtime publica invalidaciones de `territories`, `conductors` y del perfil propio. No publica nombres ni eventos DELETE de asignaciones. El navegador vuelve a pedir un snapshot autorizado y consistente; además comprueba cada 30 segundos y al recuperar el foco. La comprobación de permisos en cada operación mantiene la protección aunque el navegador tenga información anterior. Los registros privados se limpian al salir o al detectar desactivación.
+
+## Maestro de conductores
+
+La cuarta migración añade `get_conductors` y `manage_conductor`. Sus envoltorios públicos son `SECURITY INVOKER`; la implementación privada comprueba administrador activo. Los clientes no escriben directamente en las tablas. El catálogo completo, incluidos inactivos y papelera, es administrativo; el snapshot autorizado entrega solo fichas activas disponibles para asignar.
+
+Cada conductor tiene UUID estable, código generado por identidad, `person_id` único, versión y metadatos de creación/actualización/eliminación. El código no se reutiliza ni se puede cambiar. El nombre se valida y normaliza sin convertirlo en identidad única. La eliminación es lógica y recuperable; restaurar deja la ficha inactiva. Se conserva la referencia desde asignaciones y cronogramas.
+
+Las mutaciones se serializan con un bloqueo transaccional del catálogo y comprueban la versión que vio el administrador. Repetir un alta con el mismo UUID y nombre es idempotente. Una versión obsoleta se rechaza con `40001`; el usuario recibe los datos actuales antes de reintentar. El motivo, actor y antes/después se guardan en la auditoría existente.
+
+Cuando se asigna con `person_id`, el servidor bloquea y comprueba la ficha y la persona activas y verifica que el nombre mostrado sea el vigente. Guarda ese nombre como snapshot, sin reescribir asignaciones anteriores al editar la ficha. Una corrección manual que cambia el nombre del responsable retira el vínculo anterior; una corrección solo de fechas lo conserva. Los respaldos incluyen personas, fichas en todos los estados y auditoría.
 
 ## Informes
 

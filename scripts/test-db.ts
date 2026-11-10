@@ -1,4 +1,5 @@
 import { bootstrapTestDb } from "./bootstrap-test-db";
+import { testConductors } from "./test-conductors";
 import assert from "node:assert/strict";
 import { Client } from "pg";
 const external = process.env.TEST_DATABASE_URL;
@@ -311,6 +312,16 @@ try {
     ),
     /row-level security/,
   );
+  const admin2 = await connection("authenticated", ids.admin);
+  checks += await testConductors({
+    root,
+    admin,
+    admin2,
+    editor: ed1,
+    reader,
+    inactive,
+    anon,
+  });
   // Immediate revocation does not depend on refreshing a JWT claim.
   await root.query("update profiles set active=false where id=$1", [
     ids.editor,

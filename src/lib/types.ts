@@ -36,8 +36,26 @@ export interface Snapshot {
   territories: Territory[];
   assignments: Assignment[];
   people: { id: string; display_name: string }[];
+  conductors?: Conductor[];
   revision: string;
 }
+export interface Conductor {
+  id: string;
+  code: number;
+  person_id: string;
+  display_name: string;
+  active: boolean;
+  deleted_at: string | null;
+  version: number;
+}
+export interface ConductorRecord extends Conductor {
+  created_at: string;
+  updated_at: string;
+  assignments_count: number;
+  open_assignments: number;
+}
+export type ConductorAction =
+  "create" | "update" | "activate" | "deactivate" | "delete" | "restore";
 export interface Period {
   start: string;
   end: string;

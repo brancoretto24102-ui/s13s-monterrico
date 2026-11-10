@@ -16,7 +16,7 @@ La cuenta administrativa autorizada está activa. Se comprobó el inicio de sesi
 
 ## Datos y acceso
 
-- Tres migraciones aplicadas, 82 territorios y 820 asignaciones históricas.
+- Cuatro migraciones aplicadas, 82 territorios y 820 asignaciones históricas. La actualización del maestro conserva exactamente los registros históricos; se comprobó su huella completa antes y después.
 - Un único lote de importación. Una segunda carga no añadió registros.
 - Cero diferencias en territorio, responsable, asignación, cierre, celda de origen y orden, comparando todos los registros con el Excel validado.
 - Ajuste aprobado de T64 conservado: asignación y cierre el 29/08/2026, con exactamente una entrada de auditoría de migración.
@@ -31,7 +31,7 @@ La cuenta administrativa autorizada está activa. Se comprobó el inicio de sesi
 
 ## Verificaciones realizadas
 
-- 15 pruebas unitarias y 43 comprobaciones PostgreSQL, incluida concurrencia real entre dos conexiones.
+- 15 pruebas unitarias y 90 comprobaciones PostgreSQL, incluida concurrencia real entre dos conexiones para territorios y conductores.
 - En la base alojada: lector sin exportación, editor, lector con exportación, perfil inactivo y anónimo respetan sus permisos. Las modificaciones temporales de esas comprobaciones se revirtieron en la misma transacción; el administrador y el historial quedaron intactos.
 - Los cuatro resultados de referencia coinciden también en producción: 739/217/11, 580/179/9, 81/82/5 y 250/101/6 (asignaciones/filas/páginas).
 - Desde la web autenticada: informe 01/06/2026–10/11/2026 con 250 asignaciones, 101 filas y seis páginas.
@@ -40,6 +40,12 @@ La cuenta administrativa autorizada está activa. Se comprobó el inicio de sesi
 - Menú y formulario revisados a 449 píxeles CSS de ancho, sin desbordamiento horizontal general. No se realizó una prueba en un teléfono físico.
 
 Ver [evidencia de validación](VALIDACION.md) y [resultado agregado de la comprobación web](production-qa-2026-11-10.json).
+
+## Maestro de conductores — versión 0.2.0
+
+Se añadió el maestro administrativo para crear, editar, activar/desactivar, enviar a Papelera y restaurar conductores. El código individual evita confundir homónimos; se mantienen versiones, auditoría e historial. La selección de conductor registrado es opcional al asignar territorios. La base alojada contiene las funciones del maestro y las comprobaciones de rol correspondientes.
+
+Se verificaron en la vista temporal todas las operaciones, búsqueda por código, selección al asignar y recuento del historial vinculado. No se crearon personas ficticias en producción. El maestro inicial está vacío: el administrador crea las fichas reales cuando corresponda; los 820 nombres históricos no se convierten en identidades automáticamente.
 
 ## Límites y siguientes incorporaciones
 

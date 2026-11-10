@@ -1,6 +1,6 @@
 # Publicación bajo control del propietario
 
-**Instalación actual:** las tres migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La cuenta administrativa y las 820 asignaciones históricas ya están activas; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
+**Instalación actual:** las cuatro migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La cuenta administrativa y las 820 asignaciones históricas ya están activas; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
 
 ## Control de cambios
 
@@ -17,6 +17,7 @@ Crear el proyecto en el plan Free de una cuenta controlada por el propietario. E
 1. `supabase/migrations/20261110041139_s13s_core.sql`
 2. `supabase/migrations/20261110041146_s13s_private_storage_realtime.sql`
 3. `supabase/migrations/20261110042222_s13s_api_hardening.sql`
+4. `supabase/migrations/20261110064656_s13s_conductors_master.sql`
 
 Puede usarse Supabase CLI con migraciones o el editor SQL del panel. Las migraciones son para un proyecto limpio. No deben reejecutarse contra tablas existentes como si fueran comandos idempotentes de mantenimiento. El esquema `private` no debe añadirse a los esquemas expuestos por la API. Se revoca ejecución pública de las funciones; solo los RPC permitidos se conceden a `authenticated`.
 
@@ -50,13 +51,13 @@ Desplegar `supabase/functions/invite-user/index.ts` como Edge Function `invite-u
 
 Configurar:
 
-| Variable | Valor |
-|---|---|
-| `ALLOWED_ORIGINS` | `https://PROPIETARIO.github.io` |
-| `ALLOWED_REDIRECT_URLS` | URL completa y exacta del sitio, con `/` final |
-| `SUPABASE_URL` | La URL del proyecto; normalmente preconfigurada por la plataforma |
-| `SUPABASE_ANON_KEY` | Clave pública heredada para verificar la llamada desde la función, si el entorno la utiliza |
-| `SUPABASE_SERVICE_ROLE_KEY` | Secreto de servidor preconfigurado por Supabase; nunca una variable `VITE_*` |
+| Variable                    | Valor                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------- |
+| `ALLOWED_ORIGINS`           | `https://PROPIETARIO.github.io`                                                             |
+| `ALLOWED_REDIRECT_URLS`     | URL completa y exacta del sitio, con `/` final                                              |
+| `SUPABASE_URL`              | La URL del proyecto; normalmente preconfigurada por la plataforma                           |
+| `SUPABASE_ANON_KEY`         | Clave pública heredada para verificar la llamada desde la función, si el entorno la utiliza |
+| `SUPABASE_SERVICE_ROLE_KEY` | Secreto de servidor preconfigurado por Supabase; nunca una variable `VITE_*`                |
 
 `supabase/config.toml` mantiene `verify_jwt=true`. Además de la verificación de la plataforma, la función verifica cada token con `Auth.getUser()` y comprueba el perfil activo en PostgreSQL antes de usar el cliente administrativo. Sin token se rechaza la solicitud y un lector recibe 403. No retirar esas comprobaciones para resolver un error de configuración; revisar el modo de firma y la documentación actual. Confirmar ambos rechazos en el servicio desplegado antes de habilitar invitaciones reales.
 
@@ -106,15 +107,15 @@ La validación local no sustituye estas comprobaciones del servicio alojado.
 
 Información consultada en fuentes oficiales el 09/11/2026:
 
-| Servicio | Referencia gratuita |
-|---|---|
-| GitHub Pages | Disponible para repositorios públicos en GitHub Free |
-| Supabase PostgreSQL | 500 MB por proyecto |
-| Supabase Storage | 1 GB |
-| Egress | 5 GB según tabla del plan |
-| Auth | 50 000 usuarios activos mensuales |
-| Realtime | 200 conexiones pico; 2 millones de mensajes mensuales |
-| Inactividad | Un proyecto Free puede pausarse tras siete días de poca actividad |
+| Servicio            | Referencia gratuita                                               |
+| ------------------- | ----------------------------------------------------------------- |
+| GitHub Pages        | Disponible para repositorios públicos en GitHub Free              |
+| Supabase PostgreSQL | 500 MB por proyecto                                               |
+| Supabase Storage    | 1 GB                                                              |
+| Egress              | 5 GB según tabla del plan                                         |
+| Auth                | 50 000 usuarios activos mensuales                                 |
+| Realtime            | 200 conexiones pico; 2 millones de mensajes mensuales             |
+| Inactividad         | Un proyecto Free puede pausarse tras siete días de poca actividad |
 
 Son cuotas del proveedor, no una garantía contractual de costo perpetuo. Supervisar uso y exportar respaldos periódicos; no activar servicios pagados para resolver límites sin autorización. Si se pausa, reactivarlo desde el panel y verificar integridad/acceso. No se han añadido automatismos de actividad artificial.
 

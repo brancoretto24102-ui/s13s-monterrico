@@ -16,7 +16,7 @@ Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, 
 - Formulario oficial: cuatro asignaciones por fila, veinte filas por página, continuaciones, cierres al corte, última finalización histórica y encabezado con raya de ancho medido en cada página.
 - Búsqueda, filtros, historial, observaciones y actualización por Realtime con comprobación cada 30 segundos como respaldo.
 - Respaldo completo JSON y exportación CSV administrativa; los datos nunca se guardan en el repositorio ni en localStorage.
-- Catálogos y tablas preparados para conductores y cronogramas. La gestión de esos cronogramas queda para la segunda etapa.
+- Maestro de conductores para administradores: crear, editar, activar/desactivar, eliminar a papelera y restaurar. Código único, motivo y auditoría; selección opcional al asignar territorios. Los cronogramas quedan para la segunda etapa.
 
 ## Ejecución local
 
@@ -67,6 +67,8 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 ```
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
+
+La versión 0.2.0 incorpora el [maestro de conductores](docs/CONDUCTORES.md), comprobado con 90 verificaciones PostgreSQL además de las 15 pruebas unitarias.
 
 Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 

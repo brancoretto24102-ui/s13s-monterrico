@@ -43,7 +43,9 @@ export async function rpc<T>(
   if (error) {
     if (error.code === "40001")
       throw new Error(
-        "Otro usuario actualizó este territorio. Se actualizarán los datos; revise el registro antes de volver a guardar.",
+        fn === "manage_conductor"
+          ? "Otro administrador actualizó este conductor. Revisa la lista y vuelve a abrir el formulario."
+          : "Otro usuario actualizó el registro o la selección. Se actualizarán los datos; revisa el formulario antes de volver a guardar.",
       );
     throw new Error(error.message);
   }

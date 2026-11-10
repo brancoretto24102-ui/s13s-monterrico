@@ -1,0 +1,148 @@
+.conductor-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0;
+}
+.conductor-stats article {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 20px 24px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  color: #79948a;
+}
+.conductor-stats article div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.conductor-stats strong {
+  font-size: 30px;
+  font-weight: 600;
+  color: #274e40;
+  line-height: 1.15;
+}
+.conductor-stats span {
+  font-size: 12px;
+}
+.conductor-panel .filters {
+  padding: 0 0 20px;
+}
+.conductor-panel .filters select {
+  width: 210px;
+}
+.conductor-panel label.search {
+  flex-direction: row;
+  align-items: center;
+  margin: 0;
+}
+.conductor-panel .table-wrap {
+  overflow-x: auto;
+}
+.conductor-table {
+  min-width: 830px;
+}
+.conductor-table td:first-child {
+  min-width: 180px;
+  max-width: 280px;
+  overflow-wrap: anywhere;
+}
+.conductor-table td:first-child strong {
+  display: block;
+  font-weight: 550;
+  margin-bottom: 5px;
+}
+.conductor-actions {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.conductor-actions button {
+  font-size: 11px;
+  min-height: 34px;
+  padding: 7px 10px;
+  white-space: nowrap;
+}
+.conductor-actions .conductor-delete {
+  color: #a34a4a;
+  border-color: #edd9d9;
+}
+.conductor-delete-primary {
+  background: #a44747;
+}
+.conductor-delete-primary:hover {
+  background: #8e3838;
+}
+.conductor-target {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-bottom: 20px;
+}
+.conductor-target span {
+  font-size: 12px;
+  color: #84958d;
+}
+.conductor-empty {
+  padding: 44px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 14px;
+  color: #789486;
+}
+.conductor-empty h3 {
+  color: #355b48;
+  font-size: 18px;
+}
+.conductor-empty p {
+  max-width: 370px;
+  font-size: 13px;
+  line-height: 1.7;
+}
+.conductor-empty button {
+  margin-top: 4px;
+}
+.conductor-loading {
+  font-size: 12px;
+  color: #789486;
+  padding: 0 0 12px;
+}
+@media (max-width: 760px) {
+  .conductor-heading {
+    align-items: stretch;
+    flex-direction: column;
+    gap: 18px;
+  }
+  .conductor-heading > .primary {
+    justify-content: center;
+  }
+  .conductor-panel .filters {
+    flex-direction: column;
+  }
+  .conductor-panel .filters select {
+    width: 100%;
+  }
+  .conductor-stats {
+    gap: 10px;
+  }
+  .conductor-stats article {
+    padding: 15px 12px;
+    gap: 8px;
+  }
+}
+@media (max-width: 560px) {
+  .conductor-stats article > svg {
+    display: none;
+  }
+  .conductor-stats strong {
+    font-size: 25px;
+  }
+  .conductor-stats span {
+    font-size: 11px;
+  }
+}
