@@ -1,6 +1,7 @@
 import { bootstrapTestDb } from "./bootstrap-test-db";
 import { testConductors } from "./test-conductors";
 import { testAccess } from "./test-access";
+import { testVisitRestrictions } from "./test-visit-restrictions";
 import assert from "node:assert/strict";
 import { Client } from "pg";
 const external = process.env.TEST_DATABASE_URL;
@@ -344,6 +345,16 @@ try {
     admin,
     admin2,
     reader,
+    anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testVisitRestrictions({
+    root,
+    admin,
+    admin2,
+    editor: ed1,
+    reader,
+    inactive,
     anon,
     connect: (uid) => connection("authenticated", uid),
   });

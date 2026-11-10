@@ -68,7 +68,7 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
 
-La versión 0.4.0 exige seleccionar conductores activos del maestro, con búsqueda y lista desplazable; el formulario muestra **Fecha de Inicio**. Se conservan las reglas del PDF y el historial previo. También incorpora [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md), permisos por módulo y acción, y un menú modular inspirado en la referencia visual proporcionada. El maestro de conductores se encuentra en Configuración → Maestros. La validación incluye 22 pruebas unitarias y 169 comprobaciones PostgreSQL.
+La versión 0.5.0 incorpora [Domicilios que no desean visitas](docs/DOMICILIOS_SIN_VISITAS.md): plazo anual, avisos en el historial y al asignar, renovación, permisos y auditoría. También exige seleccionar conductores activos del maestro, con búsqueda y lista desplazable; el formulario muestra **Fecha de Inicio**. Se conservan las reglas del PDF y el historial previo. También incorpora [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md), permisos por módulo y acción, y un menú modular inspirado en la referencia visual proporcionada. El maestro de conductores se encuentra en Configuración → Maestros. La validación incluye 29 pruebas unitarias y 222 comprobaciones PostgreSQL.
 
 Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 

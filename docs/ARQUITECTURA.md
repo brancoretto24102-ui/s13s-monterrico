@@ -73,3 +73,11 @@ Para cuentas básicas se conservan las reglas de Administrador, Editor y Lector.
 El snapshot y las políticas de tablas filtran los datos según el acceso efectivo. Un perfil de Conductores no recibe por ese motivo el historial de asignaciones. Los nombres del historial, las reglas de fechas y el motor PDF se conservan. Los cambios concurrentes de ficha de usuario o perfil requieren la versión vigente. Se rechazan también versiones nulas al completar asignaciones o editar territorios.
 
 La función de invitaciones comprueba identidad y administrador activo, valida perfiles y alias, crea la cuenta inicialmente inactiva y aplica el acceso en una transacción. Si falla esa configuración, informa que la invitación ya fue enviada y conserva la cuenta inactiva para revisión. Los enlaces de recuperación usan el correo de Auth obtenido por identificador, no una dirección arbitraria del formulario; el resultado aceptado se registra en auditoría. No se almacenan contraseñas de usuarios en las tablas de la aplicación.
+
+## Domicilios y plazo anual
+
+`visit_restrictions` conserva la referencia, la fecha informada, el territorio, la fecha calculada, estado, versión y procedencia de la carga. `eligible_on` es una columna generada de PostgreSQL; no puede sustituirse por una fecha elegida por el cliente. El 29 de febrero cumple el plazo el 28 de febrero del siguiente año. El día vigente se calcula según America/Lima.
+
+`manage_visit_restriction` mantiene una envoltura pública SECURITY INVOKER y una implementación privada con autorización actual, versiones y un bloqueo transaccional corto. RLS limita la lectura de referencias a `visits.view`. El snapshot entrega un catálogo mínimo de territorios a ese módulo y recuentos sin direcciones para la consulta de territorios. No se amplían los permisos de perfiles existentes.
+
+Los avisos se calculan desde las fechas, sin una tarea de pago. La fecha peruana se actualiza cada 30 segundos y al recuperar el foco. Realtime y el refresco de respaldo mantienen los registros compartidos al día. Los datos de este maestro no se imprimen en el formulario oficial S-13-S.

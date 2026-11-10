@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 22 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
-- 169 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 29 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
+- 222 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -52,3 +52,13 @@ Se comprobó también el inicio de sesión en la versión publicada, la carga de
 Se comprueban selección obligatoria, búsqueda por nombre y código, homónimos independientes y exclusión de fichas inactivas o eliminadas. El RPC rechaza nombres libres, identidades inexistentes y personas sin ficha en el maestro. Un perfil autorizado a asignar recibe las opciones activas sin requerir permisos para administrar el maestro.
 
 Una prueba con dos conexiones mantiene una desactivación sin confirmar, observa que la asignación espera el bloqueo y luego confirma la desactivación: la asignación se rechaza sin crear registros. La incorporación inicial de fichas se realiza en la base privada con auditoría; no cambia las asignaciones históricas ni se publica su contenido.
+
+## Domicilios que no desean visitas (0.5.0)
+
+La fecha permitida se calcula como un año calendario desde la fecha informada. Se prueban el aniversario exacto, el cambio de estado ese mismo día, el primer día del año y el 29 de febrero (28 de febrero del siguiente año). Se rechazan fechas futuras, referencias vacías y domicilios duplicados dentro del mismo territorio.
+
+Se comprueban altas idempotentes, edición, renovación, archivo después del plazo, reactivación, Papelera/restauración, procedencia inmutable, auditoría y respaldo. Dos conexiones compiten tanto por una misma versión como por crear la misma referencia: solo una confirma. El cliente no puede escribir la fecha calculada ni modificar directamente la tabla. Los avisos activos y los plazos cumplidos se conservan hasta una acción expresa.
+
+Los perfiles existentes mantienen sus permisos. La consulta de direcciones requiere `visits.view`; los permisos de territorios permiten consultar únicamente recuentos de avisos cuando no se dispone de ese acceso. Se prueba un perfil limitado al maestro, su selector mínimo de territorios, la revocación inmediata de sus permisos y la ausencia de datos de asignaciones fuera de su alcance.
+
+La preparación de la hoja NO TOCAR diferencia encabezados, filas vacías y domicilios; valida sus columnas y rechaza registros incompletos o repetidos antes de la carga privada. Las comprobaciones verifican que la gestión del nuevo maestro no modifica las asignaciones.

@@ -10,6 +10,14 @@ const user: Profile = {
   can_export: true,
 };
 describe("Permisos del cliente y revocaciones", () => {
+  it("el maestro de domicilios no amplía automáticamente los accesos de editor o lector", () => {
+    expect(can(user, "visits.view")).toBe(false);
+    expect(can({ ...user, role: "lector" }, "visits.view")).toBe(false);
+    expect(can({ ...user, role: "administrador" }, "visits.view")).toBe(true);
+    expect(can({ ...user, permissions: ["visits.view"] }, "visits.view")).toBe(
+      true,
+    );
+  });
   it("un acceso personalizado vacío no hereda el rol ni la exportación anteriores", () => {
     expect(can(user, "territories.assign")).toBe(true);
     expect(

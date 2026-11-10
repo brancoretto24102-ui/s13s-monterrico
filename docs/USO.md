@@ -57,3 +57,13 @@ En Configuración se guarda la plantilla privada, se descargan respaldos y se ag
 ## Perfiles y cuentas de acceso
 
 En **Seguridad → Maestros → Perfiles** se crean los perfiles personalizados mediante un árbol de permisos. En **Seguridad → Maestros → Usuarios** se asignan a las cuentas desde la pestaña Perfiles web. Ver la [guía completa](PERFILES_Y_USUARIOS.md). La vista de ejemplo permite probar estas pantallas sin enviar correos ni guardar usuarios reales.
+
+## Domicilios que no desean visitas
+
+Abrir Configuración → Maestros → Domicilios sin visitas. Registrar Territorio, Domicilio / referencia y Fecha informada. La web calcula y muestra **Puede visitarse desde**, un año calendario después. Por ejemplo, 01/01/2026 produce 01/01/2027.
+
+**No visitar** indica que el año todavía no se cumple. **Plazo cumplido** aparece automáticamente desde el aniversario y muestra la fecha desde la que puede visitarse. Los avisos aparecen en el inicio, en el historial del territorio y al asignarlo. El plazo no se renueva ni el domicilio se elimina automáticamente.
+
+Renovar solicitud registra un aviso posterior y calcula un nuevo año. Archivar retira un caso revisado de los recordatorios después de cumplir el plazo. Eliminar se reserva para registros incorrectos o duplicados y utiliza una Papelera recuperable. Cada cambio requiere un motivo y conserva auditoría.
+
+Inicialmente, el administrador gestiona el maestro. Otros usuarios necesitan permisos específicos de este módulo para consultar referencias o realizar cambios. Sin acceso a direcciones, el historial muestra los recuentos de avisos del territorio. Ver [guía del maestro](DOMICILIOS_SIN_VISITAS.md).

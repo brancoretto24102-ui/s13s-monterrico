@@ -2,6 +2,18 @@ import type { Profile } from "./types";
 
 export const permissionGroups = [
   {
+    section: "CONFIGURACIÓN",
+    module: "Domicilios que no desean visitas",
+    prefix: "visits",
+    actions: [
+      ["view", "Visualizar"],
+      ["create", "Registrar"],
+      ["edit", "Editar / renovar solicitud"],
+      ["state", "Archivar / activar"],
+      ["delete", "Eliminar / restaurar"],
+    ],
+  },
+  {
     section: "TERRITORIOS",
     module: "Registro de asignaciones",
     prefix: "territories",

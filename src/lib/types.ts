@@ -64,8 +64,32 @@ export interface Snapshot {
   assignments: Assignment[];
   people: { id: string; display_name: string }[];
   conductors?: Conductor[];
+  visit_restrictions?: VisitRestriction[];
+  visit_territories?: Pick<Territory, "id" | "territory_number" | "active">[];
+  visit_restriction_summary?: VisitRestrictionSummary[];
   revision: string;
 }
+export interface VisitRestriction {
+  id: string;
+  code: number;
+  territory_id: string;
+  address_reference: string;
+  reported_on: string;
+  eligible_on: string;
+  active: boolean;
+  deleted_at: string | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  source_reference?: string | null;
+}
+export interface VisitRestrictionSummary {
+  territory_id: string;
+  blocking_count: number;
+  eligible_count: number;
+}
+export type VisitRestrictionAction =
+  "create" | "update" | "renew" | "archive" | "activate" | "delete" | "restore";
 export interface Conductor {
   id: string;
   code: number;

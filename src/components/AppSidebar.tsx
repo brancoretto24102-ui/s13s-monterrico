@@ -15,6 +15,7 @@ import {
   Settings,
   LogOut,
   X,
+  House,
 } from "lucide-react";
 import { can } from "../lib/permissions";
 import type { Profile } from "../lib/types";
@@ -27,6 +28,7 @@ export type AppView =
   | "users"
   | "access-profiles"
   | "conductors"
+  | "visit-restrictions"
   | "settings";
 export const viewInfo: Record<
   AppView,
@@ -56,6 +58,11 @@ export const viewInfo: Record<
     label: "Conductores",
     section: "CONFIGURACIÓN / MAESTROS",
     permission: "conductors.view",
+  },
+  "visit-restrictions": {
+    label: "Domicilios sin visitas",
+    section: "CONFIGURACIÓN / MAESTROS",
+    permission: "visits.view",
   },
   audit: {
     label: "Auditoría",
@@ -128,7 +135,7 @@ export default function AppSidebar({
         <span>{viewInfo[id].label}</span>
       </button>
     );
-  const config = ["conductors", "settings"] as AppView[],
+  const config = ["conductors", "visit-restrictions", "settings"] as AppView[],
     territory = ["territories", "import", "export"] as AppView[],
     security = ["access-profiles", "users", "audit"] as AppView[];
   return (
@@ -171,6 +178,7 @@ export default function AppSidebar({
                 </summary>
                 <div>
                   {item("conductors", UsersRound)}
+                  {item("visit-restrictions", House)}
                   {item("settings", Settings)}
                 </div>
               </details>

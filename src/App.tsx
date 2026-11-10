@@ -39,6 +39,11 @@ import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
 import ImportPanel from "./components/ImportPanel";
 import ConductorsPanel from "./components/ConductorsPanel";
+import VisitRestrictionsPanel, {
+  TerritoryVisitNotice,
+} from "./components/VisitRestrictionsPanel";
+import { visitSummary } from "./lib/visitRestrictions";
+import { useLimaToday } from "./lib/useLimaToday";
 import ConductorSelect from "./components/ConductorSelect";
 import { requireAssignableConductor } from "./lib/conductors";
 import { AuditPanel, SettingsPanel } from "./components/AdminPanels";
@@ -57,6 +62,8 @@ import type {
   Profile,
   Snapshot,
   Territory,
+  VisitRestriction,
+  VisitRestrictionSummary,
 } from "./lib/types";
 type View = AppView;
 type Action = {
@@ -95,7 +102,21 @@ export default function App() {
     [territorySize, setTerritorySize] = useState(20);
   const epoch = useRef(0);
   const accessSignature = useRef("");
-  const today = todayLima();
+  const today = useLimaToday();
+  const [visitFilter, setVisitFilter] = useState({
+    territory: "",
+    eligible: false,
+    key: 0,
+  });
+  const visitRows = snapshot.visit_restrictions ?? [];
+  const canViewVisits = can(profile, "visits.view");
+  const visitCounts = canViewVisits
+    ? visitSummary(visitRows, today)
+    : (snapshot.visit_restriction_summary ?? []);
+  const eligibleVisits = visitCounts.reduce(
+    (sum, row) => sum + row.eligible_count,
+    0,
+  );
   const [year, setYear] = useState(
     +today.slice(0, 4) - (+today.slice(5, 7) < 9 ? 1 : 0),
   );
@@ -186,6 +207,11 @@ export default function App() {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "conductors" },
+        () => void refresh(),
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "visit_restrictions" },
         () => void refresh(),
       )
       .on(
@@ -299,6 +325,12 @@ export default function App() {
   function navigate(v: View) {
     if (!viewAllowed(profile, v)) return;
     setTerritoryPage(1);
+    if (v === "visit-restrictions")
+      setVisitFilter((current) => ({
+        territory: "",
+        eligible: false,
+        key: current.key + 1,
+      }));
     setView(v);
     setMenu(false);
     setDetail(null);
@@ -306,6 +338,15 @@ export default function App() {
     setFilter("all");
     setNotice("");
     window.scrollTo({ top: 0 });
+  }
+  function openVisits(territory = "", eligible = false) {
+    if (!canViewVisits) return;
+    navigate("visit-restrictions");
+    setVisitFilter((current) => ({
+      territory,
+      eligible,
+      key: current.key + 1,
+    }));
   }
   async function saveAction(values: {
     name: string;
@@ -658,6 +699,29 @@ export default function App() {
               </button>
             </div>
           )}
+          {!selected && view === "overview" && eligibleVisits > 0 && (
+            <div className="visit-alert" role="status">
+              <Clock3 size={20} />
+              <div>
+                <strong>
+                  {eligibleVisits}{" "}
+                  {eligibleVisits === 1
+                    ? "domicilio cumplió"
+                    : "domicilios cumplieron"}{" "}
+                  el año sin visitas.
+                </strong>
+                <p>Revisa la fecha desde la que puede visitarse cada casa.</p>
+              </div>
+              {canViewVisits && (
+                <button
+                  className="text-button"
+                  onClick={() => openVisits("", true)}
+                >
+                  Revisar avisos
+                </button>
+              )}
+            </div>
+          )}
           {selected ? (
             <>
               <button
@@ -780,52 +844,69 @@ export default function App() {
                     </ol>
                   )}
                 </section>
-                <section className="panel observations">
-                  <div className="panel-heading">
-                    <h2>
-                      <MessageSquare size={18} />
-                      Observaciones
-                    </h2>
-                    {can(profile, "territories.observe") && (
-                      <button
-                        className="icon"
-                        aria-label="Agregar observación"
-                        onClick={() =>
-                          openAction({ kind: "observe", territory: selected })
-                        }
-                      >
-                        <Plus size={18} />
-                      </button>
+                <aside className="territory-side">
+                  <section className="panel observations">
+                    <div className="panel-heading">
+                      <h2>
+                        <MessageSquare size={18} />
+                        Observaciones
+                      </h2>
+                      {can(profile, "territories.observe") && (
+                        <button
+                          className="icon"
+                          aria-label="Agregar observación"
+                          onClick={() =>
+                            openAction({ kind: "observe", territory: selected })
+                          }
+                        >
+                          <Plus size={18} />
+                        </button>
+                      )}
+                    </div>
+                    {observations.length ? (
+                      observations.map((o) => (
+                        <article key={o.id}>
+                          <p>{o.body}</p>
+                          <small>
+                            {new Date(o.created_at).toLocaleDateString(
+                              "es-PE",
+                              {
+                                timeZone: "America/Lima",
+                              },
+                            )}
+                          </small>
+                        </article>
+                      ))
+                    ) : (
+                      <p className="muted">Sin observaciones registradas.</p>
                     )}
-                  </div>
-                  {observations.length ? (
-                    observations.map((o) => (
-                      <article key={o.id}>
-                        <p>{o.body}</p>
-                        <small>
-                          {new Date(o.created_at).toLocaleDateString("es-PE", {
-                            timeZone: "America/Lima",
-                          })}
-                        </small>
-                      </article>
-                    ))
-                  ) : (
-                    <p className="muted">Sin observaciones registradas.</p>
-                  )}
-                  {can(profile, "territories.edit") && (
-                    <details className="territory-admin">
-                      <summary>Administrar territorio</summary>
-                      <p className="small muted">
-                        El número se conserva y no puede reutilizarse.
-                      </p>
-                      <TerritorySettings
-                        territory={selected}
-                        demo={demo}
-                        onDone={refresh}
-                      />
-                    </details>
-                  )}
-                </section>
+                    {can(profile, "territories.edit") && (
+                      <details className="territory-admin">
+                        <summary>Administrar territorio</summary>
+                        <p className="small muted">
+                          El número se conserva y no puede reutilizarse.
+                        </p>
+                        <TerritorySettings
+                          territory={selected}
+                          demo={demo}
+                          onDone={refresh}
+                        />
+                      </details>
+                    )}
+                  </section>
+                  <TerritoryVisitNotice
+                    rows={visitRows}
+                    summary={visitCounts.find(
+                      (r) => r.territory_id === selected.id,
+                    )}
+                    territoryId={selected.id}
+                    today={today}
+                    canView={canViewVisits}
+                    onManage={
+                      canViewVisits ? () => openVisits(selected.id) : undefined
+                    }
+                  />
+                </aside>
               </div>
             </>
           ) : (
@@ -1108,6 +1189,32 @@ export default function App() {
                   }
                 />
               )}
+              {view === "visit-restrictions" && canViewVisits && (
+                <VisitRestrictionsPanel
+                  key={visitFilter.key}
+                  rows={visitRows}
+                  territories={
+                    snapshot.visit_territories ?? snapshot.territories
+                  }
+                  profile={profile}
+                  today={today}
+                  demo={demo}
+                  onChanged={refresh}
+                  initialTerritory={visitFilter.territory}
+                  onlyEligible={visitFilter.eligible}
+                  onTerritory={(id) => {
+                    navigate("territories");
+                    setDetail(id);
+                  }}
+                  onDemoChange={(visit_restrictions) =>
+                    setSnapshot((current) => ({
+                      ...current,
+                      visit_restrictions,
+                      revision: new Date().toISOString(),
+                    }))
+                  }
+                />
+              )}
               {view === "settings" && isAdmin && (
                 <SettingsPanel
                   demo={demo}
@@ -1175,6 +1282,10 @@ export default function App() {
           canCorrect={can(profile, "territories.correct")}
           canVoid={can(profile, "territories.void")}
           conductors={snapshot.conductors ?? []}
+          visitRows={visitRows}
+          visitCounts={visitCounts}
+          canViewVisits={canViewVisits}
+          today={today}
           names={[
             ...new Set(
               snapshot.assignments.map((a) => a.assigned_name_snapshot),
@@ -1243,7 +1354,15 @@ function ActionModal({
   onSave,
   names,
   conductors,
+  visitRows,
+  visitCounts,
+  canViewVisits,
+  today,
 }: {
+  visitRows: VisitRestriction[];
+  visitCounts: VisitRestrictionSummary[];
+  canViewVisits: boolean;
+  today: string;
   canCorrect: boolean;
   canVoid: boolean;
   action: Action;
@@ -1405,6 +1524,18 @@ function ActionModal({
               </>
             )}
           </>
+        )}
+        {action.kind === "assign" && (
+          <TerritoryVisitNotice
+            compact
+            rows={visitRows}
+            summary={visitCounts.find(
+              (r) => r.territory_id === action.territory.id,
+            )}
+            territoryId={action.territory.id}
+            today={today}
+            canView={canViewVisits}
+          />
         )}
         {message && (
           <p className="error" role="alert">

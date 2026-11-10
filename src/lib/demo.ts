@@ -1,5 +1,6 @@
 import { todayLima } from "./dates";
-import type { Snapshot, Profile } from "./types";
+import type { Snapshot, Profile, VisitRestriction } from "./types";
+import { eligibleVisitDate } from "./visitRestrictions";
 export const demoProfile: Profile = {
   id: "demo",
   display_name: "Sesión de ejemplo",
@@ -45,7 +46,47 @@ export function demoSnapshot(): Snapshot {
     deleted_at: null,
     version: 1,
   }));
+  const visit_restrictions: VisitRestriction[] = [
+    {
+      number: 1,
+      reported: days(30),
+      address: "Domicilio de ejemplo A",
+      active: true,
+    },
+    {
+      number: 1,
+      reported: days(400),
+      address: "Domicilio de ejemplo B",
+      active: true,
+    },
+    {
+      number: 51,
+      reported: days(10),
+      address: "Domicilio de ejemplo C",
+      active: true,
+    },
+    {
+      number: 54,
+      reported: days(500),
+      address: "Domicilio de ejemplo D",
+      active: false,
+    },
+  ].map((row, i) => ({
+    id: `demo-visit-${i + 1}`,
+    code: i + 1,
+    territory_id: `demo-t${row.number}`,
+    address_reference: row.address,
+    reported_on: row.reported,
+    eligible_on: eligibleVisitDate(row.reported),
+    active: row.active,
+    deleted_at: null,
+    version: 1,
+    created_at: `${row.reported}T12:00:00Z`,
+    updated_at: `${row.reported}T12:00:00Z`,
+  }));
   return {
+    visit_restrictions,
+    visit_territories: territories,
     conductors,
     territories,
     assignments,
