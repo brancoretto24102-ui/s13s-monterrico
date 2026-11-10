@@ -1,8 +1,10 @@
 # Evidencia de esta entrega
 
-Validaciones realizadas localmente el 09/11/2026 con los insumos privados indicados en la especificación. No se han ejecutado acciones en GitHub, desplegado servicios ni creado usuarios reales.
+Validación local inicial realizada el 09/11/2026. La puesta en marcha se completó el 10/11/2026 con GitHub Pages, Supabase, la primera cuenta administrativa y el historial real.
 
-**Actualización de puesta en marcha:** ya se configuró el proyecto Supabase del propietario y se desplegó `invite-user`. Se verificó por HTTP el rechazo anónimo, se corrigieron los avisos de la revisión de seguridad de la base y se amplió la prueba de PostgreSQL a 43 comprobaciones. No se han creado usuarios reales ni importado datos de producción; GitHub Pages sigue pendiente. El párrafo anterior describe la primera entrega local. Ver [estado actual](ESTADO_DESPLIEGUE.md).
+**Validación en producción:** 820 registros importados en un único lote y comparados campo por campo, sin diferencias. La segunda carga no generó duplicados. Los cuatro resultados históricos coinciden en la base alojada. Se comprobaron RLS y permisos de lector, editor, exportación explícita, perfil inactivo y anónimo mediante cambios temporales revertidos.
+
+Se inició sesión por contraseña en el sitio publicado. Se generó y descargó el PDF hasta el 10/11/2026: 250 asignaciones, 101 filas, seis páginas y 931 campos correctos. Coinciden las palabras con la referencia aprobada, actualizando explícitamente solo la fecha de actualidad del encabezado; no hay píxeles cambiados fuera de las zonas previstas. Se descargó el respaldo JSON desde la web y se conciliaron nuevamente sus 820 registros. Ver [resultado agregado](production-qa-2026-11-10.json) y [estado actual](ESTADO_DESPLIEGUE.md).
 
 ## Reglas y PostgreSQL
 
@@ -38,18 +40,17 @@ Los insumos, el PDF generado y sus comprobaciones detalladas contienen datos per
 
 Probados en navegador de escritorio: acceso a la sesión ficticia, tablero, apertura de historial, asignación, cierre el mismo día, rechazo de nueva asignación el mismo día, búsqueda por nombre, selector hasta actualidad, validación de la plantilla cargada y generación de PDF con vista previa y enlace de descarga.
 
-La interfaz implementa diseño adaptable, menú móvil, formularios de ancho flexible y tablas con desplazamiento propio. La prueba visual en teléfono real queda pendiente de la publicación; no se afirma que se haya realizado. El visor e impresión de PDFs deben probarse en los equipos de los usuarios.
+La interfaz implementa diseño adaptable, menú móvil, formularios de ancho flexible y tablas con desplazamiento propio. Se revisaron el menú y el formulario a 449 píxeles CSS de ancho en el navegador, sin desbordamiento horizontal general. No se probó un teléfono físico. El visor e impresión de PDFs deben comprobarse también en los equipos de los usuarios.
 
 ## Compilación y dependencias
 
 Compilación TypeScript/Vite y pruebas unitarias completadas. Las dependencias de producción no presentaron vulnerabilidades conocidas en `npm audit --omit=dev` durante esta entrega. Las versiones resueltas están fijadas; el resultado del análisis depende de la base de avisos disponible en la fecha de ejecución.
 
-## Pendiente antes de aceptación final
+## Comprobaciones con futuras incorporaciones
 
-- Autorización y acceso al repositorio específico.
-- Proyecto Supabase del propietario, configuración Auth y correo, Edge Function y primera cuenta administrativa.
-- Prueba real de inicio/recuperación/invitaciones, RLS de API, Storage y actualización entre dos navegadores contra Supabase.
-- Migración de producción aprobada y verificación de respaldo/recuperación.
-- Publicación en GitHub Pages, URL comprobada y revisión en teléfono real.
+- Configurar SMTP para invitaciones y recuperación de destinatarios generales, o crear las cuentas de forma controlada desde el panel del propietario. No hay cuentas adicionales autorizadas.
+- Comprobar correo de recuperación y el flujo de invitación con cada nuevo usuario.
+- Verificar actualización visual entre dos sesiones reales editando simultáneamente. El bloqueo de la base ya se comprobó con dos conexiones independientes.
+- Revisar teléfonos físicos y ejecutar un simulacro de restauración en un entorno separado.
 
-El código y el paquete son una implementación funcional preparada para conectarse; la aplicación todavía no está activada para usuarios reales. La URL local de revisión no es una dirección pública de producción.
+La aplicación publicada ya permite al administrador autorizado consultar y gestionar los registros reales y generar sus formularios. Estas comprobaciones adicionales no deben confundirse con pruebas que ya se hayan realizado.

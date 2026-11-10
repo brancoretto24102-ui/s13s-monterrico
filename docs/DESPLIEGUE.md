@@ -1,10 +1,10 @@
 # Publicación bajo control del propietario
 
-**Instalación actual:** las tres migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La primera cuenta y la carga del historial siguen pendientes; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
+**Instalación actual:** las tres migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La cuenta administrativa y las 820 asignaciones históricas ya están activas; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
 
 ## Control de cambios
 
-La configuración de Supabase, el repositorio y la publicación se realizaron con la autorización del propietario. Para completar esta instalación falta autorizar expresamente el destinatario y los permisos de la primera cuenta administrativa. No dar acceso a otras personas sin indicación del propietario.
+La configuración de Supabase, el repositorio y la publicación se realizaron con la autorización del propietario. La primera cuenta administrativa se invitó y activó después de la autorización expresa de su destinatario y permisos. No dar acceso a otras personas sin indicación del propietario.
 
 En instalaciones nuevas, elegir un proyecto limpio y un repositorio concreto antes de aplicar migraciones o publicar. Los datos históricos deben ir al proyecto privado seleccionado, nunca a GitHub.
 

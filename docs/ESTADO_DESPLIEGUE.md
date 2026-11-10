@@ -1,44 +1,50 @@
-# Puesta en marcha — 09/11/2026
+# Puesta en marcha — 10/11/2026
 
-Sitio publicado: **https://brancoretto24102-ui.github.io/s13s-monterrico/**
+Sitio operativo: **https://brancoretto24102-ui.github.io/s13s-monterrico/**
 
 Repositorio: https://github.com/brancoretto24102-ui/s13s-monterrico
 
-La URL y la pantalla de acceso se comprobaron en el alojamiento real. La activación operativa todavía requiere la primera cuenta administrativa y la importación del historial.
+La cuenta administrativa autorizada está activa. Se comprobó el inicio de sesión por contraseña desde la web, la consulta de los registros reales, la generación del PDF y la descarga del respaldo.
 
-## Publicación realizada
+## Publicación y privacidad
 
-- Código publicado sin el Excel, nombres del historial, PDFs originales ni credenciales privadas.
-- Validación de GitHub Actions completada correctamente: ejecución `42757456725`.
-- Publicación manual de Pages completada correctamente: ejecución `42757845679`.
-- Versión de aplicación publicada: commit `9ffbbc77439006ac286a02913492d111b601524d`.
-- Pantalla de acceso conectada al proyecto Supabase real. La vista ficticia es opcional y está identificada.
+- Código publicado sin Excel, nombres del historial, PDFs originales ni credenciales privadas.
+- Validación inicial de GitHub Actions: `42757456725`. Validación de la actualización documental: `42759415552`, también correcta.
+- Publicación manual de Pages: `42757845679`. Versión de aplicación publicada: `9ffbbc77439006ac286a02913492d111b601524d`.
+- Pantalla de acceso y tablero autenticado comprobados en la dirección real.
+- Proyecto Supabase `lexohsdrmgunjacocxtx`, en organización Free. No se contrató una suscripción ni se creó otro proyecto.
 
-## Supabase configurado
+## Datos y acceso
 
-- Proyecto `lexohsdrmgunjacocxtx`, inicialmente vacío, en una organización Free. No se contrató una suscripción ni se creó un proyecto adicional.
-- Tres migraciones aplicadas. 82 territorios preparados; el historial de producción sigue vacío hasta activar al administrador.
-- RLS en todas las tablas. Sin escritura directa de asignaciones desde el cliente. Funciones privilegiadas en el esquema privado, con comprobación de permisos.
-- Plantilla oficial guardada como `template/S-13_S.pdf` en el bucket `s13s-private`, de acceso público desactivado. Coinciden el hash admitido y los 44 165 bytes del original.
-- Edge Function `invite-user` desplegada con verificación JWT y comprobación de administrador activo. No se han enviado invitaciones.
-- URL de Auth y única redirección permitida configuradas con la dirección exacta de Pages.
-- Autorregistro y acceso anónimo desactivados. Confirmación de correo activada; contraseña mínima de 12 caracteres y cambio seguro de contraseña configurados.
-- Revisión de seguridad de la base sin avisos. Las observaciones de rendimiento restantes son índices todavía sin uso.
-- Las pruebas HTTP de asignaciones, snapshot e invitación rechazan solicitudes sin autenticar.
+- Tres migraciones aplicadas, 82 territorios y 820 asignaciones históricas.
+- Un único lote de importación. Una segunda carga no añadió registros.
+- Cero diferencias en territorio, responsable, asignación, cierre, celda de origen y orden, comparando todos los registros con el Excel validado.
+- Ajuste aprobado de T64 conservado: asignación y cierre el 29/08/2026, con exactamente una entrada de auditoría de migración.
+- Primera cuenta invitada y activada tras la autorización expresa del propietario. Invitación aceptada e inicio de sesión por contraseña comprobado; no hay credenciales predeterminadas.
+- Activación inicial e importación ejecutadas mediante la conexión administrativa autorizada. La importación utilizó el RPC con la identidad de la primera cuenta y guardó esa procedencia en el informe del lote.
+- RLS en todas las tablas, sin escritura directa de asignaciones desde el cliente. Implementaciones privilegiadas en el esquema privado con comprobación de rol activo.
+- URL de Auth y redirección exacta de Pages configuradas. Autorregistro y acceso anónimo desactivados; confirmación de correo y cambio seguro de contraseña activados; longitud mínima de 12 caracteres.
+- Plantilla original guardada como `template/S-13_S.pdf` en `s13s-private`, con acceso público desactivado. La descarga privada funcionó durante la generación desde la web.
+- Edge Function `invite-user` desplegada con verificación JWT y comprobación de administrador activo. No se dio acceso a otras personas.
 
-## Verificación terminada
+## Verificaciones realizadas
 
-- 15 pruebas unitarias y 43 comprobaciones en PostgreSQL, incluida una asignación concurrente desde dos conexiones.
-- Excel privado conciliado: 820 registros y un ajuste documentado de T64.
-- Cuatro casos de referencia: 739/217/11, 580/179/9, 81/82/5 y 250/101/6 (asignaciones/filas/páginas).
-- PDF comparado con la referencia aprobada: 931 campos, texto coincidente y ningún cambio de píxeles fuera de las zonas previstas. Tamaño mínimo observado de texto: 8,1 puntos.
+- 15 pruebas unitarias y 43 comprobaciones PostgreSQL, incluida concurrencia real entre dos conexiones.
+- En la base alojada: lector sin exportación, editor, lector con exportación, perfil inactivo y anónimo respetan sus permisos. Las modificaciones temporales de esas comprobaciones se revirtieron en la misma transacción; el administrador y el historial quedaron intactos.
+- Los cuatro resultados de referencia coinciden también en producción: 739/217/11, 580/179/9, 81/82/5 y 250/101/6 (asignaciones/filas/páginas).
+- Desde la web autenticada: informe 01/06/2026–10/11/2026 con 250 asignaciones, 101 filas y seis páginas.
+- Los 931 campos de ese PDF coinciden con los datos esperados. Las palabras coinciden con la referencia aprobada actualizando explícitamente solo la fecha del encabezado del 09 al 10/11/2026. Ningún píxel cambió fuera de las zonas de relleno y encabezado. Fuente mínima: 8,1 puntos.
+- Respaldo JSON descargado desde Configuración: 82 territorios, 820 asignaciones, un lote y la auditoría de T64; comparación completa con el historial validado sin diferencias.
+- Menú y formulario revisados a 449 píxeles CSS de ancho, sin desbordamiento horizontal general. No se realizó una prueba en un teléfono físico.
 
-## Activación pendiente
+Ver [evidencia de validación](VALIDACION.md) y [resultado agregado de la comprobación web](production-qa-2026-11-10.json).
 
-1. Autorizar expresamente el destinatario de la primera invitación y sus permisos de administrador. La revisión automática detuvo el envío; no existe una cuenta predeterminada.
-2. El propietario establece su propia contraseña. Activar exclusivamente su perfil con auditoría.
-3. Importar las 820 asignaciones con el procedimiento transaccional de la aplicación y comprobar la deduplicación.
-4. Probar en producción inicio de sesión, exportación privada, recuperación, roles y colaboración entre dos sesiones; verificar también un teléfono real.
-5. Configurar SMTP para invitar a destinatarios generales. El correo incorporado de Supabase tiene restricciones de destinatarios y frecuencia.
+## Límites y siguientes incorporaciones
 
-No se declara completada la activación mientras falten esas comprobaciones. Los insumos y resultados privados permanecen fuera de GitHub.
+- Las invitaciones y recuperación por correo para destinatarios generales necesitan SMTP propio por las restricciones del correo incorporado de Supabase. No se contrató un proveedor ni se enviaron invitaciones a terceros. El acceso por contraseña también permite cuentas creadas de forma controlada desde el panel del propietario, sin correo automático.
+- Antes de incorporar personas, el administrador debe determinar sus identidades, roles y permiso de exportación. No compartir la cuenta inicial.
+- El asesor de Auth informa que la comprobación de contraseñas filtradas no está habilitada; el panel ofrece ese control en Pro. Se conservó el plan gratuito y la política mínima de 12 caracteres. Los controles de RLS, privilegios y Storage se verificaron sin fallos. [Referencia del control](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection).
+- Recuperación por correo, dos sesiones reales editando simultáneamente y funcionamiento en teléfonos físicos quedan para la comprobación con los usuarios que se incorporen. El bloqueo concurrente ya se verificó con conexiones PostgreSQL independientes.
+- El respaldo descargable incluye datos y auditoría; Auth y la plantilla se conservan por separado. No se ejecutó una restauración sobre producción.
+
+La operación básica está habilitada. Los insumos y resultados privados permanecen fuera de GitHub.

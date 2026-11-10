@@ -2,7 +2,7 @@
 
 Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, completar y corregir territorios, importar el historial de Excel y generar el formulario oficial S-13-S. La aplicación operativa requiere un proyecto Supabase configurado. Sin configuración ofrece una sesión temporal con datos ficticios claramente identificados.
 
-**Sitio publicado:** [Abrir Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/). GitHub Actions validó y publicó la aplicación correctamente. Supabase está configurado en el plan Free, con 82 territorios, RLS y la plantilla oficial en almacenamiento privado. La activación de la primera cuenta y la carga del historial de producción siguen pendientes. Ver [estado de puesta en marcha](docs/ESTADO_DESPLIEGUE.md). La vista ficticia no sustituye a los registros reales.
+**Sitio publicado:** [Abrir Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/). GitHub Actions validó y publicó la aplicación correctamente. Supabase está configurado en el plan Free, con 82 territorios, RLS y la plantilla oficial en almacenamiento privado. La cuenta administrativa ya está activa y se importaron las 820 asignaciones históricas. Se comprobaron el acceso autenticado, el PDF y el respaldo desde el sitio real. Ver [estado de puesta en marcha](docs/ESTADO_DESPLIEGUE.md). La vista ficticia no sustituye a los registros reales.
 
 ## Funciones implementadas
 

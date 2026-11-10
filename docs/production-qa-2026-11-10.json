@@ -1,0 +1,45 @@
+{
+  "status": "PASS",
+  "date": "2026-11-10",
+  "territories": 82,
+  "importedAssignments": 820,
+  "importBatches": 1,
+  "fieldDifferences": 0,
+  "duplicateAssignmentsCreatedOnRetry": 0,
+  "auditedMigrationAdjustments": 1,
+  "hostedPermissionChecks": [
+    "lector_sin_exportacion",
+    "editor",
+    "lector_con_exportacion",
+    "inactivo",
+    "anonimo"
+  ],
+  "web": {
+    "passwordSignIn": true,
+    "privateTemplateDownload": true,
+    "pdf": {
+      "periodStart": "2026-06-01",
+      "periodEnd": "2026-11-10",
+      "assignments": 250,
+      "rows": 101,
+      "pages": 6,
+      "textFields": 931,
+      "minimumFontSize": 8.1,
+      "changedPixelsOutsideFields": 0,
+      "approvedComparison": "Mismas palabras tras actualizar exclusivamente la fecha de actualidad del encabezado al 10/11/2026"
+    },
+    "backup": {
+      "territories": 82,
+      "assignments": 820,
+      "fieldDifferences": 0
+    },
+    "responsiveCssWidth": 449,
+    "horizontalDocumentOverflow": false
+  },
+  "limits": {
+    "physicalPhoneTested": false,
+    "twoSignedInBrowsersEditingProductionTested": false,
+    "productionRestoreExecuted": false,
+    "generalRecipientSmtpConfigured": false
+  }
+}
