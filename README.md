@@ -2,7 +2,7 @@
 
 Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, completar y corregir territorios, importar el historial de Excel y generar el formulario oficial S-13-S. La aplicación operativa requiere un proyecto Supabase configurado. Sin configuración ofrece una sesión temporal con datos ficticios claramente identificados.
 
-**Estado actual:** Supabase conectado y configurado en el plan Free, con 82 territorios, tres migraciones aplicadas, almacenamiento privado y función de invitación desplegada. La API rechaza llamadas anónimas y la revisión de seguridad de la base no presenta avisos. Siguen pendientes el acceso web a GitHub, la primera cuenta de la aplicación, la importación de producción, la plantilla y la publicación. Ver [estado de puesta en marcha](docs/ESTADO_DESPLIEGUE.md). La vista ficticia no sustituye a los registros reales.
+**Sitio publicado:** [Abrir Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/). GitHub Actions validó y publicó la aplicación correctamente. Supabase está configurado en el plan Free, con 82 territorios, RLS y la plantilla oficial en almacenamiento privado. La activación de la primera cuenta y la carga del historial de producción siguen pendientes. Ver [estado de puesta en marcha](docs/ESTADO_DESPLIEGUE.md). La vista ficticia no sustituye a los registros reales.
 
 ## Funciones implementadas
 
@@ -76,4 +76,4 @@ El código puede publicarse sin nombres, Excel, resultados PDF, plantilla ni cre
 
 GitHub Pages y Supabase permiten comenzar con costo mensual de S/ 0 dentro de sus cuotas gratuitas. No se ha contratado ningún servicio. Los límites, la pausa por inactividad y las restricciones de envío de correo se explican en la guía de despliegue. El historial no tiene un límite artificial por territorio, pero la capacidad total está sujeta al proveedor.
 
-No se incluye licencia de redistribución de los insumos originales. El propietario debe decidir la licencia del código antes de abrir un repositorio público.
+Los insumos originales no se redistribuyen. La licencia del código queda a elección del propietario.

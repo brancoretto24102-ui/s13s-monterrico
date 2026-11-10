@@ -1,13 +1,12 @@
 # Publicación bajo control del propietario
 
-**Proyecto conectado:** las tres migraciones siguientes ya se aplicaron en Supabase. No reejecutarlas en ese proyecto. La primera cuenta, la carga del historial y GitHub Pages siguen pendientes; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
+**Instalación actual:** las tres migraciones siguientes ya se aplicaron en Supabase y GitHub Pages ya está publicado en https://brancoretto24102-ui.github.io/s13s-monterrico/. No reejecutar las migraciones en ese proyecto. La primera cuenta y la carga del historial siguen pendientes; consultar [el estado actual](ESTADO_DESPLIEGUE.md). Las instrucciones siguientes también sirven para una instalación nueva.
 
-## Autorizaciones pendientes
+## Control de cambios
 
-1. Seleccionar el repositorio GitHub concreto y autorizar subir este código. La integración disponible no devolvió repositorios accesibles durante la preparación.
-2. Conectar Supabase y elegir un proyecto nuevo o uno expresamente autorizado. No reutilizar una base que ya aloje otros sistemas sin revisar nombres, políticas y migraciones.
-3. Autorizar aplicar las migraciones, configurar autenticación, guardar la plantilla privada y migrar las 820 asignaciones. Los datos irán al proyecto privado seleccionado, nunca a GitHub.
-4. Revisar el código/configuración y autorizar la ejecución del workflow manual de GitHub Pages. Verificar después la URL real y el acceso de cada rol.
+La configuración de Supabase, el repositorio y la publicación se realizaron con la autorización del propietario. Para completar esta instalación falta autorizar expresamente el destinatario y los permisos de la primera cuenta administrativa. No dar acceso a otras personas sin indicación del propietario.
+
+En instalaciones nuevas, elegir un proyecto limpio y un repositorio concreto antes de aplicar migraciones o publicar. Los datos históricos deben ir al proyecto privado seleccionado, nunca a GitHub.
 
 No enviar contraseñas, access tokens de administración, cadenas de conexión ni service-role keys en el chat ni en el repositorio. Utilizar la conexión del proveedor o su panel para la configuración privada.
 
@@ -77,14 +76,14 @@ Subir únicamente el directorio del proyecto, sin `node_modules`, `dist`, `.env`
 
 Para GitHub Free, Pages requiere normalmente un repositorio público. Eso hace público el código, no la base. Si el propietario no desea abrir el código, elegir un plan que admita Pages desde repositorios privados o acordar otro alojamiento; no cambiar de proveedor sin aprobación.
 
-En Settings → Secrets and variables → Actions → Variables, configurar solo:
+La instalación actual carga endpoint y clave publicable desde `config/public.json`. El workflow valida esa configuración antes de construir. Para otra instalación, editar ese archivo con datos públicos; las variables de entorno pueden sobrescribirlos. Usar únicamente:
 
 - `VITE_SUPABASE_URL`
 - `VITE_SUPABASE_PUBLISHABLE_KEY` (`sb_publishable_…` o anon heredada, nunca service role)
 
 Seleccionar GitHub Actions como fuente de Pages. Para un repositorio de proyecto, el workflow fija la base como `/REPOSITORIO/`. Si se usa un repositorio `PROPIETARIO.github.io`, adaptar `VITE_BASE_PATH` a `/` antes de construir.
 
-Ejecutar primero Validación y revisar sus resultados. Luego, con autorización, ejecutar manualmente Publicar en GitHub Pages. El workflow no se dispara automáticamente con un push. La ausencia de variables debe corregirse antes de publicar: sin ellas la web solo permite la vista ficticia.
+Ejecutar primero Validación y revisar sus resultados. Luego, con autorización, ejecutar manualmente Publicar en GitHub Pages. El workflow no se dispara automáticamente con un push. La ausencia de configuración debe corregirse antes de publicar: sin ella la web solo permite la vista ficticia.
 
 ## Verificación obligatoria en el alojamiento real
 
