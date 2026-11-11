@@ -1,16 +1,16 @@
 # Cronograma semanal de predicación
 
-Abrir **Predicación → Procesos → Cronograma semanal**. Se prepara una sola semana para conductores; la vista y el PDF de **Publicadores** se generan automáticamente con las mismas salidas, sin la columna Territorio.
+Abrir **Predicación → Procesos → Cronograma semanal**. Se prepara una sola semana para conductores; la vista e imagen de **Publicadores** se generan automáticamente con las mismas salidas, sin la columna Territorio.
 
 ## Preparar una semana
 
-1. Elegir el lunes. La aplicación calcula las fechas hasta el domingo, con cambios de mes y año incluidos.
-2. Marcar los días con predicación. Desmarcar un día lo retira de las dos versiones y los PDF. Se pueden volver a marcar sus salidas antes de guardar; después de guardar, la auditoría conserva la versión anterior.
+1. Elegir el lunes y pulsar **Abrir semana**. Se puede seleccionar libremente otro lunes; cambiar el campo no descarta las ediciones de la semana abierta. Si hay cambios pendientes, permite seguir editando o descartarlos expresamente antes de abrir la otra semana. La aplicación calcula las fechas hasta el domingo, con cambios de mes y año incluidos.
+2. Marcar los días con predicación. Desmarcar un día lo retira de las dos versiones y las imágenes. Se pueden volver a marcar sus salidas antes de guardar; después de guardar, la auditoría conserva la versión anterior.
 3. Agregar las salidas necesarias de cada día, su hora y punto de reunión. Una salida admite varios conductores activos del maestro y varios territorios; también puede quedar sin territorio, por ejemplo para una reunión virtual. Se permiten salidas simultáneas con distintos conductores y territorios.
 4. Revisar los territorios sugeridos arriba. El semáforo usa la última finalización real: rojo desde 12 meses o sin registro, anaranjado desde 8, amarillo desde 4 y verde antes de 4 meses. Es una sugerencia ordenada por prioridad; no obliga a programar esos territorios. Elegir la salida de destino antes de agregar una sugerencia.
-5. Guardar. Cambiar a **Conductores** o **Publicadores** para revisar, y descargar cada PDF. Es necesario guardar los cambios antes de descargar.
+5. Guardar. Cambiar a **Conductores** o **Publicadores** para revisar, y usar **Imagen conductores** o **Imagen publicadores**. Es necesario guardar los cambios antes de descargar.
 
-El formato reproduce las columnas del Excel, agrupa Día y Fecha para las salidas de una misma jornada, utiliza el encabezado verde y alterna jornadas grises y blancas. Los PDF son A4 horizontal; el texto se ajusta y continúa en páginas con encabezados repetidos cuando hace falta. No se imprimen las justificaciones internas.
+El formato reproduce las columnas del Excel, agrupa Día y Fecha para las salidas de una misma jornada, utiliza el encabezado verde y alterna jornadas grises y blancas. La descarga es una tabla compacta en imagen: fechas cortas como «9 Nov», texto centrado, bordes negros y márgenes blancos, siguiendo la referencia aprobada. Se generan PNG y JPG con la misma resolución y JPG de calidad alta, y se descarga el menor; no se reduce el tamaño del texto para ahorrar peso. La imagen tiene 1848 píxeles de ancho. Si una semana muy extensa necesita varias imágenes, conserva todas las salidas y presenta botones para descargar cada parte, con el encabezado repetido. No se imprimen las justificaciones internas.
 
 ## Valores iniciales y continuidad
 
@@ -42,7 +42,7 @@ Programar **no inicia ni cierra automáticamente** una asignación S-13-S. El cr
 | Visualizar                           | Consultar semanas, estructura y catálogo mínimo necesario para planificar.                         |
 | Crear semanas                        | Guardar una semana nueva.                                                                          |
 | Editar salidas y días                | Modificar una semana existente, incluidas sus salidas, conductores, territorios y justificaciones. |
-| Descargar conductores y publicadores | Descargar los dos PDF de una versión guardada.                                                     |
+| Descargar conductores y publicadores | Descargar las dos imágenes de una versión guardada.                                                |
 
 Los accesos de acción incorporan Visualizar. Inicialmente solo el administrador recibe este módulo; Editor, Lector y perfiles existentes mantienen sus permisos. Para delegarlo, crear o editar un perfil y seleccionar sus acciones. El acceso al cronograma no concede acceso a direcciones de domicilios sin visitas ni a nombres históricos de asignaciones. Permite consultar las fechas mínimas necesarias para verificar los plazos.
 
@@ -50,4 +50,4 @@ Cada semana tiene una versión. Dos personas pueden consultarla y trabajar; si u
 
 El servidor vuelve a validar conductores activos, plazos y versión al guardar. Antes de descargar comprueba nuevamente los plazos: si cambió el descanso de un territorio o quedó fuera del trimestre, pide revisar y guardar. Un conductor o territorio no puede aparecer dos veces a la misma fecha y hora. Se admiten hasta 100 salidas por semana, 8 conductores y 64 territorios por salida.
 
-El respaldo JSON incluye semanas, estructura inicial privada, observaciones y auditoría. Los PDF descargados deben conservarse y compartirse únicamente con sus destinatarios autorizados.
+El respaldo JSON incluye semanas, estructura inicial privada, observaciones y auditoría. Las imágenes descargadas deben conservarse y compartirse únicamente con sus destinatarios autorizados.

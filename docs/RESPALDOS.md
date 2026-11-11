@@ -11,7 +11,7 @@ El Excel original permanece intacto y privado como respaldo de origen. La aplica
 
 Los respaldos contienen datos personales y UUID de usuarios. No guardarlos en GitHub Pages, repositorios públicos ni carpetas compartidas sin control. Conservar dos copias privadas, comprobar fechas y revisar periódicamente que puedan leerse. El CSV es útil para consulta, no sustituye el respaldo completo porque no contiene toda la auditoría y configuración.
 
-Desde la versión 0.8.0, el JSON incorpora `preaching_schedules` (semanas con sus versiones y salidas) y `preaching_template` (estructura inicial privada). Las observaciones enlazan las excepciones con su semana y salida. Restaurar también estos UUID y vínculos, y la auditoría de versiones anteriores; no regenerar las semanas desde sus PDF.
+Desde la versión 0.8.0, el JSON incorpora `preaching_schedules` (semanas con sus versiones y salidas) y `preaching_template` (estructura inicial privada). Las observaciones enlazan las excepciones con su semana y salida. Restaurar también estos UUID y vínculos, y la auditoría de versiones anteriores; no reconstruir las semanas desde sus imágenes ni sus PDF anteriores.
 
 ## Recuperación controlada
 

@@ -88,10 +88,16 @@ Los avisos se calculan desde las fechas, sin una tarea de pago. La fecha peruana
 
 ## Cronograma semanal (0.8.0)
 
-Cada lunes identifica una sola semana. Sus salidas se guardan como un documento JSONB acotado y validado por servidor; nombres y números se resuelven desde UUID, sin confiar en campos suministrados por el cliente. Los PDF de conductores y publicadores se derivan del mismo documento; el segundo omite Territorio. La estructura inicial se incorpora como datos privados, no como una migración con personas o puntos de reunión.
+Cada lunes identifica una sola semana. Sus salidas se guardan como un documento JSONB acotado y validado por servidor; nombres y números se resuelven desde UUID, sin confiar en campos suministrados por el cliente. Las vistas de conductores y publicadores se derivan del mismo documento; el segundo omite Territorio. La estructura inicial se incorpora como datos privados, no como una migración con personas o puntos de reunión.
 
 `get_preaching_context`, `save_preaching_schedule` y `export_preaching_schedule` tienen envoltorios públicos invoker y autorización privada. Las tablas tienen RLS y no admiten escritura directa del cliente. El contexto entrega solo el catálogo y las fechas necesarias; no entrega nombres del historial ni domicilios. Los cuatro permisos de cronograma no se conceden automáticamente a los perfiles existentes.
 
 El guardado toma un bloqueo transaccional por semana, comprueba versión y bloquea territorios en orden estable, antes de comprobar las fichas de conductores. Las asignaciones reales usan el mismo bloqueo por territorio. El servidor revisa los plazos según la fecha de cada salida: permite continuación dentro del trimestre, bloquea abiertos después de 3 meses para todos y exige motivo durante los 14 días posteriores al cierre. La excepción del cronograma no otorga permisos de excepción del historial real.
 
 La semana y sus observaciones `schedule_exception` se confirman juntas. Estas observaciones conservan `schedule_id`, `schedule_entry_id`, fechas y motivo; guardados idénticos no duplican notas. La auditoría conserva antes y después de semanas y estructura, incluidas las salidas retiradas. La descarga comprueba la versión y revalida los plazos bajo bloqueo antes de registrar EXPORT. El respaldo agrega ambas tablas en la misma consulta consistente. Consultar [uso y límites del cronograma](CRONOGRAMA_PREDICACION.md).
+
+## Imágenes y selector (0.8.1)
+
+La vista previa y el exportador utilizan `preachingDocument`, un modelo de presentación común. Resuelve filas, fechas cortas, horas y nombres; el estilo solo modifica la presentación, sin reescribir identidades o snapshots. El exportador utiliza Canvas local, sin servicios externos ni nuevas dependencias. Compara los tamaños reales de PNG y JPEG de alta calidad, conserva la extensión correspondiente al MIME recibido y descarga el menor. Los límites por imagen mantienen una resolución legible; las semanas largas se dividen sin omitir filas. Se repiten Día y Fecha cuando un grupo continúa en otra imagen. No se incluyen motivos internos ni identificadores en el texto exportado.
+
+El selector de conductores mide el espacio disponible en el viewport y, cuando existe, en el diálogo contenedor. Admite ambos contextos y reacciona al desplazamiento de sus antecesores. Elegir un lunes cambia solo un campo local; Abrir semana valida y carga explícitamente, conservando la semana abierta mientras la nueva fecha es incompleta o se decide sobre cambios sin guardar.

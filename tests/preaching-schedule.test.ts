@@ -1,11 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { PDFDocument } from "pdf-lib";
 import { addDays } from "../src/lib/assignmentTiming";
 import { can, completePermissions } from "../src/lib/permissions";
-import {
-  generatePreachingPdf,
-  preachingPdfHeaders,
-} from "../src/lib/preachingPdf";
 import {
   mondayOf,
   newPreachingRow,
@@ -286,48 +281,5 @@ describe("Cronograma semanal de predicación", () => {
         "schedules.export",
       ),
     ).toBe(true);
-  });
-  it("deriva ambos documentos de las mismas salidas y omite territorios en publicadores", async () => {
-    expect(preachingPdfHeaders("conductors")).toContain("Territorio");
-    expect(preachingPdfHeaders("publishers")).not.toContain("Territorio");
-    const week = {
-      id: "synthetic",
-      week_start: monday,
-      version: 1,
-      rows: [
-        row(
-          0,
-          [
-            {
-              territory_id: "t1",
-              reason: "Motivo interno que no debe imprimirse",
-            },
-          ],
-          { conductor_names: ["Conductor sintético"], territory_numbers: [1] },
-        ),
-      ],
-    };
-    for (const audience of ["conductors", "publishers"] as const) {
-      const doc = await PDFDocument.load(
-        await generatePreachingPdf(week, audience),
-      );
-      expect(doc.getPageCount()).toBe(1);
-      expect(doc.getPage(0).getSize()).toEqual({ width: 842, height: 595 });
-      expect(doc.getTitle()).toContain(
-        audience === "conductors" ? "conductores" : "publicadores",
-      );
-    }
-  });
-  it("pagina salidas extensas sin truncar el documento", async () => {
-    const rows = Array.from({ length: 50 }, (_, i) =>
-      row(i % 7, [], { conductor_names: [`Conductor sintético ${i + 1}`] }),
-    );
-    const doc = await PDFDocument.load(
-      await generatePreachingPdf(
-        { id: "synthetic", week_start: monday, rows, version: 1 },
-        "conductors",
-      ),
-    );
-    expect(doc.getPageCount()).toBeGreaterThan(1);
   });
 });

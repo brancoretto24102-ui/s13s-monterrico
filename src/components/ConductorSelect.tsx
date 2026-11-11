@@ -59,13 +59,15 @@ export default function ConductorSelect({
   useLayoutEffect(() => {
     if (!expanded) return;
     const measure = () => {
-      const box = root.current!.getBoundingClientRect();
-      const dialog = root.current!.closest("dialog")!.getBoundingClientRect();
+      const element = root.current;
+      if (!element) return;
+      const box = element.getBoundingClientRect();
+      const dialog = element.closest("dialog")?.getBoundingClientRect();
       const viewport = window.visualViewport;
-      const top = Math.max(dialog.top, viewport?.offsetTop ?? 0) + 10;
+      const top = Math.max(dialog?.top ?? 0, viewport?.offsetTop ?? 0) + 10;
       const bottom =
         Math.min(
-          dialog.bottom,
+          dialog?.bottom ?? window.innerHeight,
           (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight),
         ) - 10;
       const below = Math.max(0, bottom - box.bottom - 4);
@@ -77,14 +79,13 @@ export default function ConductorSelect({
       });
     };
     measure();
-    const dialog = root.current!.closest("dialog")!;
     window.addEventListener("resize", measure);
     window.visualViewport?.addEventListener("resize", measure);
-    dialog.addEventListener("scroll", measure);
+    window.addEventListener("scroll", measure, true);
     return () => {
       window.removeEventListener("resize", measure);
       window.visualViewport?.removeEventListener("resize", measure);
-      dialog.removeEventListener("scroll", measure);
+      window.removeEventListener("scroll", measure, true);
     };
   }, [expanded, options.length]);
 

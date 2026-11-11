@@ -37,6 +37,9 @@ import {
 import type { Profile, Snapshot } from "../lib/types";
 import ConductorSelect from "./ConductorSelect";
 import { CoverageDate } from "./TerritoryCoverage";
+import Modal from "./Modal";
+import { preachingDocument } from "../lib/preachingDocument";
+import type { PreachingImage } from "../lib/preachingImage";
 import "./PreachingSchedulePanel.css";
 
 function demoTemplate(
@@ -78,15 +81,29 @@ export function PreachingPreview({
   context: PreachingContext;
   publishers?: boolean;
 }) {
-  const dates = preachingWeekDates(week.week_start),
-    rows = sortedPreachingRows(week.rows);
-  const names = (r: PreachingRow) =>
-    r.conductor_names ??
-    r.conductor_ids.map(
-      (id) =>
-        context.conductors.find((c) => c.id === id)?.display_name ??
-        "Conductor pendiente",
-    );
+  const dates = preachingWeekDates(week.week_start);
+  const doc = preachingDocument(
+    {
+      ...week,
+      rows: week.rows.map((r) => ({
+        ...r,
+        conductor_names:
+          r.conductor_names ??
+          r.conductor_ids.map(
+            (id) =>
+              context.conductors.find((c) => c.id === id)?.display_name ??
+              "Conductor pendiente",
+          ),
+        territory_numbers: r.territories.map(
+          (t) =>
+            context.territories.find((x) => x.id === t.territory_id)
+              ?.territory_number ?? 0,
+        ),
+      })),
+    },
+    publishers ? "publishers" : "conductors",
+  );
+  const rows = doc.rows;
   return (
     <div className="preaching-preview">
       <div className="preaching-document-title">
@@ -98,14 +115,21 @@ export function PreachingPreview({
       </div>
       <div className="table-wrap">
         <table>
+          <colgroup>
+            {doc.widths.map((width, i) => (
+              <col
+                key={i}
+                style={{
+                  width: `${(width / doc.widths.reduce((a, b) => a + b, 0)) * 100}%`,
+                }}
+              />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <th>Día</th>
-              <th>Fecha</th>
-              <th>Hora</th>
-              <th>Punto de Reunión</th>
-              {!publishers && <th>Territorio</th>}
-              <th>Conductor</th>
+              {doc.headers.map((h) => (
+                <th key={h}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
@@ -117,26 +141,16 @@ export function PreachingPreview({
                   {first && (
                     <>
                       <td rowSpan={count} className="preaching-merged">
-                        {preachingDays[r.day]}
+                        {r.values[0]}
                       </td>
                       <td rowSpan={count} className="preaching-merged">
-                        {displayDate(dates[r.day])}
+                        {r.values[1]}
                       </td>
                     </>
                   )}
-                  <td>{scheduleTime(r.time)}</td>
-                  <td>{r.meeting_point}</td>
-                  {!publishers && (
-                    <td>
-                      {r.territories
-                        .map(
-                          (t) =>
-                            `T: ${context.territories.find((x) => x.id === t.territory_id)?.territory_number ?? "?"}`,
-                        )
-                        .join(" / ") || "—"}
-                    </td>
-                  )}
-                  <td>{names(r).join(" / ")}</td>
+                  {r.values.slice(2).map((value, col) => (
+                    <td key={col}>{value}</td>
+                  ))}
                 </tr>
               );
             })}
@@ -264,6 +278,12 @@ export default function PreachingSchedulePanel({
   onSaved: () => Promise<void>;
 }) {
   const [weekStart, setWeekStart] = useState(() => mondayOf(today));
+  const [weekInput, setWeekInput] = useState(() => mondayOf(today)),
+    [pendingWeek, setPendingWeek] = useState<string | null>(null);
+  const [exported, setExported] = useState<{
+    publishers: boolean;
+    images: PreachingImage[];
+  } | null>(null);
   const [context, setContext] = useState<PreachingContext | null>(null),
     [rows, setRows] = useState<PreachingRow[]>([]),
     [saved, setSaved] = useState<PreachingWeek | null>(null);
@@ -283,6 +303,12 @@ export default function PreachingSchedulePanel({
   const writable = saved ? canEdit : canCreate;
   let dates: string[] = [];
   let dateError = "";
+  let weekInputError = "";
+  try {
+    preachingWeekDates(weekInput);
+  } catch (e) {
+    weekInputError = (e as Error).message;
+  }
   try {
     dates = preachingWeekDates(weekStart);
   } catch (e) {
@@ -292,14 +318,14 @@ export default function PreachingSchedulePanel({
     dirtyRef.current = true;
     setDirty(true);
     setMessage("");
+    setExported(null);
   }
   function changeWeek(value: string) {
     if (value === weekStart || busy) return;
-    if (
-      dirty &&
-      !confirm("Hay cambios sin guardar. ¿Cambiar de semana y descartarlos?")
-    )
+    if (dirty) {
+      setPendingWeek(value);
       return;
+    }
     setWeekStart(value);
     setMessage("");
   }
@@ -349,6 +375,7 @@ export default function PreachingSchedulePanel({
   }
   useEffect(() => {
     setLoading(true);
+    setExported(null);
     setContext(null);
     dirtyRef.current = false;
     setDirty(false);
@@ -519,21 +546,38 @@ export default function PreachingSchedulePanel({
             p_id: saved.id,
             p_expected_version: saved.version,
           });
-      const { generatePreachingPdf } = await import("../lib/preachingPdf");
-      const bytes = await generatePreachingPdf(
+      const { generatePreachingImages } = await import("../lib/preachingImage");
+      const images = await generatePreachingImages(
         week,
         publishers ? "publishers" : "conductors",
       );
-      downloadBlob(
-        new Blob([bytes as BlobPart], { type: "application/pdf" }),
-        `Cronograma_${publishers ? "Publicadores" : "Conductores"}_${weekStart}.pdf`,
-      );
+      if (images.length === 1) {
+        downloadImage(images[0], publishers);
+        setMessage(
+          `Imagen de ${publishers ? "publicadores" : "conductores"} descargada (${images[0].extension.toUpperCase()}, ${Math.ceil(images[0].blob.size / 1024)} KB).`,
+        );
+      } else {
+        setExported({ publishers, images });
+        setMessage(
+          `El cronograma ocupa ${images.length} imágenes para conservar todo el texto. Descarga cada parte debajo.`,
+        );
+      }
     } catch (e) {
       setMessage((e as Error).message);
       if (!demo) await load();
     } finally {
       setBusy(false);
     }
+  }
+  function downloadImage(
+    image: PreachingImage,
+    publishers: boolean,
+    part?: number,
+  ) {
+    downloadBlob(
+      image.blob,
+      `Cronograma_${publishers ? "Publicadores" : "Conductores"}_${weekStart}${part ? `_Parte_${part}` : ""}.${image.extension}`,
+    );
   }
   const preview: PreachingWeek = {
     id: saved?.id ?? "draft",
@@ -577,12 +621,33 @@ export default function PreachingSchedulePanel({
           <input
             type="date"
             aria-label="Lunes de la semana"
+            aria-invalid={!!weekInputError}
+            aria-describedby="preaching-week-help"
+            min="1900-01-01"
+            max="9998-12-24"
+            step={7}
             disabled={busy}
-            value={weekStart}
-            onInput={(e) => changeWeek(e.currentTarget.value)}
-            onChange={(e) => changeWeek(e.target.value)}
+            value={weekInput}
+            onInput={(e) => setWeekInput(e.currentTarget.value)}
+            onChange={(e) => setWeekInput(e.target.value)}
           />
+          <span
+            id="preaching-week-help"
+            className={weekInputError ? "error small" : "small muted"}
+          >
+            {weekInputError || "Elige un lunes y pulsa Abrir semana."}
+          </span>
         </label>
+        <button
+          className="secondary"
+          disabled={
+            loading || busy || !!weekInputError || weekInput === weekStart
+          }
+          onClick={() => changeWeek(weekInput)}
+        >
+          <CalendarDays size={15} />
+          Abrir semana
+        </button>
         {dates.length > 0 && (
           <p>
             <CalendarDays size={16} />
@@ -620,6 +685,31 @@ export default function PreachingSchedulePanel({
           )}
         </div>
       </section>
+      {pendingWeek && (
+        <Modal title="Cambiar de semana" onClose={() => setPendingWeek(null)}>
+          <p>
+            Hay cambios sin guardar en la semana actual. ¿Descartarlos y abrir
+            la semana del {displayDate(pendingWeek)}?
+          </p>
+          <div className="button-row">
+            <button className="secondary" onClick={() => setPendingWeek(null)}>
+              Seguir editando
+            </button>
+            <button
+              className="primary"
+              onClick={() => {
+                dirtyRef.current = false;
+                setDirty(false);
+                setWeekStart(pendingWeek);
+                setPendingWeek(null);
+                setMessage("");
+              }}
+            >
+              Descartar y abrir semana
+            </button>
+          </div>
+        </Modal>
+      )}
       {message && (
         <p className="notice preaching-message" role="status">
           {message}
@@ -1085,7 +1175,7 @@ export default function PreachingSchedulePanel({
                       onClick={() => void download(false)}
                     >
                       <Download size={15} />
-                      PDF conductores
+                      Imagen conductores
                     </button>
                     <button
                       className="secondary"
@@ -1093,7 +1183,7 @@ export default function PreachingSchedulePanel({
                       onClick={() => void download(true)}
                     >
                       <Download size={15} />
-                      PDF publicadores
+                      Imagen publicadores
                     </button>
                   </>
                 )}
@@ -1109,6 +1199,31 @@ export default function PreachingSchedulePanel({
                 )}
               </div>
             </div>
+            {canExport && (
+              <p className="small muted">
+                Se descarga el JPG o PNG más ligero, conservando el formato y la
+                legibilidad.
+              </p>
+            )}
+            {exported && !dirty && !conflict && (
+              <section className="panel">
+                <h2>Imágenes del cronograma</h2>
+                <div className="button-row">
+                  {exported.images.map((image, i) => (
+                    <button
+                      key={i}
+                      className="secondary"
+                      onClick={() =>
+                        downloadImage(image, exported.publishers, i + 1)
+                      }
+                    >
+                      Descargar parte {i + 1} · {image.extension.toUpperCase()}{" "}
+                      · {Math.ceil(image.blob.size / 1024)} KB
+                    </button>
+                  ))}
+                </div>
+              </section>
+            )}
           </>
         )
       )}
