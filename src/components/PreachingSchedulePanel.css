@@ -358,7 +358,7 @@
 .preaching-document-title {
   margin-bottom: 20px;
 }
-.preaching-document-title h2 {
+.enterprise-shell .preaching-document-title h2 {
   text-transform: uppercase;
   font-size: 17px;
   color: #17412a;
@@ -370,7 +370,7 @@
 .preaching-preview table {
   min-width: 650px;
 }
-.preaching-preview th {
+.enterprise-shell .preaching-preview th {
   background: #00b050;
   color: #fff;
 }
