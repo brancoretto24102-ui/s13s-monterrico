@@ -43,6 +43,28 @@ async function scan(dir) {
   }
 }
 await scan(".");
+// Las previsualizaciones usan imágenes locales temporales. Comprobar también
+// el HTML compilado evita publicar una política que las deje en blanco.
+for (const path of ["index.html", "dist/index.html"]) {
+  let html;
+  try {
+    html = await readFile(path, "utf8");
+  } catch (error) {
+    if (path.startsWith("dist/") && error.code === "ENOENT") continue;
+    throw error;
+  }
+  const tag = html.match(
+    /<meta\b[^>]*http-equiv="Content-Security-Policy"[^>]*>/i,
+  )?.[0];
+  const policy = tag?.match(/\bcontent="([^"]*)"/i)?.[1];
+  const imageSources = policy
+    ?.split(";")
+    .map((directive) => directive.trim().split(/\s+/))
+    .find(([name]) => name === "img-src")
+    ?.slice(1);
+  if (!imageSources?.includes("blob:"))
+    errors.push(`La política bloquea las imágenes de previsualización: ${path}`);
+}
 if (errors.length) {
   console.error(errors.join("\n"));
   process.exitCode = 1;

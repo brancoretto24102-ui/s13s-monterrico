@@ -104,6 +104,8 @@ El selector de conductores mide el espacio disponible en el viewport y, cuando e
 
 ## Sugerencias y previsualizaciones (0.8.2)
 
+La política CSP permite imágenes temporales `blob:` generadas en el navegador. La revisión previa a publicar lo comprueba en el HTML fuente y compilado. Los scripts y conexiones conservan sus restricciones.
+
 Las sugerencias excluyen el conjunto de UUID de territorios de las salidas de los días marcados. La exclusión se recalcula desde el cronograma completo, sin flags persistentes ni escrituras adicionales. Retirar la última aparición o su día devuelve el territorio a la lista conservando el orden de prioridad.
 
 El modelo común calcula cada ancho con Canvas `measureText`, tomando la línea más ancha entre todos los valores y el encabezado, más el margen de celda. No se utilizan longitudes de cadenas como sustituto de la medida de la fuente. Los límites de lienzo y área por imagen permiten conservar texto extenso mediante ajuste de líneas y división, sin reducir la fuente ni omitir salidas.

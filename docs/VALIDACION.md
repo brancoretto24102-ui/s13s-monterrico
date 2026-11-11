@@ -105,6 +105,8 @@ Las pruebas automatizadas actuales reemplazan las dos del antiguo PDF de cronogr
 
 ## Sugerencias, anchos y descarga elegida (0.8.2)
 
+La revisión del paquete comprueba que la política de imágenes del HTML fuente y compilado admita los enlaces `blob:` de las previsualizaciones. La comprobación final publicada detectó y corrigió su bloqueo en la política anterior; se mantienen las restricciones de scripts y conexiones.
+
 Las cinco pruebas unitarias nuevas cubren la exclusión semanal de territorios, varias apariciones y retorno al retirar la última o desmarcar su día; anchos por medida real de glifos, incluidos textos con menos letras pero más anchos; reducción de espacios cuando se acorta el contenido; encabezados y líneas explícitas; y límites de lienzo sin pérdida de texto. La nueva comprobación PostgreSQL verifica que consultar el contexto para previsualizar no registra EXPORT.
 
 En navegador, con datos ficticios, se añadió y retiró un territorio desde sugerencias y se desmarcó y volvió a marcar su día. Se observó el retorno correcto de la tarjeta. Un punto de reunión largo amplió solo su columna. Se preparó una imagen sin evento de descarga automática, se cerró sin descargar y se preparó la otra versión. Después de pulsar Descargar se obtuvieron ambas imágenes y se comprobaron sus dimensiones variables, colores y contenido. El archivo descargado procede del mismo blob que se muestra en la previsualización.
