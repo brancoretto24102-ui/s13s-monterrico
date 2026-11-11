@@ -19,7 +19,10 @@ export const emptyCoverageOptions: CoverageOptions = {
 
 // Compute from the whole authorized history, before applying any list filters.
 export function latestCompletedDates(
-  assignments: readonly Assignment[],
+  assignments: readonly Pick<
+    Assignment,
+    "territory_id" | "completed_at" | "voided_at"
+  >[],
   today = todayLima(),
 ): Map<string, string> {
   const dates = new Map<string, string>();

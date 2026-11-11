@@ -8,15 +8,18 @@ El listado permite buscar, ordenar, filtrar por estado, cambiar el tamaño de p�
 
 En **Nuevo perfil**, indicar una descripción, seleccionar las acciones en el árbol de accesos y revisar el resumen de la derecha. Los accesos necesarios para visualizar se agregan automáticamente. Guardar requiere un motivo y registra los cambios en auditoría.
 
-| Módulo                   | Acciones configurables                                                                 |
-| ------------------------ | -------------------------------------------------------------------------------------- |
+| Módulo                   | Acciones configurables                                                                                                   |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | Registro de asignaciones | Visualizar, asignar, completar, corregir, anular, observar, crear y editar territorios; excepciones de plazos con motivo |
-| Conductores              | Visualizar, registrar, editar, cambiar estado, eliminar/restaurar y exportar CSV       |
-| Formulario S-13-S        | Visualizar y generar/descargar PDF                                                     |
-| Importación              | Previsualizar e importar                                                               |
-| Auditoría                | Visualizar                                                                             |
+| Conductores              | Visualizar, registrar, editar, cambiar estado, eliminar/restaurar y exportar CSV                                         |
+| Formulario S-13-S        | Visualizar y generar/descargar PDF                                                                                       |
+| Cronograma semanal       | Visualizar, crear semanas, editar salidas y días, descargar conductores y publicadores                                   |
+| Importación              | Previsualizar e importar                                                                                                 |
+| Auditoría                | Visualizar                                                                                                               |
 
 Usuarios, Perfiles, respaldos y ajustes del sistema se reservan al administrador. Duplicar el perfil Administrador no convierte a un perfil personalizado en administrador del sistema.
+
+Desde la versión 0.8.0, **Predicación → Procesos → Cronograma semanal** tiene permisos independientes `schedules.view`, `schedules.create`, `schedules.edit` y `schedules.export`. Crear no permite editar una semana existente. Las acciones agregan Visualizar; no agregan acceso a otros módulos. Inicialmente se reservan al administrador; los perfiles existentes no reciben nuevos accesos. Quien prepara el cronograma puede justificar una programación antes de 14 días, pero nadie puede programar un territorio que siga abierto fuera de los 3 meses. Esto no altera los permisos de excepciones del registro real. Ver [cronograma](CRONOGRAMA_PREDICACION.md).
 
 Desde la versión 0.7.0, **Asignar / agregar inicio**, **Editar inicio / corregir historial** y **Eliminar inicio / anular registros** son opciones independientes, con los mismos permisos del servidor que ya utilizaban las operaciones del historial. Un perfil con solo Asignar puede agregar inicios y consultar los datos necesarios, pero no editar, completar ni anular. Revisar también los demás perfiles vinculados: sus permisos se suman. No es necesario conceder Crear territorios ni Editar / cambiar estado de territorios. Ver [acciones directas y ejemplo de perfil](PRIORIDAD_TERRITORIOS.md).
 

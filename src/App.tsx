@@ -47,6 +47,12 @@ import VisitRestrictionsPanel, {
 import { visitSummary } from "./lib/visitRestrictions";
 import { useLimaToday } from "./lib/useLimaToday";
 import ConductorSelect from "./components/ConductorSelect";
+import PreachingSchedulePanel from "./components/PreachingSchedulePanel";
+import {
+  scheduleExceptionBody,
+  territoryPlanStatus,
+  type PreachingWeek,
+} from "./lib/preachingSchedule";
 import TerritoryCoverage, {
   CoverageDate,
 } from "./components/TerritoryCoverage";
@@ -122,6 +128,9 @@ export default function App() {
     [busy, setBusy] = useState(false),
     [observations, setObservations] = useState<any[]>([]);
   const [demoObservations, setDemoObservations] = useState<any[]>([]);
+  const [demoPreachingWeeks, setDemoPreachingWeeks] = useState<
+    Record<string, PreachingWeek>
+  >({});
   const [collapsed, setCollapsed] = useState(false);
   const [creatingTerritory, setCreatingTerritory] = useState(false);
   const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
@@ -159,6 +168,7 @@ export default function App() {
     setProfile(null);
     setSnapshot(empty);
     setDemoObservations([]);
+    setDemoPreachingWeeks({});
     setAction(null);
     setDetail(null);
     setObservations([]);
@@ -383,6 +393,7 @@ export default function App() {
     setProfile(demoProfile);
     setSnapshot(demoSnapshot());
     setDemoObservations([]);
+    setDemoPreachingWeeks({});
     setCoverageOptions(emptyCoverageOptions);
     setSync("demo");
     setLoading(false);
@@ -1145,9 +1156,12 @@ export default function App() {
                     {selectedObservations.length ? (
                       selectedObservations.map((o) => (
                         <article key={o.id}>
-                          {o.kind === "timing_exception" && (
+                          {(o.kind === "timing_exception" ||
+                            o.kind === "schedule_exception") && (
                             <span className="observation-exception-label">
-                              Excepción autorizada de plazos
+                              {o.kind === "schedule_exception"
+                                ? "Excepción de cronograma"
+                                : "Excepción autorizada de plazos"}
                             </span>
                           )}
                           <p className="observation-body">{o.body}</p>
@@ -1436,6 +1450,74 @@ export default function App() {
                   </section>
                 </>
               )}
+              {view === "preaching-schedule" &&
+                can(profile, "schedules.view") && (
+                  <PreachingSchedulePanel
+                    profile={profile}
+                    snapshot={snapshot}
+                    demo={demo}
+                    today={today}
+                    demoWeeks={demoPreachingWeeks}
+                    onDemoSave={(week, context) => {
+                      setDemoPreachingWeeks((prev) => ({
+                        ...prev,
+                        [week.week_start]: week,
+                      }));
+                      const notes = week.rows.flatMap((row) =>
+                        row.territories.flatMap((t) => {
+                          const status = territoryPlanStatus(
+                            context.assignments,
+                            t.territory_id,
+                            new Date(
+                              new Date(
+                                `${week.week_start}T12:00:00Z`,
+                              ).getTime() +
+                                row.day * 86400000,
+                            )
+                              .toISOString()
+                              .slice(0, 10),
+                          );
+                          return status.kind === "rest"
+                            ? [
+                                {
+                                  id: crypto.randomUUID(),
+                                  territory_id: t.territory_id,
+                                  kind: "schedule_exception",
+                                  schedule_id: week.id,
+                                  schedule_entry_id: row.id,
+                                  body: scheduleExceptionBody(
+                                    week.week_start,
+                                    row,
+                                    t,
+                                    status,
+                                  ),
+                                  created_at: new Date().toISOString(),
+                                },
+                              ]
+                            : [];
+                        }),
+                      );
+                      setDemoObservations((prev) => [
+                        ...notes.filter(
+                          (n) =>
+                            !prev.some(
+                              (o) =>
+                                o.body === n.body &&
+                                o.territory_id === n.territory_id &&
+                                o.schedule_id === n.schedule_id &&
+                                o.schedule_entry_id === n.schedule_entry_id,
+                            ),
+                        ),
+                        ...prev,
+                      ]);
+                    }}
+                    onTerritory={(id) => {
+                      navigate("territories");
+                      setDetail(id);
+                    }}
+                    onSaved={refresh}
+                  />
+                )}
               {view === "export" && can(profile, "reports.view") && (
                 <ExportPanel
                   snapshot={snapshot}

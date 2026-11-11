@@ -16,6 +16,7 @@ import {
   LogOut,
   X,
   House,
+  CalendarDays,
 } from "lucide-react";
 import { can } from "../lib/permissions";
 import type { Profile } from "../lib/types";
@@ -29,11 +30,17 @@ export type AppView =
   | "access-profiles"
   | "conductors"
   | "visit-restrictions"
+  | "preaching-schedule"
   | "settings";
 export const viewInfo: Record<
   AppView,
   { label: string; section: string; permission?: string; admin?: boolean }
 > = {
+  "preaching-schedule": {
+    label: "Cronograma semanal",
+    section: "PREDICACIÓN / PROCESOS",
+    permission: "schedules.view",
+  },
   overview: {
     label: "Inicio",
     section: "INICIO",
@@ -212,6 +219,19 @@ export default function AppSidebar({
                   <div>{item("export", FileText)}</div>
                 </details>
               )}
+            </section>
+          )}
+          {viewAllowed(profile, "preaching-schedule") && (
+            <section className="nav-module">
+              <h2>PREDICACIÓN</h2>
+              <details open>
+                <summary>
+                  <CalendarDays size={17} />
+                  <span>Procesos</span>
+                  <ChevronDown size={13} />
+                </summary>
+                <div>{item("preaching-schedule", CalendarDays)}</div>
+              </details>
             </section>
           )}
           {security.some((v) => viewAllowed(profile, v)) && (

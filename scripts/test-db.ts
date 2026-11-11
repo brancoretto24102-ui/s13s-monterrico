@@ -3,6 +3,7 @@ import { bootstrapTestDb } from "./bootstrap-test-db";
 import { testConductors } from "./test-conductors";
 import { testAccess } from "./test-access";
 import { testAssignmentTiming } from "./test-assignment-timing";
+import { testPreachingSchedule } from "./test-preaching-schedule";
 import { testVisitRestrictions } from "./test-visit-restrictions";
 import assert from "node:assert/strict";
 import { Client } from "pg";
@@ -375,6 +376,15 @@ try {
     admin2,
     editor: ed1,
     reader,
+    anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testPreachingSchedule({
+    root,
+    admin,
+    admin2,
+    reader,
+    editor: ed1,
     anon,
     connect: (uid) => connection("authenticated", uid),
   });

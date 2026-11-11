@@ -1,30 +1,21 @@
-# Estado funcional — versión 0.3.0
+# Estado funcional — versión 0.8.0
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
-## Maestro de conductores
+La aplicación incluye gestión compartida de territorios, importación histórica, formulario oficial S-13-S, maestro de conductores, Perfiles y Usuarios, domicilios sin visitas, plazos con excepciones y seguimiento de la última predicación con semáforo.
 
-El administrador dispone de **Administración → Conductores** para crear, editar, activar, desactivar, eliminar a Papelera y restaurar fichas. Cada ficha tiene un código independiente. La búsqueda admite nombre o código y los filtros separan activos, inactivos y Papelera.
+## Cronograma semanal
 
-La eliminación es recuperable y conserva el historial. Restaurar deja la ficha inactiva. Un conductor inactivo o en Papelera no aparece como opción para nuevas asignaciones; sus asignaciones anteriores se pueden completar. Los cambios requieren motivo y quedan en auditoría.
+**Predicación → Procesos → Cronograma semanal** permite preparar días y salidas desde un lunes. Las vistas de conductores y publicadores se derivan de la misma semana y generan sus PDF. Se proponen continuaciones abiertas y territorios por prioridad; se pueden retirar. La estructura inicial procede del Excel privado y requiere revisión y guardado.
 
-Al asignar un territorio se puede elegir un conductor registrado activo o escribir un nombre manual. Las fichas no se crean ni vinculan automáticamente por coincidencia de nombres históricos. Una edición de ficha conserva el nombre registrado en cada asignación anterior.
+Se avisa del descanso de 14 días y se permite justificar la programación anticipada. Los territorios que sigan abiertos fuera de 3 meses no se pueden programar hasta cerrar la asignación real. No se crean inicios ni cierres del registro oficial al programar. Los cambios usan permisos, control de versión y auditoría.
 
-## Validación de la actualización
+## Validación
 
-- 19 pruebas unitarias y 159 comprobaciones de base de datos aprobadas.
-- Comprobaciones de PostgreSQL con datos sintéticos, incluidos permisos, versiones, historial y dos conexiones concurrentes.
-- Compilación y revisión del paquete público aprobadas.
-- En la vista temporal se probaron todas las operaciones del maestro, búsqueda, filtros y selección al asignar un territorio.
-- En la web se comprobó el acceso administrativo, la carga del maestro y la apertura/cancelación del formulario de alta.
-- Se revisaron la vista temporal y su formulario con un ancho aproximado de 450 píxeles CSS. No se probó un teléfono físico.
+- 65 pruebas unitarias y 359 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- Conflictos de creación y edición verificados con conexiones independientes.
+- PDF de conductores y publicadores descargados desde la interfaz y revisados por extracción y renderizado.
+- Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
+- Base alojada con estructura inicial privada y sin semanas de prueba ni cambios en el historial real.
 
-La actualización no modifica el motor del formulario PDF. Los datos de ejemplo usados para comprobar el maestro son temporales y no se insertan en el catálogo operativo.
-
-Consultar la [guía del maestro](CONDUCTORES.md), el [manual de uso](USO.md) y la [validación](VALIDACION.md). La documentación pública omite identificadores de infraestructura, credenciales y resultados con datos personales.
-
-## Interfaz modular y accesos
-
-La versión 0.3.0 añade menú lateral verde con grupos desplegables y pantallas independientes de Perfiles y Usuarios. Los perfiles definen acciones de los módulos y las cuentas pueden recibir varios perfiles personalizados. La guía pública describe funciones y validaciones sin incluir identificadores privados de infraestructura ni información de personas.
-
-Se comprobó también el inicio de sesión en la versión publicada, la carga de los listados de Usuarios y Perfiles y la apertura del formulario Nuevo perfil con su árbol de accesos. Se canceló el formulario sin crear datos de prueba en el entorno operativo.
+Consultar el [manual del cronograma](CRONOGRAMA_PREDICACION.md), el [manual general](USO.md) y los [resultados y límites de validación](VALIDACION.md). La documentación pública no incluye datos personales de los insumos ni credenciales privadas.

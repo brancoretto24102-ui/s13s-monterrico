@@ -2,6 +2,17 @@ import type { Profile } from "./types";
 
 export const permissionGroups = [
   {
+    section: "PREDICACIÓN",
+    module: "Cronograma semanal",
+    prefix: "schedules",
+    actions: [
+      ["view", "Visualizar cronogramas"],
+      ["create", "Crear semanas"],
+      ["edit", "Editar salidas y días"],
+      ["export", "Descargar cronogramas de conductores y publicadores"],
+    ],
+  },
+  {
     section: "CONFIGURACIÓN",
     module: "Domicilios que no desean visitas",
     prefix: "visits",

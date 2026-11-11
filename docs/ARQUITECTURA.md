@@ -6,17 +6,19 @@ Desde la tercera migración, los RPC de `public` usan `SECURITY INVOKER` y llama
 
 ## Entidades
 
-| Tabla                    | Propósito                                                                |
-| ------------------------ | ------------------------------------------------------------------------ |
-| `territories`            | Número único, estado y versión de todo el territorio                     |
-| `people`                 | Identidad separada y nombre normalizado, preparada para ampliación       |
-| `assignments`            | Registro normalizado, snapshot del nombre, DATE, versiones y procedencia |
-| `profiles`               | Rol, estado y exportación por usuario de Auth                            |
-| `audit_log`              | Usuario, hora UTC, antes/después y motivo                                |
-| `import_batches`         | SHA-256 del archivo, responsable, resultados y conciliación              |
+| Tabla                    | Propósito                                                                  |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `territories`            | Número único, estado y versión de todo el territorio                       |
+| `people`                 | Identidad separada y nombre normalizado, preparada para ampliación         |
+| `assignments`            | Registro normalizado, snapshot del nombre, DATE, versiones y procedencia   |
+| `profiles`               | Rol, estado y exportación por usuario de Auth                              |
+| `audit_log`              | Usuario, hora UTC, antes/después y motivo                                  |
+| `import_batches`         | SHA-256 del archivo, responsable, resultados y conciliación                |
 | `territory_observations` | Observaciones generales y excepciones de plazos vinculadas a la asignación |
-| `conductors`             | Ficha del maestro: código único, persona, estado, papelera y versión     |
-| `meeting_schedule`       | Base para programación en segunda etapa                                  |
+| `conductors`             | Ficha del maestro: código único, persona, estado, papelera y versión       |
+| `meeting_schedule`       | Tabla inicial reservada, conservada por compatibilidad                     |
+| `preaching_schedules`    | Documento semanal compartido, salidas JSONB normalizadas y versión         |
+| `preaching_template`     | Estructura inicial privada, singleton con UUID para auditoría              |
 
 Un nombre histórico no se cambia cuando se amplía la ficha de la persona. Los registros importados conservan snapshot aunque no haya correspondencia inequívoca con un `person_id`; no se fusionan homónimos como si fueran necesariamente la misma persona. Una nueva asignación exige seleccionar un conductor activo identificado por UUID; las sugerencias históricas no identifican automáticamente a personas. La corrección expresa del nombre histórico se conserva como operación independiente con motivo.
 
@@ -83,3 +85,13 @@ La función de invitaciones comprueba identidad y administrador activo, valida p
 `manage_visit_restriction` mantiene una envoltura pública SECURITY INVOKER y una implementación privada con autorización actual, versiones y un bloqueo transaccional corto. RLS limita la lectura de referencias a `visits.view`. El snapshot entrega un catálogo mínimo de territorios a ese módulo y recuentos sin direcciones para la consulta de territorios. No se amplían los permisos de perfiles existentes.
 
 Los avisos se calculan desde las fechas, sin una tarea de pago. La fecha peruana se actualiza cada 30 segundos y al recuperar el foco. Realtime y el refresco de respaldo mantienen los registros compartidos al día. Los datos de este maestro no se imprimen en el formulario oficial S-13-S.
+
+## Cronograma semanal (0.8.0)
+
+Cada lunes identifica una sola semana. Sus salidas se guardan como un documento JSONB acotado y validado por servidor; nombres y números se resuelven desde UUID, sin confiar en campos suministrados por el cliente. Los PDF de conductores y publicadores se derivan del mismo documento; el segundo omite Territorio. La estructura inicial se incorpora como datos privados, no como una migración con personas o puntos de reunión.
+
+`get_preaching_context`, `save_preaching_schedule` y `export_preaching_schedule` tienen envoltorios públicos invoker y autorización privada. Las tablas tienen RLS y no admiten escritura directa del cliente. El contexto entrega solo el catálogo y las fechas necesarias; no entrega nombres del historial ni domicilios. Los cuatro permisos de cronograma no se conceden automáticamente a los perfiles existentes.
+
+El guardado toma un bloqueo transaccional por semana, comprueba versión y bloquea territorios en orden estable, antes de comprobar las fichas de conductores. Las asignaciones reales usan el mismo bloqueo por territorio. El servidor revisa los plazos según la fecha de cada salida: permite continuación dentro del trimestre, bloquea abiertos después de 3 meses para todos y exige motivo durante los 14 días posteriores al cierre. La excepción del cronograma no otorga permisos de excepción del historial real.
+
+La semana y sus observaciones `schedule_exception` se confirman juntas. Estas observaciones conservan `schedule_id`, `schedule_entry_id`, fechas y motivo; guardados idénticos no duplican notas. La auditoría conserva antes y después de semanas y estructura, incluidas las salidas retiradas. La descarga comprueba la versión y revalida los plazos bajo bloqueo antes de registrar EXPORT. El respaldo agrega ambas tablas en la misma consulta consistente. Consultar [uso y límites del cronograma](CRONOGRAMA_PREDICACION.md).

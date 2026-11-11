@@ -45,7 +45,15 @@ Los registros históricos conservan el nombre original aunque se edite la ficha.
 
 Seleccionar el libro privado en Importar historial. El análisis se realiza en el navegador, sin modificar el Excel. Revisar los recuentos, las incidencias y el ajuste aprobado del territorio 64. La tabla muestra los primeros 30 registros; se validan todos. No se puede confirmar con errores. La segunda carga del mismo archivo no duplica la historia.
 
-Las hojas de conductores, observaciones y cronogramas se reconocen, pero la importación del Excel solo carga las asignaciones S-13-S. Las fichas del maestro se crean expresamente para identificar a cada persona; el historial no genera fichas automáticamente. Conservar el libro completo para las siguientes etapas.
+Las hojas de conductores, observaciones y cronogramas se reconocen, pero la importación del Excel solo carga las asignaciones S-13-S. Las fichas del maestro se crean expresamente para identificar a cada persona; el historial no genera fichas automáticamente. La estructura inicial del cronograma se incorpora por un procedimiento privado separado; no se publica el libro ni se crea una semana aprobada automáticamente.
+
+## Cronograma de predicación
+
+Abrir **Predicación → Procesos → Cronograma semanal**. Elegir el lunes para calcular todas las fechas hasta domingo; marcar solo los días que se predica, agregar salidas y seleccionar conductores activos del maestro. Los territorios abiertos con una salida conocida aparecen por defecto y se pueden retirar. Arriba se muestran sugerencias del semáforo, sin obligación de seleccionarlas.
+
+El cronograma avisa si todavía no pasaron 14 días desde el cierre y permite programar con un motivo obligatorio, conservado en observaciones y auditoría. Un territorio que siga abierto después de 3 meses debe cerrarse antes de programarlo; desde el cierre se revisan sus 14 días. La programación utiliza la fecha de cada salida y no crea inicios ni cierres reales en el S-13-S.
+
+Guardar y revisar las pestañas **Conductores** y **Publicadores**. La segunda se genera automáticamente con las mismas filas y sin Territorio. Descargar los dos PDF desde la versión guardada. Si otra persona guardó primero, actualizar y revisar antes de guardar de nuevo. Inicialmente el módulo es administrativo; se delegan Visualizar, Crear, Editar y Descargar por separado en Perfiles. Ver [guía completa](CRONOGRAMA_PREDICACION.md).
 
 ## Formulario
 

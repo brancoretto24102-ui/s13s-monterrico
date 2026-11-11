@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 52 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 291 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 65 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 359 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -84,3 +84,13 @@ Se comprueban el orden numérico predeterminado, el orden de colores, las fechas
 Las pruebas de permisos verifican que una cuenta que solo puede asignar no puede completar, editar ni anular, y que los permisos de corrección y anulación son independientes. En PostgreSQL se ejercitan las denegaciones directas al RPC, una corrección autorizada, una anulación autorizada y su auditoría con los perfiles mínimos correspondientes. No se cambian las reglas ni las funciones de la base alojada para ofrecer estos accesos directos.
 
 En navegador, con datos ficticios temporales, se verificaron el filtro exacto de una fecha, la selección por color, el orden prioritario, la asignación desde la tabla, la edición del inicio, el motivo obligatorio de la anulación y la conservación de la última finalización anterior después de anular el inicio de prueba. No se modificaron registros operativos para estas comprobaciones.
+
+## Cronograma semanal de predicación (0.8.0)
+
+Las pruebas unitarias verifican las siete fechas desde el lunes, cruces de mes y año, día 13/14, aniversario exacto de 3 meses, bloqueo posterior y cierre que reinicia el descanso. Comprueban los valores iniciales, el retiro de territorios cerrados y días omitidos, los casos sin horario conocido, las salidas simultáneas con identidades diferentes y las prohibiciones de duplicar conductor o territorio a la misma hora.
+
+Las comprobaciones PostgreSQL ejercitan los cuatro permisos mínimos, acceso anónimo y revocación, contexto sin nombres históricos, escritura directa prohibida, resolución de nombres/números desde UUID, motivos vacíos o inválidos, observaciones atómicas sin duplicados y trazabilidad de salidas retiradas. Incluyen el alta de la estructura inicial y su auditoría, protección frente al borrado físico y respaldo. Dos conexiones compiten por crear la misma semana y por editar la misma versión: solo una confirma. El servidor rechaza la exportación cuando cambian el descanso o la versión, y bloquea abiertos fuera del trimestre incluso para el administrador.
+
+En navegador, con datos ficticios temporales, se retiró un territorio propuesto, se omitió el miércoles, se justificó un territorio antes de 14 días, se guardó y se compararon ambas vistas y PDF. Cambiar de semana conservó las fechas y los días elegidos, propuso únicamente las continuaciones abiertas y mantuvo el guardado anterior. También se revisó el formulario y su selector desplazable con 449 píxeles CSS de ancho, sin desbordamiento horizontal general. No se utilizó un teléfono físico. Los dos PDF descargados desde la interfaz se extrajeron y renderizaron para revisar columnas, agrupación, fechas y colores. Las pruebas de PDF comprueban también paginación con textos largos.
+
+La actualización alojada conserva las asignaciones anteriores. La estructura inicial se incorpora de forma privada, sin crear semanas aprobadas, cuentas, conductores ni asignaciones ficticias en producción. El motor del formulario oficial S-13-S no se modifica.
