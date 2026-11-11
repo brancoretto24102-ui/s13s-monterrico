@@ -1,3 +1,4 @@
+import { fixtureDate } from "./fixture-date";
 import assert from "node:assert/strict";
 import type { Client } from "pg";
 
@@ -118,14 +119,14 @@ export async function testConductors(clients: {
   for (const personId of [null, crypto.randomUUID(), noCatalogPerson]) {
     await deny(
       editor,
-      "select assign_territory($1,$2,'Persona sin ficha','2026-04-01',$3)",
+      `select assign_territory($1,$2,'Persona sin ficha','${fixtureDate(20)}',$3)`,
       [another, anotherVersion, personId],
       /conductor activo del maestro/,
     );
   }
   await deny(
     editor,
-    "select assign_territory($1,$2,'Nombre libre','2026-04-01')",
+    `select assign_territory($1,$2,'Nombre libre','${fixtureDate(20)}')`,
     [another, anotherVersion],
     /conductor activo del maestro/,
   );
@@ -139,13 +140,13 @@ export async function testConductors(clients: {
   );
   await deny(
     editor,
-    "select assign_territory($1,$2,'Nombre de otra persona','2026-04-01',$3)",
+    `select assign_territory($1,$2,'Nombre de otra persona','${fixtureDate(20)}',$3)`,
     [another, anotherVersion, original.person_id],
     /nombre.*cambió/,
   );
   const assignment = await scalar(
     editor,
-    "select assign_territory($1,$2,$3,'2026-04-01',$4)",
+    `select assign_territory($1,$2,$3,'${fixtureDate(20)}',$4)`,
     [territory, territoryVersion, original.display_name, original.person_id],
   );
   check(
@@ -202,18 +203,18 @@ export async function testConductors(clients: {
   );
   await deny(
     editor,
-    "select assign_territory($1,$2,'Conductor ficticio Actualizado','2026-04-01',$3)",
+    `select assign_territory($1,$2,'Conductor ficticio Actualizado','${fixtureDate(20)}',$3)`,
     [another, anotherVersion, original.person_id],
     /inactivo o eliminado/,
   );
   // Deactivation never prevents finishing an already recorded assignment.
-  await editor.query("select complete_assignment($1,1,$2,'2026-04-01')", [
-    assignment,
-    territoryVersion + 1,
-  ]);
+  await editor.query(
+    `select complete_assignment($1,1,$2,'${fixtureDate(20)}')`,
+    [assignment, territoryVersion + 1],
+  );
   check((await get(first)).open_assignments, 0);
   await admin.query(
-    "select correct_assignment($1,2,$2,$3,'2026-04-01','2026-04-01','Revisión de fechas del registro')",
+    `select correct_assignment($1,2,$2,$3,'${fixtureDate(20)}','${fixtureDate(20)}','Revisión de fechas del registro')`,
     [assignment, territoryVersion + 2, original.display_name],
   );
   check(
@@ -232,7 +233,7 @@ export async function testConductors(clients: {
   );
   await deny(
     editor,
-    "select assign_territory($1,$2,$3,'2026-04-01',$4)",
+    `select assign_territory($1,$2,$3,'${fixtureDate(20)}',$4)`,
     [another, anotherVersion, deleted.display_name, deleted.person_id],
     /inactivo o eliminado/,
   );
@@ -276,12 +277,10 @@ export async function testConductors(clients: {
     homonym.person_id !== original.person_id && homonym.code !== original.code,
     true,
   );
-  await editor.query("select assign_territory($1,$2,$3,'2026-04-01',$4)", [
-    another,
-    anotherVersion,
-    homonym.display_name,
-    homonym.person_id,
-  ]);
+  await editor.query(
+    `select assign_territory($1,$2,$3,'${fixtureDate(20)}',$4)`,
+    [another, anotherVersion, homonym.display_name, homonym.person_id],
+  );
   check((await get(second)).assignments_count, 1);
   const manualCorrection = await scalar(
     root,
@@ -289,7 +288,7 @@ export async function testConductors(clients: {
     [another],
   );
   await admin.query(
-    "select correct_assignment($1,1,$2,'Responsable manual corregido','2026-04-01',null,'Corrección manual del responsable')",
+    `select correct_assignment($1,1,$2,'Responsable manual corregido','${fixtureDate(20)}',null,'Corrección manual del responsable')`,
     [manualCorrection, anotherVersion + 1],
   );
   check(
@@ -383,7 +382,7 @@ export async function testConductors(clients: {
   try {
     await mutate(admin, second, 1, "", "deactivate");
     const waiting = editor.query(
-      "select assign_territory($1,$2,$3,'2026-04-01',$4)",
+      `select assign_territory($1,$2,$3,'${fixtureDate(20)}',$4)`,
       [
         lockTerritory.id,
         lockTerritory.version,

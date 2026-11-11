@@ -10,7 +10,7 @@ Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, 
 - Acceso con correo/contraseña; recuperación por correo comprobada hasta el envío; invitaciones administrativas mediante Edge Function y SMTP privado configurado.
 - Administrador, editor y lector; permiso específico para exportar. RLS en todas las tablas privadas y almacenamiento privado del PDF original.
 - Operaciones SQL transaccionales, bloqueo por territorio y versiones optimistas. Nunca se sobrescribe una modificación concurrente silenciosamente.
-- Cierre el mismo día permitido; nueva asignación estrictamente posterior al cierre; comprobación del predecesor y sucesor en correcciones.
+- Descanso de 14 días desde el cierre y máximo de 3 meses calendario por asignación. Excepciones solo para administrador o perfil autorizado, siempre con motivo en observaciones y auditoría. Se conserva la comprobación del predecesor y sucesor en correcciones.
 - Auditoría inmutable para usuarios de la aplicación; correcciones y anulaciones con motivo; sin borrado físico habitual.
 - Importación local del Excel con previsualización, procedencia por celda, ajustes visibles, transacción atómica y deduplicación por archivo y por registro.
 - Formulario oficial: cuatro asignaciones por fila, veinte filas por página, continuaciones, cierres al corte, última finalización histórica y encabezado con raya de ancho medido en cada página.
@@ -68,7 +68,7 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
 
-La versión 0.5.0 incorpora [Domicilios que no desean visitas](docs/DOMICILIOS_SIN_VISITAS.md): plazo anual, avisos en el historial y al asignar, renovación, permisos y auditoría. También exige seleccionar conductores activos del maestro, con búsqueda y lista desplazable; el formulario muestra **Fecha de Inicio**. Se conservan las reglas del PDF y el historial previo. También incorpora [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md), permisos por módulo y acción, y un menú modular inspirado en la referencia visual proporcionada. El maestro de conductores se encuentra en Configuración → Maestros. La validación incluye 29 pruebas unitarias y 222 comprobaciones PostgreSQL.
+La versión 0.6.0 incorpora [Plazos y excepciones de territorios](docs/PLAZOS_TERRITORIOS.md): descanso de 14 días, cierre en 3 meses calendario, avisos y excepciones justificadas. Conserva [Domicilios que no desean visitas](docs/DOMICILIOS_SIN_VISITAS.md), la selección obligatoria de conductores activos del maestro y [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md). El maestro de conductores se encuentra en Configuración → Maestros. Se conservan las reglas del PDF y el historial previo. La validación incluye 38 pruebas unitarias y 281 comprobaciones PostgreSQL.
 
 Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 

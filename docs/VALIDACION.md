@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 29 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad y previsualización de errores Excel.
-- 222 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 38 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel y plazos de asignación con excepciones justificadas.
+- 281 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -62,3 +62,15 @@ Se comprueban altas idempotentes, edición, renovación, archivo después del pl
 Los perfiles existentes mantienen sus permisos. La consulta de direcciones requiere `visits.view`; los permisos de territorios permiten consultar únicamente recuentos de avisos cuando no se dispone de ese acceso. Se prueba un perfil limitado al maestro, su selector mínimo de territorios, la revocación inmediata de sus permisos y la ausencia de datos de asignaciones fuera de su alcance.
 
 La preparación de la hoja NO TOCAR diferencia encabezados, filas vacías y domicilios; valida sus columnas y rechaza registros incompletos o repetidos antes de la carga privada. Las comprobaciones verifican que la gestión del nuevo maestro no modifica las asignaciones.
+
+## Plazos y excepciones (0.6.0)
+
+Se comprueba el bloqueo al día 13 y la aceptación al día 14 después del cierre, así como el cierre inclusivo a los 3 meses calendario. Se cubren cambios de año, fines de mes y años bisiestos. La apertura con un inicio que ya excede los 3 meses también necesita autorización y motivo. Un cierre normal no vuelve a pedir la justificación de un inicio anticipado previamente autorizado.
+
+El administrador necesita motivo; los perfiles personalizados necesitan tanto el permiso de excepción como el de la operación. Se prueban denegación por perfil lector y acceso anónimo, revocación inmediata, metadatos de usuario sin efecto y ausencia de acceso directo a los ayudantes privados. Los clientes con firmas de RPC anteriores siguen operando dentro de los plazos, pero no pueden omitir las nuevas reglas.
+
+Se rechazan motivos vacíos, compuestos solo por espacios, tabulaciones o espacios no separables, demasiado cortos o de más de 2000 caracteres. Se verifica la conservación completa de un motivo de 2000 caracteres, la observación vinculada a su asignación y la auditoría. Dos conexiones compitiendo por una excepción producen una sola operación y una sola observación; la otra recibe un conflicto de versión.
+
+Las correcciones de fechas revisan los descansos anterior y siguiente. Se comprueba que un parámetro de anulación nulo no permita saltarse la validación. Una corrección solo del nombre conserva las fechas históricas. Los solapamientos, las fechas futuras y las identidades no autorizadas siguen bloqueados; los errores revierten también la observación. El respaldo conserva las justificaciones.
+
+En navegador se comprobaron, con datos ficticios temporales, el inicio durante el descanso, el cierre fuera del trimestre, el guardado deshabilitado sin motivo válido, la observación en el territorio correspondiente y la nueva casilla de Perfiles. La actualización de la base alojada conservó la huella del historial anterior, sin crear asignaciones, observaciones ni cuentas ficticias en el entorno operativo.

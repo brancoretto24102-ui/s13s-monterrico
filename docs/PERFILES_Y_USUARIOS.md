@@ -10,13 +10,15 @@ En **Nuevo perfil**, indicar una descripción, seleccionar las acciones en el á
 
 | Módulo                   | Acciones configurables                                                                 |
 | ------------------------ | -------------------------------------------------------------------------------------- |
-| Registro de asignaciones | Visualizar, asignar, completar, corregir, anular, observar, crear y editar territorios |
+| Registro de asignaciones | Visualizar, asignar, completar, corregir, anular, observar, crear y editar territorios; excepciones de plazos con motivo |
 | Conductores              | Visualizar, registrar, editar, cambiar estado, eliminar/restaurar y exportar CSV       |
 | Formulario S-13-S        | Visualizar y generar/descargar PDF                                                     |
 | Importación              | Previsualizar e importar                                                               |
 | Auditoría                | Visualizar                                                                             |
 
 Usuarios, Perfiles, respaldos y ajustes del sistema se reservan al administrador. Duplicar el perfil Administrador no convierte a un perfil personalizado en administrador del sistema.
+
+Desde la versión 0.6.0, el árbol de **Territorios → Procesos → Registro de asignaciones** incluye **Permitir excepciones de 14 días / 3 meses (con motivo)** (`territories.override_timing`). Permite autorizar un inicio anticipado o un cierre posterior al plazo únicamente con motivo obligatorio, incluso para administradores. No concede por sí sola permiso para asignar, completar o corregir. Los perfiles Editor, Lector y los perfiles personalizados existentes no reciben esta facultad automáticamente. La observación de excepción se registra junto con la operación en una sola transacción. Ver [reglas y ejemplos](PLAZOS_TERRITORIOS.md).
 
 Los perfiles personalizados admiten edición, activación/desactivación y eliminación a Papelera. Al desactivar o eliminar un perfil, sus usuarios dejan de recibir esos permisos en el servidor; no se activa automáticamente un acceso básico alternativo. Restaurar deja el perfil inactivo. El listado indica cuántas cuentas están vinculadas para revisar el impacto.
 

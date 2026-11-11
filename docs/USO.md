@@ -8,6 +8,7 @@ Iniciar sesión con el correo autorizado y la contraseña personal. No hay autor
 | --------------------------------- | ------------- | ----------- | ----------- |
 | Consultar territorios e historial | Sí            | Sí          | Sí          |
 | Asignar y completar               | Sí            | Sí          | No          |
+| Excepciones de plazos con motivo  | Sí            | No          | No          |
 | Agregar observaciones             | Sí            | Sí          | No          |
 | Corregir o anular con motivo      | Sí            | No          | No          |
 | Importar y respaldar              | Sí            | No          | No          |
@@ -21,10 +22,12 @@ El administrador puede activar o retirar la exportación de editores y lectores.
 1. Abrir Territorios, buscar un número o responsable y revisar su estado.
 2. Entrar al detalle y elegir Asignar si está disponible. Seleccionar un conductor activo del maestro en **Nombre del conductor** e indicar la **Fecha de Inicio**. Buscar por nombre o código; desplazar la lista para ver más opciones. Si no aparece, registrarlo o activarlo en el maestro antes de asignar.
 3. Para completar, abrir el territorio asignado, indicar la fecha de finalización y confirmar.
-4. La finalización puede ser el mismo día de asignación. Una nueva asignación debe comenzar en un día posterior al cierre anterior.
+4. La finalización puede ser el mismo día de asignación. Una nueva asignación comienza como mínimo 14 días después del cierre anterior; el cierre debe estar dentro de los 3 meses calendario desde el inicio. El sistema muestra ambas fechas límite.
 5. Si otra persona guardó primero, revisar los datos actualizados antes de reintentar. El sistema conserva el primer cambio confirmado.
 
 Las observaciones son independientes del historial oficial. Una corrección histórica solo la realiza un administrador con motivo; el registro anterior y el nuevo quedan en auditoría. La anulación conserva el registro para trazabilidad y lo retira de la historia vigente y los PDFs.
+
+Una excepción de plazo requiere administrador o un perfil con la casilla **Permitir excepciones de 14 días / 3 meses (con motivo)**, además del permiso de la operación. El formulario exige un motivo y lo agrega automáticamente a las observaciones del territorio. No se pueden omitir las reglas de cronología, fechas futuras, identidad del conductor ni conflictos de versión. Ver [plazos y excepciones](PLAZOS_TERRITORIOS.md).
 
 ## Maestro de conductores
 

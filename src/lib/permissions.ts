@@ -26,6 +26,10 @@ export const permissionGroups = [
       ["observe", "Registrar observaciones"],
       ["create", "Crear territorios"],
       ["edit", "Editar / cambiar estado de territorios"],
+      [
+        "override_timing",
+        "Permitir excepciones de 14 días / 3 meses (con motivo)",
+      ],
     ],
   },
   {

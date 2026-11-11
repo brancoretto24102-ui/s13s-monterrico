@@ -45,6 +45,16 @@ import VisitRestrictionsPanel, {
 import { visitSummary } from "./lib/visitRestrictions";
 import { useLimaToday } from "./lib/useLimaToday";
 import ConductorSelect from "./components/ConductorSelect";
+import AssignmentTimingNotice from "./components/AssignmentTimingNotice";
+import {
+  assignmentDeadline,
+  assignmentTimingIssues,
+  nextAssignmentDate,
+  timingObservation,
+  validateTimingException,
+  validTimingReason,
+  TIMING_OVERRIDE_PERMISSION,
+} from "./lib/assignmentTiming";
 import { requireAssignableConductor } from "./lib/conductors";
 import { AuditPanel, SettingsPanel } from "./components/AdminPanels";
 import { getProfile, loadSnapshot, rpc, supabase } from "./lib/client";
@@ -95,6 +105,7 @@ export default function App() {
     [action, setAction] = useState<Action | null>(null),
     [busy, setBusy] = useState(false),
     [observations, setObservations] = useState<any[]>([]);
+  const [demoObservations, setDemoObservations] = useState<any[]>([]);
   const [collapsed, setCollapsed] = useState(false);
   const [creatingTerritory, setCreatingTerritory] = useState(false);
   const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
@@ -129,6 +140,7 @@ export default function App() {
     epoch.current++;
     setProfile(null);
     setSnapshot(empty);
+    setDemoObservations([]);
     setAction(null);
     setDetail(null);
     setObservations([]);
@@ -238,7 +250,13 @@ export default function App() {
     };
   }, [demo, profile?.id, profile?.active, refresh]);
   useEffect(() => {
-    if (!detail || demo || !supabase) {
+    if (demo) {
+      setObservations(
+        demoObservations.filter((o) => o.territory_id === detail),
+      );
+      return;
+    }
+    if (!detail || !supabase) {
       setObservations([]);
       return;
     }
@@ -257,14 +275,25 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, [detail, snapshot.revision, demo]);
+  }, [detail, snapshot.revision, demo, demoObservations]);
   const openFor = (id: string) =>
     snapshot.assignments.find((a) => a.territory_id === id && !a.completed_at);
   const lastFor = (id: string) =>
     snapshot.assignments
       .filter((a) => a.territory_id === id)
       .sort((a, b) => b.assigned_at.localeCompare(a.assigned_at))[0];
+  const nextFor = (id: string) =>
+    nextAssignmentDate(
+      snapshot.assignments.filter((a) => a.territory_id === id),
+    );
+  const resting = (id: string) =>
+    !openFor(id) && !!nextFor(id) && nextFor(id)! > today;
+  const overdue = (id: string) =>
+    !!openFor(id) && assignmentDeadline(openFor(id)!.assigned_at) < today;
   const selected = snapshot.territories.find((t) => t.id === detail);
+  const selectedObservations = observations.filter(
+    (o) => o.territory_id === detail,
+  );
   const selectedHistory = snapshot.assignments
     .filter((a) => a.territory_id === detail)
     .sort(
@@ -274,6 +303,11 @@ export default function App() {
   const period = servicePeriod(year);
   const activeTerritories = snapshot.territories.filter((t) => t.active);
   const assigned = activeTerritories.filter((t) => openFor(t.id)).length;
+  const availableTerritories = activeTerritories.filter(
+    (t) => !openFor(t.id) && !resting(t.id),
+  ).length;
+  const restingCount = activeTerritories.filter((t) => resting(t.id)).length;
+  const overdueCount = activeTerritories.filter((t) => overdue(t.id)).length;
   const completed = snapshot.assignments.filter(
     (a) =>
       a.completed_at &&
@@ -296,11 +330,13 @@ export default function App() {
           match &&
           (filter === "all" ||
             (filter === "assigned" && !!open) ||
-            (filter === "available" && t.active && !open) ||
+            (filter === "available" && t.active && !open && !resting(t.id)) ||
+            (filter === "resting" && t.active && resting(t.id)) ||
+            (filter === "overdue" && t.active && overdue(t.id)) ||
             (filter === "inactive" && !t.active))
         );
       }),
-    [snapshot, query, filter],
+    [snapshot, query, filter, today],
   );
   async function logout() {
     if (demo) {
@@ -317,6 +353,7 @@ export default function App() {
     setDemo(true);
     setProfile(demoProfile);
     setSnapshot(demoSnapshot());
+    setDemoObservations([]);
     setSync("demo");
     setLoading(false);
     setView("overview");
@@ -362,6 +399,40 @@ export default function App() {
     setNotice("");
     try {
       const { kind, territory: t, assignment: a } = action;
+      const history = snapshot.assignments.filter(
+        (row) => row.territory_id === t.id,
+      );
+      const datesChanged =
+        a &&
+        (values.date !== a.assigned_at ||
+          (values.completed || null) !== a.completed_at);
+      const issues =
+        kind === "assign"
+          ? assignmentTimingIssues(history, values.date, null, undefined, today)
+          : kind === "complete"
+            ? assignmentTimingIssues(
+                [],
+                a!.assigned_at,
+                values.completed || null,
+                undefined,
+                today,
+              )
+            : kind === "correct" && !values.voided && datesChanged
+              ? assignmentTimingIssues(
+                  history,
+                  values.date,
+                  values.completed || null,
+                  a!.id,
+                  today,
+                  values.date !== a!.assigned_at,
+                )
+              : [];
+      validateTimingException(
+        issues,
+        can(profile, TIMING_OVERRIDE_PERMISSION),
+        values.reason,
+      );
+      let savedAssignmentId = a?.id ?? "";
       const conductor =
         kind === "assign"
           ? requireAssignableConductor(
@@ -371,10 +442,12 @@ export default function App() {
           : null;
       if (demo) {
         if (kind === "observe") {
-          setObservations((prev) => [
+          setDemoObservations((prev) => [
             {
               id: crypto.randomUUID(),
               body: values.body,
+              territory_id: t.id,
+              kind: "general",
               created_at: new Date().toISOString(),
             },
             ...prev,
@@ -387,8 +460,9 @@ export default function App() {
               "El territorio cambió. Abre el formulario de nuevo.",
             );
           if (kind === "assign") {
+            savedAssignmentId = crypto.randomUUID();
             records.push({
-              id: crypto.randomUUID(),
+              id: savedAssignmentId,
               territory_id: t.id,
               person_id: conductor!.person_id,
               assigned_name_snapshot: conductor!.display_name,
@@ -425,6 +499,26 @@ export default function App() {
             records.filter((x) => x.territory_id === t.id),
           );
           if (errors.length) throw new Error(errors[0]);
+          if (issues.length)
+            setDemoObservations((prev) => [
+              {
+                id: crypto.randomUUID(),
+                territory_id: t.id,
+                assignment_id: savedAssignmentId,
+                kind: "timing_exception",
+                body: timingObservation(
+                  kind === "assign"
+                    ? "Inicio de asignación"
+                    : kind === "complete"
+                      ? "Finalización de asignación"
+                      : "Corrección administrativa",
+                  issues,
+                  values.reason,
+                ),
+                created_at: new Date().toISOString(),
+              },
+              ...prev,
+            ]);
           setSnapshot({
             ...snapshot,
             assignments: records,
@@ -436,19 +530,21 @@ export default function App() {
         }
       } else {
         if (kind === "assign")
-          await rpc("assign_territory", {
+          await rpc("assign_territory_with_reason", {
             p_territory_id: t.id,
             p_expected_version: t.version,
             p_name: conductor!.display_name,
             p_assigned_at: values.date,
             p_person_id: conductor!.person_id,
+            p_exception_reason: values.reason || null,
           });
         if (kind === "complete")
-          await rpc("complete_assignment", {
+          await rpc("complete_assignment_with_reason", {
             p_id: a!.id,
             p_expected_version: a!.version,
             p_territory_version: t.version,
             p_completed_at: values.completed,
+            p_exception_reason: values.reason || null,
           });
         if (kind === "correct")
           await rpc("correct_assignment", {
@@ -564,7 +660,25 @@ export default function App() {
                     </button>
                   </td>
                   <td>
-                    <Status active={t.active} assigned={!!a} />
+                    <Status
+                      active={t.active}
+                      assigned={!!a}
+                      resting={resting(t.id)}
+                      overdue={overdue(t.id)}
+                    />
+                    {a && (
+                      <small
+                        className={`assignment-deadline ${overdue(t.id) ? "overdue" : ""}`}
+                      >
+                        Cierre hasta{" "}
+                        {displayDate(assignmentDeadline(a.assigned_at))}
+                      </small>
+                    )}
+                    {!a && resting(t.id) && (
+                      <small className="assignment-deadline">
+                        Desde {displayDate(nextFor(t.id))}
+                      </small>
+                    )}
                   </td>
                   <td>
                     {a ? (
@@ -722,6 +836,19 @@ export default function App() {
               )}
             </div>
           )}
+          {!selected && view === "overview" && overdueCount > 0 && (
+            <div className="timing-overdue-alert" role="status">
+              <strong>
+                {overdueCount}{" "}
+                {overdueCount === 1
+                  ? "asignación superó"
+                  : "asignaciones superaron"}{" "}
+                el plazo de 3 meses.
+              </strong>{" "}
+              Revisa la fecha real de finalización. El cierre fuera de plazo
+              requiere autorización y motivo.
+            </div>
+          )}
           {selected ? (
             <>
               <button
@@ -743,6 +870,8 @@ export default function App() {
                 <Status
                   active={selected.active}
                   assigned={!!openFor(selected.id)}
+                  resting={resting(selected.id)}
+                  overdue={overdue(selected.id)}
                 />
               </div>
               <div className="detail-layout">
@@ -781,6 +910,32 @@ export default function App() {
                         </button>
                       ))}
                   </div>
+                  <div className="territory-timing-info">
+                    {openFor(selected.id) ? (
+                      <>
+                        Fecha límite de cierre:{" "}
+                        <b>
+                          {displayDate(
+                            assignmentDeadline(
+                              openFor(selected.id)!.assigned_at,
+                            ),
+                          )}
+                        </b>{" "}
+                        · 3 meses calendario.
+                      </>
+                    ) : nextFor(selected.id) ? (
+                      <>
+                        Primer inicio permitido:{" "}
+                        <b>{displayDate(nextFor(selected.id))}</b> · 14 días
+                        desde la finalización anterior.
+                      </>
+                    ) : (
+                      <>
+                        Espera entre asignaciones: 14 días. Plazo máximo por
+                        asignación: 3 meses calendario.
+                      </>
+                    )}
+                  </div>
                   {!selectedHistory.length ? (
                     <div className="empty-inline">
                       Este territorio aún no tiene asignaciones.
@@ -807,6 +962,14 @@ export default function App() {
                                 ? `Completado: ${displayDate(a.completed_at)}`
                                 : "Pendiente de completar"}
                             </span>
+                            {!a.completed_at && (
+                              <small
+                                className={`assignment-deadline ${assignmentDeadline(a.assigned_at) < today ? "overdue" : ""}`}
+                              >
+                                Fecha límite de cierre:{" "}
+                                {displayDate(assignmentDeadline(a.assigned_at))}
+                              </small>
+                            )}
                             {a.source_cell_reference && (
                               <small className="muted">
                                 Origen: {a.source_cell_reference}
@@ -863,10 +1026,15 @@ export default function App() {
                         </button>
                       )}
                     </div>
-                    {observations.length ? (
-                      observations.map((o) => (
+                    {selectedObservations.length ? (
+                      selectedObservations.map((o) => (
                         <article key={o.id}>
-                          <p>{o.body}</p>
+                          {o.kind === "timing_exception" && (
+                            <span className="observation-exception-label">
+                              Excepción autorizada de plazos
+                            </span>
+                          )}
+                          <p className="observation-body">{o.body}</p>
                           <small>
                             {new Date(o.created_at).toLocaleDateString(
                               "es-PE",
@@ -982,10 +1150,13 @@ export default function App() {
                         Disponibles <CheckCircle2 size={18} />
                       </span>
                       <strong>
-                        {activeTerritories.length - assigned}
+                        {availableTerritories}
                         <i className="stat-dot" />
                       </strong>
-                      <small>Listos para una nueva asignación</small>
+                      <small>
+                        Listos para una nueva asignación · {restingCount} en
+                        descanso
+                      </small>
                     </article>
                     <article>
                       <span>
@@ -1282,6 +1453,10 @@ export default function App() {
           canCorrect={can(profile, "territories.correct")}
           canVoid={can(profile, "territories.void")}
           conductors={snapshot.conductors ?? []}
+          timingHistory={snapshot.assignments.filter(
+            (a) => a.territory_id === action.territory.id,
+          )}
+          canOverrideTiming={can(profile, TIMING_OVERRIDE_PERMISSION)}
           visitRows={visitRows}
           visitCounts={visitCounts}
           canViewVisits={canViewVisits}
@@ -1296,13 +1471,38 @@ export default function App() {
     </div>
   );
 }
-function Status({ assigned, active }: { assigned: boolean; active: boolean }) {
+function Status({
+  assigned,
+  active,
+  resting = false,
+  overdue = false,
+}: {
+  assigned: boolean;
+  active: boolean;
+  resting?: boolean;
+  overdue?: boolean;
+}) {
+  const state = !active
+    ? "inactive"
+    : overdue
+      ? "overdue"
+      : assigned
+        ? "assigned"
+        : resting
+          ? "resting"
+          : "available";
   return (
-    <span
-      className={`status ${!active ? "inactive" : assigned ? "assigned" : "available"}`}
-    >
+    <span className={`status ${state}`}>
       <i />
-      {!active ? "Inactivo" : assigned ? "Asignado" : "Disponible"}
+      {!active
+        ? "Inactivo"
+        : overdue
+          ? "Plazo vencido"
+          : assigned
+            ? "Asignado"
+            : resting
+              ? "En descanso"
+              : "Disponible"}
     </span>
   );
 }
@@ -1338,6 +1538,8 @@ function TerritoryFilters({
       >
         <option value="all">Todos los estados</option>
         <option value="assigned">Asignados</option>
+        <option value="resting">En descanso (14 días)</option>
+        <option value="overdue">Plazo de 3 meses vencido</option>
         <option value="available">Disponibles</option>
         <option value="inactive">Inactivos</option>
       </select>
@@ -1354,11 +1556,15 @@ function ActionModal({
   onSave,
   names,
   conductors,
+  timingHistory,
+  canOverrideTiming,
   visitRows,
   visitCounts,
   canViewVisits,
   today,
 }: {
+  timingHistory: Assignment[];
+  canOverrideTiming: boolean;
   visitRows: VisitRestriction[];
   visitCounts: VisitRestrictionSummary[];
   canViewVisits: boolean;
@@ -1389,6 +1595,41 @@ function ActionModal({
       if (selected) setName(selected.display_name);
     }
   }, [personId, conductors]);
+  const datesChanged =
+    a && (date !== a.assigned_at || (completed || null) !== a.completed_at);
+  const timingIssues =
+    action.kind === "assign"
+      ? assignmentTimingIssues(timingHistory, date, null, undefined, today)
+      : action.kind === "complete"
+        ? completed
+          ? assignmentTimingIssues(
+              [],
+              a!.assigned_at,
+              completed,
+              undefined,
+              today,
+            )
+          : []
+        : action.kind === "correct" && !voided && datesChanged
+          ? assignmentTimingIssues(
+              timingHistory,
+              date,
+              completed || null,
+              a!.id,
+              today,
+              date !== a!.assigned_at,
+            )
+          : [];
+  const timingBlocked =
+    timingIssues.length > 0 &&
+    (!canOverrideTiming || !validTimingReason(reason));
+  const previous = timingHistory
+    .filter((row) => !row.voided_at)
+    .sort((a, b) => b.assigned_at.localeCompare(a.assigned_at))[0];
+  const chronologyBlocked =
+    action.kind === "assign" &&
+    !!previous?.completed_at &&
+    date <= previous.completed_at;
   const titles = {
     assign: "Asignar territorio",
     complete: "Marcar como completado",
@@ -1403,12 +1644,13 @@ function ActionModal({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          const fields = new FormData(e.currentTarget);
           void onSave({
             name,
             personId,
-            date,
-            completed,
-            reason,
+            date: String(fields.get("assigned_at") ?? date),
+            completed: String(fields.get("completed_at") ?? completed),
+            reason: String(fields.get("reason") ?? reason),
             voided,
             body,
           });
@@ -1462,31 +1704,30 @@ function ActionModal({
                   Fecha de Inicio
                   <input
                     type="date"
+                    name="assigned_at"
                     required
-                    max={todayLima()}
+                    max={today}
                     disabled={action.kind === "correct" && !canCorrect}
                     value={date}
+                    onInput={(e) => setDate(e.currentTarget.value)}
                     onChange={(e) => setDate(e.target.value)}
                   />
                 </label>
               </>
             )}
-            {action.kind === "assign" && (
-              <p className="small muted">
-                La fecha debe ser estrictamente posterior al cierre de la
-                asignación anterior.
-              </p>
-            )}
+
             {action.kind !== "assign" && (
               <label>
                 Fecha de finalización
                 <input
                   type="date"
+                  name="completed_at"
                   disabled={action.kind === "correct" && !canCorrect}
                   required={action.kind === "complete"}
                   min={date}
                   max={todayLima()}
                   value={completed}
+                  onInput={(e) => setCompleted(e.currentTarget.value)}
                   onChange={(e) => setCompleted(e.target.value)}
                 />
               </label>
@@ -1503,6 +1744,7 @@ function ActionModal({
                 <label>
                   Motivo de la corrección
                   <textarea
+                    name="reason"
                     minLength={8}
                     maxLength={2000}
                     required
@@ -1525,6 +1767,33 @@ function ActionModal({
             )}
           </>
         )}
+        {action.kind !== "observe" &&
+          !(action.kind === "correct" && voided) && (
+            <AssignmentTimingNotice
+              history={timingHistory}
+              start={action.kind === "complete" ? a!.assigned_at : date}
+              issues={timingIssues}
+              allowed={canOverrideTiming}
+              assigning={action.kind === "assign"}
+            />
+          )}
+        {(action.kind === "assign" || action.kind === "complete") &&
+          timingIssues.length > 0 &&
+          canOverrideTiming && (
+            <label>
+              Motivo de la excepción
+              <textarea
+                name="reason"
+                rows={3}
+                required
+                minLength={8}
+                maxLength={2000}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explica por qué se inicia antes de los 14 días o se supera el plazo de 3 meses"
+              />
+            </label>
+          )}
         {action.kind === "assign" && (
           <TerritoryVisitNotice
             compact
@@ -1536,6 +1805,13 @@ function ActionModal({
             today={today}
             canView={canViewVisits}
           />
+        )}
+        {chronologyBlocked && (
+          <p className="error" role="alert">
+            El inicio debe ser posterior a la finalización anterior. Los
+            solapamientos y el inicio el mismo día del cierre no admiten
+            excepción.
+          </p>
         )}
         {message && (
           <p className="error" role="alert">
@@ -1555,6 +1831,8 @@ function ActionModal({
             className="primary"
             disabled={
               busy ||
+              chronologyBlocked ||
+              timingBlocked ||
               (action.kind === "assign" &&
                 !conductors.some(
                   (c) => c.person_id === personId && c.active && !c.deleted_at,

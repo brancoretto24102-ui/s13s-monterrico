@@ -1,6 +1,8 @@
+import { fixtureDate } from "./fixture-date";
 import { bootstrapTestDb } from "./bootstrap-test-db";
 import { testConductors } from "./test-conductors";
 import { testAccess } from "./test-access";
+import { testAssignmentTiming } from "./test-assignment-timing";
 import { testVisitRestrictions } from "./test-visit-restrictions";
 import assert from "node:assert/strict";
 import { Client } from "pg";
@@ -86,7 +88,10 @@ try {
     /permission denied/,
   );
   await denied(
-    reader.query("select assign_territory($1,1,'Prueba','2026-01-01')", [t]),
+    reader.query(
+      `select assign_territory($1,1,'Prueba','${fixtureDate(60)}')`,
+      [t],
+    ),
     /permiso/,
   );
   await denied(reader.query("select get_export_snapshot()"), /exportar/);
@@ -116,11 +121,11 @@ try {
   // Two independent PostgreSQL connections, competing for the same row lock.
   const requests = await Promise.allSettled([
     ed1.query(
-      "select assign_territory($1,1,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      `select assign_territory($1,1,'Conductor sintético de asignaciones','${fixtureDate(60)}',$2)`,
       [t, personId],
     ),
     ed2.query(
-      "select assign_territory($1,1,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      `select assign_territory($1,1,'Conductor sintético de asignaciones','${fixtureDate(60)}',$2)`,
       [t, personId],
     ),
   ]);
@@ -137,46 +142,52 @@ try {
   ).rows[0];
   await denied(
     ed1.query(
-      "select assign_territory($1,2,'Conductor sintético de asignaciones','2026-01-02',$2)",
+      `select assign_territory($1,2,'Conductor sintético de asignaciones','${fixtureDate(46)}',$2)`,
       [t, personId],
     ),
     /Conflicto/,
   );
   await denied(
-    ed1.query("select complete_assignment($1,1,2,'2025-12-31')", [a.id]),
+    ed1.query(`select complete_assignment($1,1,2,'${fixtureDate(61)}')`, [
+      a.id,
+    ]),
     /check constraint/,
   );
-  await ed1.query("select complete_assignment($1,1,2,'2026-01-01')", [a.id]);
+  await ed1.query(`select complete_assignment($1,1,2,'${fixtureDate(60)}')`, [
+    a.id,
+  ]);
   checks++;
   await denied(
     ed1.query(
-      "select assign_territory($1,3,'Conductor sintético de asignaciones','2026-01-01',$2)",
+      `select assign_territory($1,3,'Conductor sintético de asignaciones','${fixtureDate(60)}',$2)`,
       [t, personId],
     ),
     /retroactiva/,
   );
   const next = await value(
     ed1,
-    "select assign_territory($1,3,'Conductor sintético de asignaciones','2026-01-02',$2)",
+    `select assign_territory($1,3,'Conductor sintético de asignaciones','${fixtureDate(46)}',$2)`,
     [t, personId],
   );
   checks++;
   await denied(
     admin.query(
-      "select correct_assignment($1,2,4,'Persona prueba','2026-01-01','2026-01-02','Corrección que solapa')",
+      `select correct_assignment($1,2,4,'Persona prueba','${fixtureDate(60)}','${fixtureDate(46)}','Corrección que solapa')`,
       [a.id],
     ),
     /conflicto/,
   );
   await denied(
     admin.query(
-      "select correct_assignment($1,2,4,'Persona prueba','2026-01-01','2026-01-01','')",
+      `select correct_assignment($1,2,4,'Persona prueba','${fixtureDate(60)}','${fixtureDate(60)}','')`,
       [a.id],
     ),
     /motivo/,
   );
   await denied(
-    ed1.query("select complete_assignment($1,1,3,'2026-01-03')", [next]),
+    ed1.query(`select complete_assignment($1,1,3,'${fixtureDate(45)}')`, [
+      next,
+    ]),
     /Otro usuario/,
   );
   await denied(
@@ -254,7 +265,7 @@ try {
   checks += 2;
   // Correction and audit attribution, then logical deletion.
   await admin.query(
-    "select correct_assignment($1,1,4,'Persona corregida','2026-01-02','2026-01-03','Motivo de prueba válido')",
+    `select correct_assignment($1,1,4,'Persona corregida','${fixtureDate(46)}','${fixtureDate(45)}','Motivo de prueba válido')`,
     [next],
   );
   checks++;
@@ -268,7 +279,7 @@ try {
   );
   checks++;
   await admin.query(
-    "select correct_assignment($1,2,5,'Persona corregida','2026-01-02','2026-01-03','Anulación de prueba válida',true)",
+    `select correct_assignment($1,2,5,'Persona corregida','${fixtureDate(46)}','${fixtureDate(45)}','Anulación de prueba válida',true)`,
     [next],
   );
   checks++;
@@ -355,6 +366,15 @@ try {
     editor: ed1,
     reader,
     inactive,
+    anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testAssignmentTiming({
+    root,
+    admin,
+    admin2,
+    editor: ed1,
+    reader,
     anon,
     connect: (uid) => connection("authenticated", uid),
   });

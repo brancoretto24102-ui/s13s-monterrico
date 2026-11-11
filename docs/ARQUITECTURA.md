@@ -14,15 +14,17 @@ Desde la tercera migración, los RPC de `public` usan `SECURITY INVOKER` y llama
 | `profiles`               | Rol, estado y exportación por usuario de Auth                            |
 | `audit_log`              | Usuario, hora UTC, antes/después y motivo                                |
 | `import_batches`         | SHA-256 del archivo, responsable, resultados y conciliación              |
-| `territory_observations` | Observaciones independientes del formulario                              |
+| `territory_observations` | Observaciones generales y excepciones de plazos vinculadas a la asignación |
 | `conductors`             | Ficha del maestro: código único, persona, estado, papelera y versión     |
 | `meeting_schedule`       | Base para programación en segunda etapa                                  |
 
-Un nombre histórico no se cambia cuando se amplía la ficha de la persona. Los registros importados conservan snapshot aunque no haya correspondencia inequívoca con un `person_id`; no se fusionan homónimos como si fueran necesariamente la misma persona. El formulario permite seleccionar un conductor activo identificado por UUID o escribir un nombre manual; las sugerencias históricas no identifican automáticamente a personas.
+Un nombre histórico no se cambia cuando se amplía la ficha de la persona. Los registros importados conservan snapshot aunque no haya correspondencia inequívoca con un `person_id`; no se fusionan homónimos como si fueran necesariamente la misma persona. Una nueva asignación exige seleccionar un conductor activo identificado por UUID; las sugerencias históricas no identifican automáticamente a personas. La corrección expresa del nombre histórico se conserva como operación independiente con motivo.
 
 ## Mutaciones y simultaneidad
 
 `assign_territory`, `complete_assignment` y `correct_assignment` bloquean primero la fila del territorio. Comprueban la versión esperada que vio el usuario. Un trigger adicional valida predecesor y sucesor, actualiza la versión y escribe auditoría. Los índices únicos impiden dos abiertos y dos inicios vigentes en el mismo día por territorio.
+
+Desde la versión 0.6.0, `assign_territory_with_reason` y `complete_assignment_with_reason` agregan un motivo de excepción opcional en la firma, obligatorio cuando se incumple un plazo. Los RPC anteriores delegan sin motivo y no permiten excepciones silenciosas. Los ayudantes privados calculan descanso de 14 días y límite de 3 meses calendario usando fechas DATE; verifican el permiso actual `territories.override_timing` y el motivo dentro del bloqueo de la operación. No están expuestos ni son ejecutables directamente por los clientes. El registro y su observación de tipo `timing_exception`, con `assignment_id`, se confirman o revierten juntos. Las correcciones de fechas verifican también el descanso del sucesor; una corrección solo del nombre no revalida retrospectivamente fechas históricas. No se reescriben importaciones ni registros anteriores. Ver [plazos](PLAZOS_TERRITORIOS.md).
 
 El RPC de importación bloquea territorios en orden estable y ejecuta todo el lote en una transacción. Si una fila rompe reglas, se revierte el lote completo. Los archivos se reconocen por SHA-256 y los registros existentes por territorio y fecha de asignación, con comparación de nombre y cierre. No se actualizan registros existentes silenciosamente. La especificación histórica autoriza únicamente el ajuste particular de T64; la previsualización lo muestra y su motivo se conserva en auditoría.
 

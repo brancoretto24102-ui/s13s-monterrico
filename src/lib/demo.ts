@@ -30,7 +30,7 @@ export function demoSnapshot(): Snapshot {
             id: `demo-a${i}`,
             territory_id: t.id,
             assigned_name_snapshot: `Colaborador ${String(i + 1).padStart(2, "0")}`,
-            assigned_at: days(12 + (i % 30)),
+            assigned_at: days(i === 3 ? 110 : 12 + (i % 30)),
             completed_at: i % 3 === 0 ? null : days(i % 10),
             version: 1,
             created_at: `${today}T12:00:00Z`,

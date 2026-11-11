@@ -1,3 +1,4 @@
+import { fixtureDate } from "./fixture-date";
 import assert from "node:assert/strict";
 import type { Client } from "pg";
 import { permissionKeys } from "../src/lib/permissions";
@@ -204,7 +205,7 @@ export async function testAccess({
   await denied(custom.query("select backup_data()"));
   await denied(custom.query("select get_users()"));
   await denied(
-    custom.query("select complete_assignment($1,1,1,'2026-01-01')", [
+    custom.query(`select complete_assignment($1,1,1,'${fixtureDate(40)}')`, [
       crypto.randomUUID(),
     ]),
   );
@@ -239,12 +240,12 @@ export async function testAccess({
   );
   const assignment = await scalar(
     custom,
-    "select assign_territory($1,$2,'Conductor sintético granular','2026-01-01',$3)",
+    `select assign_territory($1,$2,'Conductor sintético granular','${fixtureDate(40)}',$3)`,
     [t.id, t.version, conductorPerson],
   );
   ok(!!assignment);
   await denied(
-    custom.query("select complete_assignment($1,1,$2,'2026-01-02')", [
+    custom.query(`select complete_assignment($1,1,$2,'${fixtureDate(39)}')`, [
       assignment,
       t.version + 1,
     ]),
@@ -259,19 +260,20 @@ export async function testAccess({
   );
   checks++;
   await denied(
-    custom.query("select complete_assignment($1,null,null,'2026-01-02')", [
-      assignment,
-    ]),
+    custom.query(
+      `select complete_assignment($1,null,null,'${fixtureDate(39)}')`,
+      [assignment],
+    ),
     /actualizó/,
   );
-  await custom.query("select complete_assignment($1,1,$2,'2026-01-02')", [
-    assignment,
-    t.version + 1,
-  ]);
+  await custom.query(
+    `select complete_assignment($1,1,$2,'${fixtureDate(39)}')`,
+    [assignment, t.version + 1],
+  );
   checks++;
   await denied(
     custom.query(
-      "select assign_territory($1,$2,'Prueba granular','2026-01-03')",
+      `select assign_territory($1,$2,'Prueba granular','${fixtureDate(38)}')`,
       [t.id, t.version + 2],
     ),
   );
