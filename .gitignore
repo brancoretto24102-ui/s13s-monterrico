@@ -1,4 +1,5 @@
 node_modules/
+supabase/.temp/
 dist/
 .env
 .env.*
@@ -8,6 +9,13 @@ private/
 test-results/
 *.xlsx
 *.pdf
+*.geojson
+*.kml
+*.gpx
+*.gpkg
+*.shp
+*.dwg
+*.dxf
 *.csv
 *.zip
 *.log

@@ -1,6 +1,6 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
-const blocked = /\.(xlsx?|pdf|csv|zip|sqlite|dump|bak)$/i;
+const blocked = /\.(xlsx?|pdf|csv|zip|sqlite|dump|bak|geojson|kml|gpx|gpkg|shp|dwg|dxf)$/i;
 const skip = new Set(["node_modules", ".git", ".pg-test", "test-results"]);
 const errors = [];
 async function scan(dir) {

@@ -31,11 +31,17 @@ export type AppView =
   | "conductors"
   | "visit-restrictions"
   | "preaching-schedule"
+  | "territory-map"
   | "settings";
 export const viewInfo: Record<
   AppView,
   { label: string; section: string; permission?: string; admin?: boolean }
 > = {
+  "territory-map": {
+    label: "Territorios geográficos",
+    section: "CONFIGURACIÓN / MAESTROS",
+    permission: "maps.view",
+  },
   "preaching-schedule": {
     label: "Cronograma semanal",
     section: "PREDICACIÓN / PROCESOS",
@@ -142,7 +148,12 @@ export default function AppSidebar({
         <span>{viewInfo[id].label}</span>
       </button>
     );
-  const config = ["conductors", "visit-restrictions", "settings"] as AppView[],
+  const config = [
+      "conductors",
+      "visit-restrictions",
+      "territory-map",
+      "settings",
+    ] as AppView[],
     territory = ["territories", "import", "export"] as AppView[],
     security = ["access-profiles", "users", "audit"] as AppView[];
   return (
@@ -186,6 +197,7 @@ export default function AppSidebar({
                 <div>
                   {item("conductors", UsersRound)}
                   {item("visit-restrictions", House)}
+                  {item("territory-map", MapPinned)}
                   {item("settings", Settings)}
                 </div>
               </details>

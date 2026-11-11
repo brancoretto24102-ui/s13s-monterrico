@@ -14,6 +14,20 @@ export const permissionGroups = [
   },
   {
     section: "CONFIGURACIÓN",
+    module: "Territorios geográficos",
+    prefix: "maps",
+    actions: [
+      ["view", "Visualizar mapa y prioridades"],
+      ["create", "Crear polígonos"],
+      ["edit", "Editar límites"],
+      ["approve", "Validar límites revisados"],
+      ["delete", "Eliminar / restaurar polígonos"],
+      ["import", "Importar GeoJSON"],
+      ["export", "Exportar GeoJSON y KML"],
+    ],
+  },
+  {
+    section: "CONFIGURACIÓN",
     module: "Domicilios que no desean visitas",
     prefix: "visits",
     actions: [

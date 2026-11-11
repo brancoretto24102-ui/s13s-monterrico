@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 92 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 360 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 131 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 534 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -118,3 +118,11 @@ El HTML renderizado del editor debe contener exactamente una casilla por cada pe
 Las pruebas de contraseñas cubren longitud, ausencia de cada categoría, espacios y emoji que no sustituyen los símbolos admitidos, el límite exacto de 12 caracteres, todos los símbolos reconocidos y la confirmación exacta. La interfaz renderiza los cinco requisitos con su cumplimiento. Los datos de prueba son sintéticos y no son credenciales operativas.
 
 En navegador se creó y reabrió un perfil temporal con los cuatro permisos de cronograma, la excepción y Asignar. Se conservó la selección y se comprobó que retirar la excepción desmarcara la casilla. En el formulario de contraseña, un valor incompleto quedó bloqueado, uno válido con confirmación exacta habilitó Guardar y una confirmación diferente volvió a bloquearlo. No se envió un cambio de contraseña real. La composición obligatoria de Auth se guardó y se verificó al recargar su panel.
+
+## Territorios geográficos (0.10.0)
+
+Las pruebas nuevas cubren geometrías Polygon/MultiPolygon, partes separadas, orientación, límites y cruces, coordenadas WGS84, centro de referencia, importaciones inválidas y exportaciones sin asignaciones. PostgreSQL comprueba RLS, usuarios inactivos y anónimos, permisos granulares, importación atómica, Papelera, revisión, auditoría, respaldo y conflictos con conexiones independientes. El contexto del mapa no devuelve personas ni direcciones restringidas. Se verifica que el historial de asignaciones conserve su huella después de todas las operaciones geográficas.
+
+La georreferenciación del plano privado es aproximada. Los contornos importados quedan en borrador: las pruebas de integridad no certifican límites actuales ni precisión GPS. No se incluyen el plano, controles, coordenadas reales ni resultados privados en este repositorio.
+
+Se comprobaron en navegador los filtros por color y rango, paginación, selección, edición, motivo y confirmación de revisión, Papelera/restauración y descargas GeoJSON/KML de los 82 territorios ficticios. La vista de 449 px no presenta desborde horizontal; no se probó un teléfono físico. En la base alojada se verificaron el contexto y respaldo autenticados, el catálogo de permisos, 82 geometrías en borrador con 184 partes y 6244 puntos y 82 eventos de alta. Las 820 asignaciones conservaron su huella; tabla y RPC geográficos rechazaron consultas REST anónimas. Los insumos privados se mantienen fuera del repositorio.

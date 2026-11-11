@@ -5,6 +5,7 @@ import { testAccess } from "./test-access";
 import { testAssignmentTiming } from "./test-assignment-timing";
 import { testPreachingSchedule } from "./test-preaching-schedule";
 import { testVisitRestrictions } from "./test-visit-restrictions";
+import { testTerritoryMap } from "./test-territory-map";
 import assert from "node:assert/strict";
 import { Client } from "pg";
 const external = process.env.TEST_DATABASE_URL;
@@ -385,6 +386,16 @@ try {
     admin2,
     reader,
     editor: ed1,
+    anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testTerritoryMap({
+    root,
+    admin,
+    admin2,
+    reader,
+    editor: ed1,
+    inactive,
     anon,
     connect: (uid) => connection("authenticated", uid),
   });

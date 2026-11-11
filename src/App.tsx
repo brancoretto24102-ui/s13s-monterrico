@@ -1,4 +1,12 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   MapPinned,
   LayoutDashboard,
@@ -36,6 +44,8 @@ import AppSidebar, {
 import SecurityPanel, { initialDemoSecurity } from "./components/SecurityPanel";
 import DataPager from "./components/DataPager";
 import { can } from "./lib/permissions";
+import type { MapShape } from "./lib/territoryMap";
+const TerritoryMapPanel = lazy(() => import("./components/TerritoryMapPanel"));
 import Access from "./components/Access";
 import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
@@ -134,6 +144,7 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
   const [creatingTerritory, setCreatingTerritory] = useState(false);
   const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
+  const [demoMapShapes, setDemoMapShapes] = useState<MapShape[] | undefined>();
   const [territoryPage, setTerritoryPage] = useState(1),
     [territorySize, setTerritorySize] = useState(20);
   const [coverageOptions, setCoverageOptions] =
@@ -169,6 +180,7 @@ export default function App() {
     setSnapshot(empty);
     setDemoObservations([]);
     setDemoPreachingWeeks({});
+    setDemoMapShapes(undefined);
     setAction(null);
     setDetail(null);
     setObservations([]);
@@ -399,6 +411,7 @@ export default function App() {
     setLoading(false);
     setView("overview");
     setDemoSecurity(initialDemoSecurity());
+    setDemoMapShapes(undefined);
   }
   function navigate(v: View) {
     if (!viewAllowed(profile, v)) return;
@@ -1455,6 +1468,26 @@ export default function App() {
                     />
                   </section>
                 </>
+              )}
+              {view === "territory-map" && can(profile, "maps.view") && (
+                <Suspense
+                  fallback={
+                    <section className="panel">Preparando el mapa…</section>
+                  }
+                >
+                  <TerritoryMapPanel
+                    profile={profile}
+                    snapshot={snapshot}
+                    today={today}
+                    demo={demo}
+                    demoShapes={demoMapShapes}
+                    onDemoShapes={setDemoMapShapes}
+                    onOpenTerritory={(id) => {
+                      navigate("territories");
+                      setDetail(id);
+                    }}
+                  />
+                </Suspense>
               )}
               {view === "preaching-schedule" &&
                 can(profile, "schedules.view") && (

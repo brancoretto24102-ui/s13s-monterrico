@@ -52,3 +52,5 @@ Los permisos se consultan en la base en cada operación y no dependen de metadat
 Las operaciones de seguridad usan versiones y un bloqueo transaccional. Si otro administrador guardó primero, se rechaza la versión anterior y se solicita revisar los datos actuales. La eliminación es recuperable y las referencias y auditoría se conservan. Los respaldos incluyen perfiles personalizados y sus vínculos.
 
 La vista de ejemplo utiliza datos ficticios temporales. Permite practicar la gestión sin enviar correos ni crear cuentas reales. Se reinicia al salir o recargar.
+
+Desde 0.10.0, Configuración → Territorios geográficos dispone de siete acciones independientes: visualizar, crear, editar, validar, eliminar/restaurar, importar y exportar. La importación necesita además crear o editar según el lote. Los roles base editor y lector no reciben estos accesos automáticamente. Ver [maestro geográfico](TERRITORIOS_GEOGRAFICOS.md).

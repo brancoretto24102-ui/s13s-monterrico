@@ -13,6 +13,8 @@ Los respaldos contienen datos personales y UUID de usuarios. No guardarlos en Gi
 
 Desde la versión 0.8.0, el JSON incorpora `preaching_schedules` (semanas con sus versiones y salidas) y `preaching_template` (estructura inicial privada). Las observaciones enlazan las excepciones con su semana y salida. Restaurar también estos UUID y vínculos, y la auditoría de versiones anteriores; no reconstruir las semanas desde sus imágenes ni sus PDF anteriores.
 
+Desde 0.10.0, `territory_geometries` conserva polígonos y partes, revisión, huella inicial, versiones, autores y Papelera. Restaurar UUID y relaciones junto con el catálogo. GeoJSON/KML no contienen toda esa información. Conservar PDF y calibración privados por separado.
+
 ## Recuperación controlada
 
 1. Detener las escrituras y conservar una copia del estado dañado antes de hacer cambios.
