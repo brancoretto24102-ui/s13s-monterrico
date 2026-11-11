@@ -15,6 +15,7 @@ Aplicación React + TypeScript con PostgreSQL/Supabase para consultar, asignar, 
 - Importación local del Excel con previsualización, procedencia por celda, ajustes visibles, transacción atómica y deduplicación por archivo y por registro.
 - Formulario oficial: cuatro asignaciones por fila, veinte filas por página, continuaciones, cierres al corte, última finalización histórica y encabezado con raya de ancho medido en cada página.
 - Búsqueda, filtros, historial, observaciones y actualización por Realtime con comprobación cada 30 segundos como respaldo.
+- Última predicación calculada desde las finalizaciones, filtros por rango y color, semáforo de 4/8/12 meses y orden por prioridad opcional. Asignar, editar y anular inicios directamente desde el listado, con permisos independientes.
 - Respaldo completo JSON y exportación CSV administrativa; los datos nunca se guardan en el repositorio ni en localStorage.
 - Maestro de conductores para administradores: crear, editar, activar/desactivar, eliminar a papelera y restaurar. Código único, motivo y auditoría; selección obligatoria de una ficha activa al asignar territorios. Los cronogramas quedan para la segunda etapa.
 
@@ -68,7 +69,7 @@ python3 scripts/validate-private-pdf.py /ruta-privada/plantilla.pdf /ruta-privad
 
 La comprobación visual requiere Python, PyMuPDF, NumPy y Pillow. No forman parte del funcionamiento normal de la aplicación web. Los archivos de validación contienen nombres y deben permanecer privados.
 
-La versión 0.6.0 incorpora [Plazos y excepciones de territorios](docs/PLAZOS_TERRITORIOS.md): descanso de 14 días, cierre en 3 meses calendario, avisos y excepciones justificadas. Conserva [Domicilios que no desean visitas](docs/DOMICILIOS_SIN_VISITAS.md), la selección obligatoria de conductores activos del maestro y [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md). El maestro de conductores se encuentra en Configuración → Maestros. Se conservan las reglas del PDF y el historial previo. La validación incluye 38 pruebas unitarias y 281 comprobaciones PostgreSQL.
+La versión 0.7.0 incorpora [Última predicación y prioridades](docs/PRIORIDAD_TERRITORIOS.md), filtros y acciones directas. Conserva [Plazos y excepciones](docs/PLAZOS_TERRITORIOS.md), [Domicilios que no desean visitas](docs/DOMICILIOS_SIN_VISITAS.md), la selección obligatoria de conductores activos del maestro y [Perfiles y Usuarios](docs/PERFILES_Y_USUARIOS.md). El maestro de conductores se encuentra en Configuración → Maestros. Se conservan las reglas del PDF y el historial previo. La validación incluye 52 pruebas unitarias y 291 comprobaciones PostgreSQL.
 
 Consultar [configuración del correo](docs/CORREO.md), [resultados y límites de verificación](docs/VALIDACION.md), [reglas y arquitectura](docs/ARQUITECTURA.md), [manual de uso](docs/USO.md) y [respaldo y recuperación](docs/RESPALDOS.md).
 

@@ -19,6 +19,10 @@ El administrador puede activar o retirar la exportación de editores y lectores.
 
 ## Trabajo diario
 
+El listado muestra **Última vez predicado**, calculada desde el último cierre. Permite filtrar esa fecha con **Desde / Hasta** y consultar colores según antigüedad: verde antes de 4 meses, amarillo desde 4, anaranjado desde 8 y rojo desde 12 o sin registro. Mantiene el orden numérico; **Ordenar por prioridad** pone primero los rojos y, al pulsar otra vez, devuelve el orden habitual. Ver [ejemplos, filtros y permisos](PRIORIDAD_TERRITORIOS.md).
+
+Se puede **Asignar** directamente desde la fila. Si hay una asignación abierta, **Editar inicio** y **Eliminar inicio** aparecen según los permisos independientes del perfil. Eliminar anula con motivo y confirmación, conservando auditoría y el resto del historial. **Ver detalle** sigue disponible.
+
 1. Abrir Territorios, buscar un número o responsable y revisar su estado.
 2. Entrar al detalle y elegir Asignar si está disponible. Seleccionar un conductor activo del maestro en **Nombre del conductor** e indicar la **Fecha de Inicio**. Buscar por nombre o código; desplazar la lista para ver más opciones. Si no aparece, registrarlo o activarlo en el maestro antes de asignar.
 3. Para completar, abrir el territorio asignado, indicar la fecha de finalización y confirmar.

@@ -19,10 +19,10 @@ export const permissionGroups = [
     prefix: "territories",
     actions: [
       ["view", "Visualizar"],
-      ["assign", "Asignar"],
+      ["assign", "Asignar / agregar inicio"],
       ["complete", "Completar"],
-      ["correct", "Corregir historial"],
-      ["void", "Anular registros"],
+      ["correct", "Editar inicio / corregir historial"],
+      ["void", "Eliminar inicio / anular registros"],
       ["observe", "Registrar observaciones"],
       ["create", "Crear territorios"],
       ["edit", "Editar / cambiar estado de territorios"],

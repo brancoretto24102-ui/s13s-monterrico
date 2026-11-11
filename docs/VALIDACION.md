@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 38 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel y plazos de asignación con excepciones justificadas.
-- 281 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 52 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 291 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -74,3 +74,13 @@ Se rechazan motivos vacíos, compuestos solo por espacios, tabulaciones o espaci
 Las correcciones de fechas revisan los descansos anterior y siguiente. Se comprueba que un parámetro de anulación nulo no permita saltarse la validación. Una corrección solo del nombre conserva las fechas históricas. Los solapamientos, las fechas futuras y las identidades no autorizadas siguen bloqueados; los errores revierten también la observación. El respaldo conserva las justificaciones.
 
 En navegador se comprobaron, con datos ficticios temporales, el inicio durante el descanso, el cierre fuera del trimestre, el guardado deshabilitado sin motivo válido, la observación en el territorio correspondiente y la nueva casilla de Perfiles. La actualización de la base alojada conservó la huella del historial anterior, sin crear asignaciones, observaciones ni cuentas ficticias en el entorno operativo.
+
+## Última predicación y acciones directas (0.7.0)
+
+Se verifica el máximo cierre de todo el historial, aunque haya una asignación más reciente abierta; se excluyen anulados, fechas futuras e inválidas. Los límites de 4, 8 y 12 meses se comprueban en su aniversario exacto, con cambios de año, fines de mes y años bisiestos. Sin finalizaciones no se inventa una fecha y el color es rojo.
+
+Se comprueban el orden numérico predeterminado, el orden de colores, las fechas más antiguas dentro del color, desempates por número, rangos inclusivos y de un solo extremo, combinaciones de color y rango, casos sin registro y rangos invertidos. El máximo cierre se calcula antes de filtrar; el rango no transforma un cierre anterior en el último. La ordenación no muta el conjunto original.
+
+Las pruebas de permisos verifican que una cuenta que solo puede asignar no puede completar, editar ni anular, y que los permisos de corrección y anulación son independientes. En PostgreSQL se ejercitan las denegaciones directas al RPC, una corrección autorizada, una anulación autorizada y su auditoría con los perfiles mínimos correspondientes. No se cambian las reglas ni las funciones de la base alojada para ofrecer estos accesos directos.
+
+En navegador, con datos ficticios temporales, se verificaron el filtro exacto de una fecha, la selección por color, el orden prioritario, la asignación desde la tabla, la edición del inicio, el motivo obligatorio de la anulación y la conservación de la última finalización anterior después de anular el inicio de prueba. No se modificaron registros operativos para estas comprobaciones.

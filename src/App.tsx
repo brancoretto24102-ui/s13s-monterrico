@@ -24,6 +24,8 @@ import {
   Menu,
   X,
   UsersRound,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import AppSidebar, {
   firstView,
@@ -45,6 +47,20 @@ import VisitRestrictionsPanel, {
 import { visitSummary } from "./lib/visitRestrictions";
 import { useLimaToday } from "./lib/useLimaToday";
 import ConductorSelect from "./components/ConductorSelect";
+import TerritoryCoverage, {
+  CoverageDate,
+} from "./components/TerritoryCoverage";
+import {
+  coveragePriority,
+  emptyCoverageOptions,
+  filterCoverageTerritories,
+  latestCompletedDates,
+  type CoverageOptions,
+} from "./lib/territoryCoverage";
+import {
+  requireAssignmentAction,
+  type AssignmentActionKind,
+} from "./lib/assignmentActions";
 import AssignmentTimingNotice from "./components/AssignmentTimingNotice";
 import {
   assignmentDeadline,
@@ -77,7 +93,7 @@ import type {
 } from "./lib/types";
 type View = AppView;
 type Action = {
-  kind: "assign" | "complete" | "correct" | "observe";
+  kind: AssignmentActionKind;
   territory: Territory;
   assignment?: Assignment;
 };
@@ -111,6 +127,8 @@ export default function App() {
   const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
   const [territoryPage, setTerritoryPage] = useState(1),
     [territorySize, setTerritorySize] = useState(20);
+  const [coverageOptions, setCoverageOptions] =
+    useState<CoverageOptions>(emptyCoverageOptions);
   const epoch = useRef(0);
   const accessSignature = useRef("");
   const today = useLimaToday();
@@ -133,8 +151,8 @@ export default function App() {
   );
   const canAssign = can(profile, "territories.assign");
   const canComplete = can(profile, "territories.complete");
-  const canCorrect =
-    can(profile, "territories.correct") || can(profile, "territories.void");
+  const canCorrect = can(profile, "territories.correct");
+  const canVoid = can(profile, "territories.void");
   const isAdmin = profile?.role === "administrador";
   const clear = useCallback(() => {
     epoch.current++;
@@ -145,6 +163,7 @@ export default function App() {
     setDetail(null);
     setObservations([]);
     setNotice("");
+    setCoverageOptions(emptyCoverageOptions);
     setView("overview");
     setLoading(false);
   }, []);
@@ -314,29 +333,39 @@ export default function App() {
       a.completed_at >= period.start &&
       a.completed_at <= period.end,
   ).length;
+  const coverageDates = useMemo(
+    () => latestCompletedDates(snapshot.assignments, today),
+    [snapshot.assignments, today],
+  );
+  useEffect(() => setTerritoryPage(1), [query, filter, coverageOptions]);
   const filtered = useMemo(
     () =>
-      snapshot.territories.filter((t) => {
-        const records = snapshot.assignments.filter(
-          (a) => a.territory_id === t.id,
-        );
-        const open = records.find((a) => !a.completed_at);
-        const match =
-          !query ||
-          normalizeName(
-            `${t.territory_number} ${t.description ?? ""} ${records.map((a) => a.assigned_name_snapshot).join(" ")}`,
-          ).includes(normalizeName(query));
-        return (
-          match &&
-          (filter === "all" ||
-            (filter === "assigned" && !!open) ||
-            (filter === "available" && t.active && !open && !resting(t.id)) ||
-            (filter === "resting" && t.active && resting(t.id)) ||
-            (filter === "overdue" && t.active && overdue(t.id)) ||
-            (filter === "inactive" && !t.active))
-        );
-      }),
-    [snapshot, query, filter, today],
+      filterCoverageTerritories(
+        snapshot.territories.filter((t) => {
+          const records = snapshot.assignments.filter(
+            (a) => a.territory_id === t.id,
+          );
+          const open = records.find((a) => !a.completed_at);
+          const match =
+            !query ||
+            normalizeName(
+              `${t.territory_number} ${t.description ?? ""} ${records.map((a) => a.assigned_name_snapshot).join(" ")}`,
+            ).includes(normalizeName(query));
+          return (
+            match &&
+            (filter === "all" ||
+              (filter === "assigned" && !!open) ||
+              (filter === "available" && t.active && !open && !resting(t.id)) ||
+              (filter === "resting" && t.active && resting(t.id)) ||
+              (filter === "overdue" && t.active && overdue(t.id)) ||
+              (filter === "inactive" && !t.active))
+          );
+        }),
+        coverageDates,
+        coverageOptions,
+        today,
+      ),
+    [snapshot, query, filter, today, coverageDates, coverageOptions],
   );
   async function logout() {
     if (demo) {
@@ -354,6 +383,7 @@ export default function App() {
     setProfile(demoProfile);
     setSnapshot(demoSnapshot());
     setDemoObservations([]);
+    setCoverageOptions(emptyCoverageOptions);
     setSync("demo");
     setLoading(false);
     setView("overview");
@@ -373,6 +403,7 @@ export default function App() {
     setDetail(null);
     setQuery("");
     setFilter("all");
+    setCoverageOptions(emptyCoverageOptions);
     setNotice("");
     window.scrollTo({ top: 0 });
   }
@@ -399,6 +430,21 @@ export default function App() {
     setNotice("");
     try {
       const { kind, territory: t, assignment: a } = action;
+      requireAssignmentAction(profile, kind);
+      const voiding = kind === "void";
+      // A dedicated cancellation cannot silently change the record being voided.
+      if (voiding) {
+        if (!a) throw new Error("Registro no disponible.");
+        values = {
+          ...values,
+          name: a.assigned_name_snapshot,
+          date: a.assigned_at,
+          completed: a.completed_at ?? "",
+          voided: true,
+        };
+      } else values = { ...values, voided: false };
+      if ((kind === "correct" || voiding) && !validTimingReason(values.reason))
+        throw new Error("Indica un motivo entre 8 y 2000 caracteres.");
       const history = snapshot.assignments.filter(
         (row) => row.territory_id === t.id,
       );
@@ -546,7 +592,7 @@ export default function App() {
             p_completed_at: values.completed,
             p_exception_reason: values.reason || null,
           });
-        if (kind === "correct")
+        if (kind === "correct" || voiding)
           await rpc("correct_assignment", {
             p_id: a!.id,
             p_expected_version: a!.version,
@@ -555,7 +601,7 @@ export default function App() {
             p_assigned_at: values.date,
             p_completed_at: values.completed || null,
             p_reason: values.reason,
-            p_void: values.voided,
+            p_void: voiding,
           });
         if (kind === "observe")
           await rpc("add_observation", {
@@ -634,15 +680,18 @@ export default function App() {
           <thead>
             <tr>
               <th>Territorio</th>
+              <th>Última vez predicado</th>
               <th>Estado</th>
               <th>Responsable</th>
               <th>Fecha de Inicio</th>
-              <th>Acción</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
             {list.map((t) => {
               const a = openFor(t.id);
+              const lastCompleted = coverageDates.get(t.id) ?? null;
+              const priority = coveragePriority(lastCompleted, today);
               return (
                 <tr key={t.id}>
                   <td>
@@ -650,7 +699,9 @@ export default function App() {
                       className="territory-link"
                       onClick={() => setDetail(t.id)}
                     >
-                      <span className="territory-number">
+                      <span
+                        className={`territory-number coverage-${priority.color}`}
+                      >
                         {String(t.territory_number).padStart(2, "0")}
                       </span>
                       <span>
@@ -658,6 +709,9 @@ export default function App() {
                         {t.description && <small>{t.description}</small>}
                       </span>
                     </button>
+                  </td>
+                  <td>
+                    <CoverageDate date={lastCompleted} today={today} />
                   </td>
                   <td>
                     <Status
@@ -694,14 +748,60 @@ export default function App() {
                   </td>
                   <td>{displayDate(a?.assigned_at)}</td>
                   <td>
-                    <button
-                      className="row-action"
-                      aria-label={`Ver territorio ${t.territory_number}`}
-                      onClick={() => setDetail(t.id)}
-                    >
-                      Ver detalle
-                      <ChevronRight size={15} />
-                    </button>
+                    <div className="territory-row-actions">
+                      {!a && t.active && canAssign && (
+                        <button
+                          className="quick-assign"
+                          aria-label={`Asignar territorio ${t.territory_number}`}
+                          onClick={() =>
+                            openAction({ kind: "assign", territory: t })
+                          }
+                        >
+                          <Plus size={13} />
+                          Asignar
+                        </button>
+                      )}
+                      {a && canCorrect && (
+                        <button
+                          className="quick-edit"
+                          aria-label={`Editar inicio del territorio ${t.territory_number}`}
+                          onClick={() =>
+                            openAction({
+                              kind: "correct",
+                              territory: t,
+                              assignment: a,
+                            })
+                          }
+                        >
+                          <Pencil size={13} />
+                          Editar inicio
+                        </button>
+                      )}
+                      {a && canVoid && (
+                        <button
+                          className="quick-void"
+                          aria-label={`Eliminar inicio del territorio ${t.territory_number}`}
+                          onClick={() =>
+                            openAction({
+                              kind: "void",
+                              territory: t,
+                              assignment: a,
+                            })
+                          }
+                        >
+                          <Trash2 size={13} />
+                          Eliminar inicio
+                        </button>
+                      )}
+                      <button
+                        className="row-action"
+                        aria-label={`Ver territorio ${t.territory_number}`}
+                        onClick={() => setDetail(t.id)}
+                      >
+                        Ver detalle
+                        <ChevronRight size={15} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
@@ -988,20 +1088,36 @@ export default function App() {
                               </small>
                             )}
                           </div>
-                          {canCorrect && (
-                            <button
-                              className="text-button"
-                              onClick={() =>
-                                openAction({
-                                  kind: "correct",
-                                  territory: selected,
-                                  assignment: a,
-                                })
-                              }
-                            >
-                              Corregir
-                            </button>
-                          )}
+                          <div className="timeline-actions">
+                            {canCorrect && (
+                              <button
+                                className="text-button"
+                                onClick={() =>
+                                  openAction({
+                                    kind: "correct",
+                                    territory: selected,
+                                    assignment: a,
+                                  })
+                                }
+                              >
+                                Corregir
+                              </button>
+                            )}
+                            {canVoid && (
+                              <button
+                                className="text-button void-link"
+                                onClick={() =>
+                                  openAction({
+                                    kind: "void",
+                                    territory: selected,
+                                    assignment: a,
+                                  })
+                                }
+                              >
+                                Anular
+                              </button>
+                            )}
+                          </div>
                         </li>
                       ))}
                     </ol>
@@ -1188,6 +1304,11 @@ export default function App() {
                         filter={filter}
                         setFilter={setFilter}
                       />
+                      <TerritoryCoverage
+                        options={coverageOptions}
+                        onChange={setCoverageOptions}
+                        today={today}
+                      />
                       {territoryTable(6)}
                       <div className="table-footer">
                         <span>
@@ -1298,6 +1419,11 @@ export default function App() {
                       setQuery={setQuery}
                       filter={filter}
                       setFilter={setFilter}
+                    />
+                    <TerritoryCoverage
+                      options={coverageOptions}
+                      onChange={setCoverageOptions}
+                      today={today}
                     />
                     {territoryTable()}
                     <DataPager
@@ -1450,8 +1576,6 @@ export default function App() {
           message={notice}
           onClose={closeAction}
           onSave={saveAction}
-          canCorrect={can(profile, "territories.correct")}
-          canVoid={can(profile, "territories.void")}
           conductors={snapshot.conductors ?? []}
           timingHistory={snapshot.assignments.filter(
             (a) => a.territory_id === action.territory.id,
@@ -1547,8 +1671,6 @@ function TerritoryFilters({
   );
 }
 function ActionModal({
-  canCorrect,
-  canVoid,
   action,
   busy,
   message,
@@ -1569,8 +1691,6 @@ function ActionModal({
   visitCounts: VisitRestrictionSummary[];
   canViewVisits: boolean;
   today: string;
-  canCorrect: boolean;
-  canVoid: boolean;
   action: Action;
   busy: boolean;
   message: string;
@@ -1587,8 +1707,8 @@ function ActionModal({
       action.kind === "complete" ? todayLima() : (a?.completed_at ?? ""),
     ),
     [reason, setReason] = useState(""),
-    [voided, setVoided] = useState(!canCorrect && canVoid),
     [body, setBody] = useState("");
+  const voided = action.kind === "void";
   useEffect(() => {
     if (personId) {
       const selected = conductors.find((c) => c.person_id === personId);
@@ -1633,7 +1753,10 @@ function ActionModal({
   const titles = {
     assign: "Asignar territorio",
     complete: "Marcar como completado",
-    correct: canCorrect ? "Corrección administrativa" : "Anulación de registro",
+    correct: a?.completed_at
+      ? "Corrección administrativa"
+      : "Editar inicio de asignación",
+    void: a?.completed_at ? "Anular registro" : "Eliminar inicio de asignación",
     observe: "Agregar observación",
   };
   return (
@@ -1667,6 +1790,35 @@ function ActionModal({
               onChange={(e) => setBody(e.target.value)}
             />
           </label>
+        ) : voided ? (
+          <>
+            <div className="void-summary">
+              <strong>{a!.assigned_name_snapshot}</strong>
+              <p>
+                Fecha de Inicio: {displayDate(a!.assigned_at)}
+                {a!.completed_at && (
+                  <> · Finalización: {displayDate(a!.completed_at)}</>
+                )}
+              </p>
+              <p>
+                Se anulará esta asignación. El territorio y sus otros registros
+                se conservan; el cambio y su motivo quedan en auditoría.
+              </p>
+            </div>
+            <label>
+              Motivo de la anulación
+              <textarea
+                name="reason"
+                rows={3}
+                required
+                minLength={8}
+                maxLength={2000}
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Explica por qué se elimina este inicio o registro"
+              />
+            </label>
+          </>
         ) : (
           <>
             {action.kind !== "complete" && (
@@ -1689,7 +1841,6 @@ function ActionModal({
                       required
                       maxLength={200}
                       value={name}
-                      readOnly={!canCorrect}
                       onChange={(e) => setName(e.target.value)}
                       placeholder="Escribe o selecciona un nombre"
                     />
@@ -1707,7 +1858,6 @@ function ActionModal({
                     name="assigned_at"
                     required
                     max={today}
-                    disabled={action.kind === "correct" && !canCorrect}
                     value={date}
                     onInput={(e) => setDate(e.currentTarget.value)}
                     onChange={(e) => setDate(e.target.value)}
@@ -1722,7 +1872,6 @@ function ActionModal({
                 <input
                   type="date"
                   name="completed_at"
-                  disabled={action.kind === "correct" && !canCorrect}
                   required={action.kind === "complete"}
                   min={date}
                   max={todayLima()}
@@ -1753,30 +1902,19 @@ function ActionModal({
                     placeholder="Explica qué se corrige y por qué"
                   />
                 </label>
-                {canVoid && (
-                  <label className="checkbox">
-                    <input
-                      type="checkbox"
-                      checked={voided}
-                      onChange={(e) => setVoided(e.target.checked)}
-                    />
-                    Anular este registro conservando su auditoría
-                  </label>
-                )}
               </>
             )}
           </>
         )}
-        {action.kind !== "observe" &&
-          !(action.kind === "correct" && voided) && (
-            <AssignmentTimingNotice
-              history={timingHistory}
-              start={action.kind === "complete" ? a!.assigned_at : date}
-              issues={timingIssues}
-              allowed={canOverrideTiming}
-              assigning={action.kind === "assign"}
-            />
-          )}
+        {action.kind !== "observe" && !voided && (
+          <AssignmentTimingNotice
+            history={timingHistory}
+            start={action.kind === "complete" ? a!.assigned_at : date}
+            issues={timingIssues}
+            allowed={canOverrideTiming}
+            assigning={action.kind === "assign"}
+          />
+        )}
         {(action.kind === "assign" || action.kind === "complete") &&
           timingIssues.length > 0 &&
           canOverrideTiming && (
@@ -1833,6 +1971,8 @@ function ActionModal({
               busy ||
               chronologyBlocked ||
               timingBlocked ||
+              ((action.kind === "correct" || voided) &&
+                !validTimingReason(reason)) ||
               (action.kind === "assign" &&
                 !conductors.some(
                   (c) => c.person_id === personId && c.active && !c.deleted_at,
@@ -1841,11 +1981,13 @@ function ActionModal({
           >
             {busy
               ? "Guardando…"
-              : action.kind === "correct"
-                ? "Guardar corrección"
-                : action.kind === "complete"
-                  ? "Confirmar finalización"
-                  : "Guardar"}
+              : voided
+                ? "Confirmar anulación"
+                : action.kind === "correct"
+                  ? "Guardar corrección"
+                  : action.kind === "complete"
+                    ? "Confirmar finalización"
+                    : "Guardar"}
           </button>
         </div>
       </form>

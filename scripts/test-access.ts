@@ -244,6 +244,14 @@ export async function testAccess({
     [t.id, t.version, conductorPerson],
   );
   ok(!!assignment);
+  // An assign-only profile cannot edit or void even its own new assignment.
+  for (const voided of [false, true])
+    await denied(
+      custom.query(
+        `select correct_assignment($1,1,$2,'Conductor sintético granular','${fixtureDate(40)}',null,'Intento sin el permiso correspondiente',$3)`,
+        [assignment, t.version + 1, voided],
+      ),
+    );
   await denied(
     custom.query(`select complete_assignment($1,1,$2,'${fixtureDate(39)}')`, [
       assignment,
@@ -276,6 +284,62 @@ export async function testAccess({
       `select assign_territory($1,$2,'Prueba granular','${fixtureDate(38)}')`,
       [t.id, t.version + 2],
     ),
+  );
+  // A correct-only account can edit without acquiring cancellation rights.
+  await profile(
+    admin,
+    second,
+    await version(second),
+    "Corrección sintética",
+    ["territories.correct"],
+    "update",
+  );
+  checks++;
+  await denied(
+    custom.query(
+      `select correct_assignment($1,2,$2,'Conductor sintético granular','${fixtureDate(40)}','${fixtureDate(39)}','Intento de anulación sin permiso',true)`,
+      [assignment, t.version + 2],
+    ),
+  );
+  await custom.query(
+    `select correct_assignment($1,2,$2,'Nombre sintético corregido','${fixtureDate(40)}','${fixtureDate(39)}','Corrección autorizada e independiente',false)`,
+    [assignment, t.version + 2],
+  );
+  checks++;
+  // A void-only account can cancel, with audit, but cannot edit the record.
+  await profile(
+    admin,
+    second,
+    await version(second),
+    "Anulación sintética",
+    ["territories.void"],
+    "update",
+  );
+  checks++;
+  await denied(
+    custom.query(
+      `select correct_assignment($1,3,$2,'Nombre sintético corregido','${fixtureDate(40)}','${fixtureDate(39)}','Intento de corrección sin permiso',false)`,
+      [assignment, t.version + 3],
+    ),
+  );
+  await custom.query(
+    `select correct_assignment($1,3,$2,'Nombre sintético corregido','${fixtureDate(40)}','${fixtureDate(39)}','Anulación autorizada e independiente',true)`,
+    [assignment, t.version + 3],
+  );
+  checks++;
+  ok(
+    (await scalar(
+      root,
+      "select voided_at is not null from assignments where id=$1",
+      [assignment],
+    )) === true,
+  );
+  ok(
+    (await scalar(
+      root,
+        "select count(*) from audit_log where entity='assignments' and entity_id=$1 and reason='Anulación autorizada e independiente'",
+      [assignment],
+    )) === "1",
   );
   await profile(admin, second, await version(second), "", [], "deactivate");
   checks++;
