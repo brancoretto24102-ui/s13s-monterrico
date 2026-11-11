@@ -8,6 +8,10 @@ El listado permite buscar, ordenar, filtrar por estado, cambiar el tamaño de p�
 
 En **Nuevo perfil**, indicar una descripción, seleccionar las acciones en el árbol de accesos y revisar el resumen de la derecha. Los accesos necesarios para visualizar se agregan automáticamente. Guardar requiere un motivo y registra los cambios en auditoría.
 
+Desde la versión 0.9.0, **Predicación → Cronograma semanal** aparece al comienzo de Accesos disponibles, con sus cuatro acciones independientes. Las secciones se obtienen del catálogo para que los nuevos módulos no se omitan del formulario.
+
+La casilla destacada **Autorizar excepciones de 14 días y 3 meses**, encima del árbol, habilita `territories.override_timing`. Selecciona también Asignar, Completar o Corregir según el trabajo del perfil. Para dar esa atribución a una persona, guarda el perfil y asígnalo en **Usuarios → Editar → Perfiles web → Perfiles personalizados**. Esta opción no quita el motivo obligatorio ni permite programar en el cronograma una asignación abierta vencida.
+
 | Módulo                   | Acciones configurables                                                                                                   |
 | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
 | Registro de asignaciones | Visualizar, asignar, completar, corregir, anular, observar, crear y editar territorios; excepciones de plazos con motivo |
@@ -34,6 +38,8 @@ La tabla muestra código, alias, nombre, correo, fecha de creación, última ses
 En **Nuevo usuario**, completar Datos generales y revisar **Perfiles web**. Se puede elegir un perfil básico del sistema o asignar uno o varios perfiles personalizados activos. Los permisos de varios perfiles se suman. El perfil Administrador mantiene la administración completa.
 
 Guardar un usuario nuevo envía una invitación al correo indicado. La persona define su contraseña mediante un enlace privado. No se muestra ni se introduce la contraseña desde esta pantalla. La pestaña Web cubre computadoras y celulares; no se simula una aplicación móvil independiente.
+
+La contraseña nueva requiere al menos 12 caracteres, mayúscula, minúscula, número y símbolo; la persona debe confirmarla. Ver [contraseñas personales](SEGURIDAD_CONTRASENAS.md).
 
 En un usuario existente se pueden cambiar nombre, alias, estado y perfiles con motivo y control de versión. El correo se muestra protegido. El icono de llave solicita confirmación y motivo antes de enviar un enlace de recuperación al correo de la cuenta; no muestra ni cambia directamente su contraseña.
 

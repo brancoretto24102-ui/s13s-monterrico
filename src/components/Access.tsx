@@ -1,17 +1,26 @@
 import { useState } from "react";
 import { MapPinned, ArrowRight, ShieldCheck, LockKeyhole } from "lucide-react";
 import { configured, supabase } from "../lib/client";
+import {
+  MIN_PASSWORD_LENGTH,
+  validPassword,
+  validateNewPassword,
+} from "../lib/passwordPolicy";
+import PasswordRequirements from "./PasswordRequirements";
 export default function Access({
   onDemo,
   recovery,
   onRecovered,
+  onPasswordUpdateRequired,
 }: {
   onDemo: () => void;
   recovery: boolean;
   onRecovered: () => void;
+  onPasswordUpdateRequired: () => void;
 }) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
+    [confirmation, setConfirmation] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
     [reset, setReset] = useState(false);
@@ -25,8 +34,11 @@ export default function Access({
           "La conexión con Supabase está pendiente de configuración.",
         );
       if (recovery) {
+        validateNewPassword(password, confirmation);
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
+        setPassword("");
+        setConfirmation("");
         setNotice("Contraseña actualizada.");
         onRecovered();
       } else if (reset) {
@@ -38,7 +50,7 @@ export default function Access({
           "Si el correo está autorizado, recibirá un enlace para recuperar el acceso.",
         );
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email,
           password,
         });
@@ -46,6 +58,14 @@ export default function Access({
           throw new Error(
             "No se pudo iniciar sesión. Verifique el correo y la contraseña.",
           );
+        if (data.weakPassword || !validPassword(password)) {
+          setPassword("");
+          setConfirmation("");
+          setNotice(
+            "Actualiza tu contraseña para cumplir los requisitos de seguridad.",
+          );
+          onPasswordUpdateRequired();
+        }
       }
     } catch (e) {
       setNotice((e as Error).message);
@@ -98,7 +118,9 @@ export default function Access({
           </h2>
           <p>
             {configured
-              ? "Ingresa con el correo autorizado por tu administrador."
+              ? recovery
+                ? "Define una contraseña personal y confirma que coincida."
+                : "Ingresa con el correo autorizado por tu administrador."
               : "La aplicación está lista para conectar con tu proyecto Supabase."}
           </p>
           <form onSubmit={submit}>
@@ -121,7 +143,10 @@ export default function Access({
                 <input
                   type="password"
                   autoComplete={recovery ? "new-password" : "current-password"}
-                  minLength={recovery ? 12 : 1}
+                  minLength={recovery ? MIN_PASSWORD_LENGTH : 1}
+                  aria-describedby={
+                    recovery ? "password-requirements" : undefined
+                  }
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -129,7 +154,45 @@ export default function Access({
                 />
               </label>
             )}
-            <button className="primary wide" disabled={busy || !configured}>
+            {recovery && (
+              <>
+                <PasswordRequirements password={password} />
+                <label>
+                  Confirma tu contraseña
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    minLength={MIN_PASSWORD_LENGTH}
+                    value={confirmation}
+                    onChange={(e) => setConfirmation(e.target.value)}
+                    aria-describedby={
+                      confirmation && confirmation !== password
+                        ? "password-confirmation"
+                        : undefined
+                    }
+                  />
+                </label>
+                {confirmation && confirmation !== password && (
+                  <p
+                    id="password-confirmation"
+                    className="password-mismatch"
+                    role="status"
+                  >
+                    Las contraseñas no coinciden.
+                  </p>
+                )}
+              </>
+            )}
+            <button
+              className="primary wide"
+              disabled={
+                busy ||
+                !configured ||
+                (recovery &&
+                  (!validPassword(password) || password !== confirmation))
+              }
+            >
               {busy
                 ? "Procesando…"
                 : recovery

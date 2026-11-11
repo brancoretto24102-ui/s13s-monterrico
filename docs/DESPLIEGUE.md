@@ -26,7 +26,7 @@ En Auth:
 
 - Desactivar registros públicos de usuarios. Los perfiles nuevos siempre nacen inactivos y sin exportación, incluso si alguien intentara registrarse mediante la API.
 - Establecer la URL del sitio y añadir únicamente su redirección exacta: `https://PROPIETARIO.github.io/REPOSITORIO/`.
-- Elegir contraseña mínima de 12 caracteres y los controles de acceso disponibles en la cuenta.
+- Elegir contraseña mínima de 12 caracteres y exigir letras mayúsculas, minúsculas, números y símbolos en el proveedor Email. Mantener los controles de acceso disponibles en la cuenta. Ver [contraseñas personales](SEGURIDAD_CONTRASENAS.md).
 - Revisar la entrega de correos antes de prometer invitaciones/recuperación. El servicio de correo incorporado de Supabase tiene restricciones y límites; para destinatarios generales normalmente hace falta configurar un SMTP propio. Un servicio externo puede tener plan gratuito, pero depende de sus condiciones y de la disponibilidad de un dominio. El acceso por contraseña funciona con usuarios previamente creados desde el panel, aunque no se configure correo.
 
 Crear el primer usuario desde el panel de Auth. El propietario establece personalmente la contraseña. Después activar exclusivamente su UUID desde el editor SQL:

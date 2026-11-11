@@ -1,4 +1,4 @@
-# Estado funcional — versión 0.8.2
+# Estado funcional — versión 0.9.0
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
@@ -12,7 +12,7 @@ Se avisa del descanso de 14 días y se permite justificar la programación antic
 
 ## Validación
 
-- 75 pruebas unitarias y 360 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- 92 pruebas unitarias y 360 comprobaciones PostgreSQL aprobadas con datos sintéticos.
 - Conflictos de creación y edición verificados con conexiones independientes.
 - Imágenes de conductores y publicadores descargadas desde la interfaz y revisadas visualmente, con el diseño compacto solicitado.
 - Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
@@ -23,3 +23,5 @@ Consultar el [manual del cronograma](CRONOGRAMA_PREDICACION.md), el [manual gene
 La actualización 0.8.1 corrige el selector de conductores fuera de ventanas de asignación y permite elegir el lunes antes de abrir la semana, con confirmación visible si hay cambios pendientes. La exportación de cronogramas compara PNG y JPG y descarga el menor; el formulario oficial S-13-S conserva su PDF.
 
 La versión 0.8.2 retira de las sugerencias los territorios incluidos en cualquier salida de la semana y los recupera cuando dejan de estar programados. Ajusta cada columna según el texto más ancho y muestra las imágenes finales antes de una descarga opcional. La preparación no genera un evento de exportación; el servidor revalida al descargar.
+
+La versión 0.9.0 corrige los accesos de Cronograma semanal en Perfiles y agrega una casilla destacada para las excepciones de 14 días y 3 meses. No concede accesos nuevos a usuarios existentes. Refuerza la definición privada de contraseñas y exige confirmación.

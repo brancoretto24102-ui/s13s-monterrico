@@ -1427,6 +1427,32 @@ pre {
 .login-card form button {
   margin-top: 8px;
 }
+.password-requirements {
+  list-style: none;
+  padding: 12px;
+  margin: 0 0 15px;
+  border-radius: 5px;
+  background: #f5f8f4;
+}
+.password-requirements li {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #63716a;
+  font-size: 11px;
+  line-height: 1.7;
+}
+.password-requirements svg {
+  flex-shrink: 0;
+}
+.password-requirements li[data-met="true"] {
+  color: #28793b;
+}
+.password-mismatch {
+  font-size: 11px;
+  color: #a13e2f;
+  margin-bottom: 12px;
+}
 .login-card > .text-button {
   display: block;
   margin: 12px auto;

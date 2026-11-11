@@ -22,7 +22,6 @@ import {
   completePermissions,
   csvDownload,
   editorPermissions,
-  permissionGroups,
   permissionKeys,
   permissionLabel,
   readerPermissions,
@@ -30,6 +29,8 @@ import {
 import type { AccessProfile, ManagedUser, Role } from "../lib/types";
 import DataPager from "./DataPager";
 import Modal from "./Modal";
+import ProfilePermissions from "./ProfilePermissions";
+import { MIN_PASSWORD_LENGTH } from "../lib/passwordPolicy";
 export interface DemoSecurity {
   profiles: AccessProfile[];
   users: ManagedUser[];
@@ -864,73 +865,10 @@ export default function SecurityPanel({
                     />
                   </label>
                 </div>
-                <div className="permission-columns">
-                  <section className="permission-box">
-                    <h3>ACCESOS DISPONIBLES</h3>
-                    <div>
-                      {["CONFIGURACIÓN", "TERRITORIOS", "SEGURIDAD"].map(
-                        (section) => (
-                          <details key={section} open>
-                            <summary>{section}</summary>
-                            {permissionGroups
-                              .filter((g) => g.section === section)
-                              .map((group) => (
-                                <details key={group.prefix} open>
-                                  <summary>{group.module}</summary>
-                                  <div className="permission-actions">
-                                    {group.actions.map(([action, label]) => (
-                                      <label className="checkbox" key={action}>
-                                        <input
-                                          type="checkbox"
-                                          checked={form.permissions.includes(
-                                            `${group.prefix}.${action}`,
-                                          )}
-                                          onChange={(e) =>
-                                            togglePermission(
-                                              `${group.prefix}.${action}`,
-                                              e.target.checked,
-                                            )
-                                          }
-                                        />
-                                        {label}
-                                        <small>({action.toUpperCase()})</small>
-                                      </label>
-                                    ))}
-                                  </div>
-                                </details>
-                              ))}
-                          </details>
-                        ),
-                      )}
-                    </div>
-                  </section>
-                  <section className="permission-box">
-                    <h3>
-                      ACCESOS SELECCIONADOS{" "}
-                      <span>{form.permissions.length}</span>
-                    </h3>
-                    <div>
-                      {!form.permissions.length ? (
-                        <p className="muted">No hay opciones seleccionadas.</p>
-                      ) : (
-                        form.permissions.map((key) => (
-                          <div className="selected-permission" key={key}>
-                            <CheckCircle2 size={13} />
-                            <span>{permissionLabel(key)}</span>
-                            <button
-                              type="button"
-                              className="icon"
-                              aria-label={`Quitar ${permissionLabel(key)}`}
-                              onClick={() => togglePermission(key, false)}
-                            >
-                              <X size={12} />
-                            </button>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </section>
-                </div>
+                <ProfilePermissions
+                  selected={form.permissions}
+                  onToggle={togglePermission}
+                />
                 <p className="small muted">
                   Los accesos necesarios para visualizar se agregan
                   automáticamente. Usuarios, Perfiles, respaldos y ajustes del
@@ -1024,6 +962,11 @@ export default function SecurityPanel({
                       El inicio de sesión utiliza el correo. La persona define
                       su contraseña mediante un enlace privado; el administrador
                       no la ve.
+                    </p>
+                    <p>
+                      La contraseña debe tener al menos {MIN_PASSWORD_LENGTH}{" "}
+                      caracteres, una mayúscula, una minúscula, un número y un
+                      carácter especial.
                     </p>
                     <p>
                       La web funciona en computadora y celular con los mismos

@@ -537,6 +537,41 @@ body {
   gap: 14px;
   margin-bottom: 17px;
 }
+.permission-exception {
+  padding: 16px;
+  border: 1px solid #c8ddcf;
+  border-radius: 5px;
+  background: #f4f9f5;
+  margin-bottom: 18px;
+}
+.permission-exception h3 {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+  margin-bottom: 12px;
+}
+.permission-exception .checkbox {
+  font-weight: 600 !important;
+  margin-bottom: 9px;
+}
+.permission-exception input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+  accent-color: #3da34b;
+  flex-shrink: 0;
+}
+.permission-exception p,
+.permission-exception small {
+  font-size: 11px;
+  line-height: 1.7;
+  color: #546b60;
+}
+.permission-exception small {
+  display: block;
+  margin-top: 7px;
+}
 .permission-box {
   border: 1px solid #dce2eb;
   border-radius: 3px;

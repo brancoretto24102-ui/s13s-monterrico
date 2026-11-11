@@ -4,7 +4,7 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 75 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 92 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
 - 360 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
@@ -110,3 +110,11 @@ La revisión del paquete comprueba que la política de imágenes del HTML fuente
 Las cinco pruebas unitarias nuevas cubren la exclusión semanal de territorios, varias apariciones y retorno al retirar la última o desmarcar su día; anchos por medida real de glifos, incluidos textos con menos letras pero más anchos; reducción de espacios cuando se acorta el contenido; encabezados y líneas explícitas; y límites de lienzo sin pérdida de texto. La nueva comprobación PostgreSQL verifica que consultar el contexto para previsualizar no registra EXPORT.
 
 En navegador, con datos ficticios, se añadió y retiró un territorio desde sugerencias y se desmarcó y volvió a marcar su día. Se observó el retorno correcto de la tarjeta. Un punto de reunión largo amplió solo su columna. Se preparó una imagen sin evento de descarga automática, se cerró sin descargar y se preparó la otra versión. Después de pulsar Descargar se obtuvieron ambas imágenes y se comprobaron sus dimensiones variables, colores y contenido. El archivo descargado procede del mismo blob que se muestra en la previsualización.
+
+## Perfiles y requisitos de contraseña (0.9.0)
+
+El HTML renderizado del editor debe contener exactamente una casilla por cada permiso del catálogo, incluidos todos los de Cronograma semanal y la excepción de plazos. Se verifican la selección, el motivo indicado y la independencia entre crear, editar, exportar y autorizar excepciones. Las 360 comprobaciones PostgreSQL existentes cubren la concesión y revocación efectivas, el motivo obligatorio y la auditoría. No se cambian las funciones ni los roles de la base para esta corrección visual.
+
+Las pruebas de contraseñas cubren longitud, ausencia de cada categoría, espacios y emoji que no sustituyen los símbolos admitidos, el límite exacto de 12 caracteres, todos los símbolos reconocidos y la confirmación exacta. La interfaz renderiza los cinco requisitos con su cumplimiento. Los datos de prueba son sintéticos y no son credenciales operativas.
+
+En navegador se creó y reabrió un perfil temporal con los cuatro permisos de cronograma, la excepción y Asignar. Se conservó la selección y se comprobó que retirar la excepción desmarcara la casilla. En el formulario de contraseña, un valor incompleto quedó bloqueado, uno válido con confirmación exacta habilitó Guardar y una confirmación diferente volvió a bloquearlo. No se envió un cambio de contraseña real. La composición obligatoria de Auth se guardó y se verificó al recargar su panel.

@@ -646,6 +646,7 @@ export default function App() {
       <Access
         recovery
         onRecovered={() => setRecovery(false)}
+        onPasswordUpdateRequired={() => setRecovery(true)}
         onDemo={startDemo}
       />
     );
@@ -658,7 +659,12 @@ export default function App() {
     );
   if (!profile)
     return (
-      <Access recovery={false} onRecovered={() => {}} onDemo={startDemo} />
+      <Access
+        recovery={false}
+        onRecovered={() => {}}
+        onPasswordUpdateRequired={() => setRecovery(true)}
+        onDemo={startDemo}
+      />
     );
   if (!profile.active)
     return (
