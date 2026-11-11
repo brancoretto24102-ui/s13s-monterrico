@@ -1,0 +1,86 @@
+.pdf-canvas-preview {
+  min-width: 0;
+  width: 100%;
+}
+.pdf-canvas-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+.pdf-canvas-controls > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.pdf-canvas-controls output {
+  font-size: 12px;
+  color: #36556a;
+  white-space: nowrap;
+}
+.pdf-canvas-controls button {
+  padding: 7px;
+  min-height: 34px;
+}
+.pdf-canvas-controls label {
+  margin: 0;
+  font-size: 11px;
+  gap: 4px;
+}
+.pdf-canvas-controls select {
+  min-height: 34px;
+  padding: 6px 8px;
+}
+.pdf-page-scroll {
+  width: 100%;
+  min-width: 0;
+  min-height: 200px;
+  padding: 12px;
+  overflow: auto;
+  box-sizing: border-box;
+  position: relative;
+  border: 1px solid #dce4eb;
+  border-radius: 5px;
+  background: #edf0f3;
+}
+.pdf-canvas-page {
+  width: max-content;
+  min-width: 100%;
+  min-height: 160px;
+}
+.pdf-canvas-page canvas {
+  display: block;
+  background: white;
+  box-shadow: 0 1px 4px #20384720;
+}
+.pdf-render-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  margin: 0;
+  padding: 8px 12px;
+  background: #ffffffed;
+  color: #486374;
+  border-radius: 4px;
+  font-size: 12px;
+}
+.pdf-canvas-preview > .small {
+  margin-top: 12px;
+  line-height: 1.6;
+}
+@media (max-width: 560px) {
+  .pdf-canvas-controls {
+    gap: 10px;
+  }
+  .pdf-canvas-controls > div {
+    gap: 6px;
+  }
+  .pdf-page-scroll {
+    padding: 6px;
+  }
+  .pdf-preview {
+    min-height: 0 !important;
+  }
+}

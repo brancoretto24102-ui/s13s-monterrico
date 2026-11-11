@@ -949,13 +949,7 @@ input[type="month"] {
   min-height: 660px;
   padding: 21px;
 }
-.pdf-preview iframe {
-  width: 100%;
-  min-height: 750px;
-  flex: 1;
-  border: 1px solid var(--line);
-  border-radius: 5px;
-}
+
 .pdf-preview .button-row {
   flex-wrap: wrap;
 }
@@ -2002,9 +1996,7 @@ td {
     font-size: 11px;
     padding: 10px 13px;
   }
-  .pdf-preview iframe {
-    min-height: 500px;
-  }
+
   .export-settings {
     margin-bottom: 0;
   }

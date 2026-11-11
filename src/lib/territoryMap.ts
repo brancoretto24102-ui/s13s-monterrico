@@ -43,6 +43,13 @@ export const mapColors = {
 };
 export const MAX_MAP_VERTICES = 4096;
 
+export function mapChangeReasonError(reason: string) {
+  const normalized = reason.replace(/\s+/gu, " ").trim();
+  return Array.from(normalized).length < 8 || Array.from(reason).length > 2000
+    ? "Escribe un motivo de entre 8 y 2000 caracteres para guardar el borrador."
+    : "";
+}
+
 function orient(a: MapPoint, b: MapPoint, c: MapPoint) {
   return (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
 }

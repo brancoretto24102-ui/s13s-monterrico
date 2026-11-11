@@ -1,6 +1,7 @@
 import { readdir, readFile, stat } from "node:fs/promises";
 import { extname, join } from "node:path";
-const blocked = /\.(xlsx?|pdf|csv|zip|sqlite|dump|bak|geojson|kml|gpx|gpkg|shp|dwg|dxf)$/i;
+const blocked =
+  /\.(xlsx?|pdf|csv|zip|sqlite|dump|bak|geojson|kml|gpx|gpkg|shp|dwg|dxf)$/i;
 const skip = new Set(["node_modules", ".git", ".pg-test", "test-results"]);
 const errors = [];
 async function scan(dir) {
@@ -63,7 +64,18 @@ for (const path of ["index.html", "dist/index.html"]) {
     .find(([name]) => name === "img-src")
     ?.slice(1);
   if (!imageSources?.includes("blob:"))
-    errors.push(`La política bloquea las imágenes de previsualización: ${path}`);
+    errors.push(
+      `La política bloquea las imágenes de previsualización: ${path}`,
+    );
+  const workerSources = policy
+    ?.split(";")
+    .map((d) => d.trim().split(/\s+/))
+    .find(([name]) => name === "worker-src")
+    ?.slice(1);
+  if (workerSources?.join(" ") !== "'self'")
+    errors.push(`La vista previa PDF requiere un worker local: ${path}`);
+  if (policy?.includes("'unsafe-eval'"))
+    errors.push(`No se permite habilitar eval para la vista previa: ${path}`);
 }
 if (errors.length) {
   console.error(errors.join("\n"));

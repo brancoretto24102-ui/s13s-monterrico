@@ -31,6 +31,7 @@ import {
   geometryFromParts,
   googleMapsUrl,
   mapColors,
+  mapChangeReasonError,
   mapFeatureCollection,
   mapKml,
   mapTerritoryStatus,
@@ -105,6 +106,7 @@ export default function TerritoryMapPanel({
     [loading, setLoading] = useState(true),
     [message, setMessage] = useState(""),
     [busy, setBusy] = useState(false),
+    [editError, setEditError] = useState(""),
     [tab, setTab] = useState<"map" | "master">("map"),
     [selected, setSelected] = useState(""),
     [query, setQuery] = useState(""),
@@ -123,7 +125,9 @@ export default function TerritoryMapPanel({
     [size, setSize] = useState(10);
   const request = useRef(0),
     formRef = useRef(form),
-    fileInput = useRef<HTMLInputElement>(null);
+    fileInput = useRef<HTMLInputElement>(null),
+    reasonInput = useRef<HTMLTextAreaElement>(null),
+    sourceInput = useRef<HTMLTextAreaElement>(null);
   formRef.current = form;
   const canCreate = can(profile, "maps.create"),
     canEdit = can(profile, "maps.edit"),
@@ -278,7 +282,7 @@ export default function TerritoryMapPanel({
   }
   const changeParts = (callback: (part: MapPoint[]) => MapPoint[]) =>
     setForm((f) =>
-      f
+      f && !busy
         ? {
             ...f,
             parts: f.parts.map((p, i) =>
@@ -303,6 +307,7 @@ export default function TerritoryMapPanel({
       return;
     }
     const s = shapeFor(t.id);
+    setEditError("");
     setSelected(t.id);
     setTab("map");
     setFocusKey((v) => v + 1);
@@ -327,13 +332,29 @@ export default function TerritoryMapPanel({
   }
   async function save() {
     if (!form || !context || busy) return;
+    setEditError("");
+    const reasonError = mapChangeReasonError(form.reason);
+    if (reasonError) {
+      setEditError(reasonError);
+      reasonInput.current?.focus();
+      return;
+    }
+    if (form.source.trim().length < 3 || form.source.trim().length > 1500) {
+      setEditError(
+        "Indica la procedencia de los límites (3 a 1500 caracteres).",
+      );
+      sourceInput.current?.focus();
+      return;
+    }
+    if (formError) {
+      setEditError(formError);
+      return;
+    }
     setBusy(true);
     setMessage("");
     try {
       const geometry = geometryFromParts(form.parts),
         source = form.source.trim();
-      if (form.reason.trim().length < 8 || form.reason.length > 2000)
-        throw new Error("Indica un motivo entre 8 y 2000 caracteres.");
       if (source.length < 3 || source.length > 1500)
         throw new Error("Indica la procedencia de los límites.");
       if (demo) {
@@ -373,6 +394,7 @@ export default function TerritoryMapPanel({
       );
       if (!demo) await load();
     } catch (error) {
+      setEditError((error as Error).message);
       setMessage((error as Error).message);
       if (!demo) await load();
     } finally {
@@ -929,173 +951,208 @@ export default function TerritoryMapPanel({
                 </section>
                 <aside className="map-detail-column">
                   {form ? (
-                    <section className="panel map-edit-form">
-                      <h2>Editor de límites</h2>
-                      <label>
-                        Parte del territorio
-                        <select
-                          value={form.currentPart}
-                          onChange={(e) =>
-                            setForm((f) =>
-                              f
-                                ? { ...f, currentPart: Number(e.target.value) }
-                                : f,
-                            )
-                          }
-                        >
-                          {form.parts.map((p, i) => (
-                            <option key={i} value={i}>
-                              Parte {i + 1} · {p.length} vértices
-                            </option>
-                          ))}
-                        </select>
-                      </label>
-                      <div className="button-row">
-                        <button
-                          className="secondary"
-                          onClick={() =>
-                            setForm((f) =>
-                              f
-                                ? {
-                                    ...f,
-                                    parts: [...f.parts, []],
-                                    currentPart: f.parts.length,
-                                  }
-                                : f,
-                            )
-                          }
-                          disabled={form.parts.length >= 64}
-                        >
-                          <Plus size={13} />
-                          Agregar parte
-                        </button>
-                        <button
-                          className="secondary"
-                          onClick={() =>
-                            changeParts((part) => part.slice(0, -1))
-                          }
-                        >
-                          <Undo2 size={13} />
-                          Deshacer punto
-                        </button>
-                        <button
-                          className="text-button danger-text"
-                          onClick={() =>
-                            setForm((f) =>
-                              f
-                                ? {
-                                    ...f,
-                                    parts:
-                                      f.parts.length > 1
-                                        ? f.parts.filter(
-                                            (_, i) => i !== f.currentPart,
-                                          )
-                                        : [[]],
-                                    currentPart: 0,
-                                  }
-                                : f,
-                            )
-                          }
-                        >
-                          Quitar parte
-                        </button>
-                      </div>
-                      <details className="map-coordinate-editor">
-                        <summary>Coordenadas de los vértices</summary>
-                        <div>
-                          {form.parts[form.currentPart].map(([lng, lat], i) => (
-                            <div key={i}>
-                              <span>{i + 1}</span>
-                              <input
-                                type="number"
-                                step="any"
-                                value={lat}
-                                aria-label={`Latitud del vértice ${i + 1}`}
-                                onChange={(e) =>
-                                  changeParts((part) =>
-                                    part.map((p, j) =>
-                                      j === i
-                                        ? [p[0], Number(e.target.value)]
-                                        : p,
-                                    ),
-                                  )
-                                }
-                              />
-                              <input
-                                type="number"
-                                step="any"
-                                value={lng}
-                                aria-label={`Longitud del vértice ${i + 1}`}
-                                onChange={(e) =>
-                                  changeParts((part) =>
-                                    part.map((p, j) =>
-                                      j === i
-                                        ? [Number(e.target.value), p[1]]
-                                        : p,
-                                    ),
-                                  )
-                                }
-                              />
-                              <button
-                                className="icon"
-                                aria-label={`Quitar vértice ${i + 1}`}
-                                onClick={() =>
-                                  changeParts((part) =>
-                                    part.filter((_, j) => j !== i),
-                                  )
-                                }
-                              >
-                                <X size={13} />
-                              </button>
-                            </div>
-                          ))}
+                    <form
+                      className="panel map-edit-form"
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void save();
+                      }}
+                      noValidate
+                    >
+                      <fieldset disabled={busy}>
+                        <h2>Editor de límites</h2>
+                        <label>
+                          Parte del territorio
+                          <select
+                            value={form.currentPart}
+                            onChange={(e) =>
+                              setForm((f) =>
+                                f
+                                  ? {
+                                      ...f,
+                                      currentPart: Number(e.target.value),
+                                    }
+                                  : f,
+                              )
+                            }
+                          >
+                            {form.parts.map((p, i) => (
+                              <option key={i} value={i}>
+                                Parte {i + 1} · {p.length} vértices
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="button-row">
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() =>
+                              setForm((f) =>
+                                f
+                                  ? {
+                                      ...f,
+                                      parts: [...f.parts, []],
+                                      currentPart: f.parts.length,
+                                    }
+                                  : f,
+                              )
+                            }
+                            disabled={form.parts.length >= 64}
+                          >
+                            <Plus size={13} />
+                            Agregar parte
+                          </button>
+                          <button
+                            type="button"
+                            className="secondary"
+                            onClick={() =>
+                              changeParts((part) => part.slice(0, -1))
+                            }
+                          >
+                            <Undo2 size={13} />
+                            Deshacer punto
+                          </button>
+                          <button
+                            type="button"
+                            className="text-button danger-text"
+                            onClick={() =>
+                              setForm((f) =>
+                                f
+                                  ? {
+                                      ...f,
+                                      parts:
+                                        f.parts.length > 1
+                                          ? f.parts.filter(
+                                              (_, i) => i !== f.currentPart,
+                                            )
+                                          : [[]],
+                                      currentPart: 0,
+                                    }
+                                  : f,
+                              )
+                            }
+                          >
+                            Quitar parte
+                          </button>
                         </div>
-                      </details>
-                      <label>
-                        Procedencia de los límites
-                        <textarea
-                          value={form.source}
-                          maxLength={1500}
-                          onChange={(e) =>
-                            setForm((f) =>
-                              f ? { ...f, source: e.target.value } : f,
-                            )
-                          }
-                        />
-                      </label>
-                      <label>
-                        Motivo del cambio
-                        <textarea
-                          value={form.reason}
-                          minLength={8}
-                          maxLength={2000}
-                          onChange={(e) =>
-                            setForm((f) =>
-                              f ? { ...f, reason: e.target.value } : f,
-                            )
-                          }
-                          placeholder="Explica cómo revisaste o corregiste los límites"
-                        />
-                      </label>
-                      {formError && (
-                        <p className="map-inline-error" role="status">
-                          {formError}
+                        <details className="map-coordinate-editor">
+                          <summary>Coordenadas de los vértices</summary>
+                          <div>
+                            {form.parts[form.currentPart].map(
+                              ([lng, lat], i) => (
+                                <div key={i}>
+                                  <span>{i + 1}</span>
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={lat}
+                                    aria-label={`Latitud del vértice ${i + 1}`}
+                                    onChange={(e) =>
+                                      changeParts((part) =>
+                                        part.map((p, j) =>
+                                          j === i
+                                            ? [p[0], Number(e.target.value)]
+                                            : p,
+                                        ),
+                                      )
+                                    }
+                                  />
+                                  <input
+                                    type="number"
+                                    step="any"
+                                    value={lng}
+                                    aria-label={`Longitud del vértice ${i + 1}`}
+                                    onChange={(e) =>
+                                      changeParts((part) =>
+                                        part.map((p, j) =>
+                                          j === i
+                                            ? [Number(e.target.value), p[1]]
+                                            : p,
+                                        ),
+                                      )
+                                    }
+                                  />
+                                  <button
+                                    type="button"
+                                    className="icon"
+                                    aria-label={`Quitar vértice ${i + 1}`}
+                                    onClick={() =>
+                                      changeParts((part) =>
+                                        part.filter((_, j) => j !== i),
+                                      )
+                                    }
+                                  >
+                                    <X size={13} />
+                                  </button>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </details>
+                        <label>
+                          Procedencia de los límites (obligatoria)
+                          <textarea
+                            ref={sourceInput}
+                            required
+                            value={form.source}
+                            maxLength={1500}
+                            onChange={(e) => {
+                              setEditError("");
+                              setForm((f) =>
+                                f ? { ...f, source: e.target.value } : f,
+                              );
+                            }}
+                          />
+                        </label>
+                        <label>
+                          Motivo del cambio (obligatorio)
+                          <textarea
+                            ref={reasonInput}
+                            required
+                            aria-describedby="map-change-reason-help"
+                            aria-invalid={
+                              !!editError && !!mapChangeReasonError(form.reason)
+                            }
+                            value={form.reason}
+                            minLength={8}
+                            maxLength={2000}
+                            onChange={(e) => {
+                              setEditError("");
+                              setForm((f) =>
+                                f ? { ...f, reason: e.target.value } : f,
+                              );
+                            }}
+                            placeholder="Explica cómo revisaste o corregiste los límites"
+                          />
+                        </label>
+                        <p
+                          className="map-reason-help"
+                          id="map-change-reason-help"
+                        >
+                          Para guardar, escribe al menos 8 caracteres explicando
+                          el cambio. El motivo quedará en la auditoría.
                         </p>
-                      )}
-                      <button
-                        className="primary wide"
-                        onClick={() => void save()}
-                        disabled={
-                          busy ||
-                          !!formError ||
-                          form.reason.trim().length < 8 ||
-                          form.source.trim().length < 3
-                        }
-                      >
-                        <Save size={15} />
-                        {busy ? "Guardando…" : "Guardar como borrador"}
-                      </button>
-                    </section>
+                        {formError && (
+                          <p className="map-inline-error" role="status">
+                            {formError}
+                          </p>
+                        )}
+                        {editError && (
+                          <p className="map-inline-error" role="alert">
+                            {editError}
+                          </p>
+                        )}
+                        <button
+                          type="submit"
+                          className="primary wide"
+                          disabled={busy}
+                        >
+                          <Save size={15} />
+                          {busy ? "Guardando…" : "Guardar como borrador"}
+                        </button>
+                      </fieldset>
+                    </form>
                   ) : selectedTerritory ? (
                     <section className="panel map-selected-detail">
                       <div className="map-detail-title">

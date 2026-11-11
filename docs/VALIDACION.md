@@ -4,7 +4,7 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 131 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 145 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
 - 534 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
@@ -126,3 +126,11 @@ Las pruebas nuevas cubren geometrías Polygon/MultiPolygon, partes separadas, or
 La georreferenciación del plano privado es aproximada. Los contornos importados quedan en borrador: las pruebas de integridad no certifican límites actuales ni precisión GPS. No se incluyen el plano, controles, coordenadas reales ni resultados privados en este repositorio.
 
 Se comprobaron en navegador los filtros por color y rango, paginación, selección, edición, motivo y confirmación de revisión, Papelera/restauración y descargas GeoJSON/KML de los 82 territorios ficticios. La vista de 449 px no presenta desborde horizontal; no se probó un teléfono físico. En la base alojada se verificaron el contexto y respaldo autenticados, el catálogo de permisos, 82 geometrías en borrador con 184 partes y 6244 puntos y 82 eventos de alta. Las 820 asignaciones conservaron su huella; tabla y RPC geográficos rechazaron consultas REST anónimas. Los insumos privados se mantienen fuera del repositorio.
+
+## Guardado de vértices y vista previa móvil (0.10.1)
+
+Se verificó que Guardar como borrador con motivo vacío muestra el requisito y enfoca ese campo. Después de modificar un vértice y completar el motivo, la versión aumenta y el valor se conserva al reabrir el editor. Se mantienen la validación geométrica, los permisos y la auditoría del servidor.
+
+La vista previa PDF usa PDF.js 6.5.438 con worker y fuentes locales, sin CDN ni iframe. Dibuja solo la página seleccionada, limita su bitmap a 3 millones de píxeles y permite ampliación. El buffer se copia antes de entregarlo al worker para conservar la descarga. Las solicitudes antiguas se descartan si cambia el periodo. Las pruebas cubren el límite de memoria, proporciones y motivos inválidos.
+
+En el navegador con la política de seguridad de producción se mostraron páginas de un S-13-S de ejemplo, se cambió de página y se amplió. El PDF descargado conservó cinco páginas legibles con sus encabezados. Las imágenes de conductores y publicadores cargaron correctamente. A 449 px no hubo desborde horizontal; esta comprobación no sustituye una prueba física en Brave/Android. Solo se usaron datos ficticios y la plantilla oficial privada cargada localmente. No se modificaron registros reales ni se añadieron migraciones de base de datos.

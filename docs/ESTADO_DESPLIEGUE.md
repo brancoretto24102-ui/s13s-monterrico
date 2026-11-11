@@ -1,4 +1,4 @@
-# Estado funcional — versión 0.10.0
+# Estado funcional — versión 0.10.1
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
@@ -12,7 +12,7 @@ Se avisa del descanso de 14 días y se permite justificar la programación antic
 
 ## Validación
 
-- 131 pruebas unitarias y 534 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- 145 pruebas unitarias y 534 comprobaciones PostgreSQL aprobadas con datos sintéticos.
 - Conflictos de creación y edición verificados con conexiones independientes.
 - Imágenes de conductores y publicadores descargadas desde la interfaz y revisadas visualmente, con el diseño compacto solicitado.
 - Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
@@ -27,3 +27,5 @@ La versión 0.8.2 retira de las sugerencias los territorios incluidos en cualqui
 La versión 0.9.0 corrige los accesos de Cronograma semanal en Perfiles y agrega una casilla destacada para las excepciones de 14 días y 3 meses. No concede accesos nuevos a usuarios existentes. Refuerza la definición privada de contraseñas y exige confirmación.
 
 La versión 0.10.0 agrega **Configuración → Maestros → Territorios geográficos**: mapa OpenStreetMap con semáforo, filtros, editor de varias partes, revisión con motivo, Papelera, importación atómica y exportación GeoJSON/KML. El administrador accede al catálogo completo; otros perfiles deben habilitar acciones explícitamente. Los límites de un plano se importan como borradores pendientes de revisión humana.
+
+La versión 0.10.1 corrige el guardado de vértices con una validación visible y foco en el motivo obligatorio. La vista previa del S-13-S dibuja una página a la vez y permite avanzar o ampliar sin depender del visor PDF incrustado del teléfono. Se verificaron ambas imágenes del cronograma a 449 px; no se probó un dispositivo físico ni el navegador Brave de la captura.

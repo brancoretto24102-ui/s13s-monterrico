@@ -59,7 +59,7 @@ Guardar y revisar las pestañas **Conductores** y **Publicadores**. La segunda s
 
 Elegir año de servicio, rango exacto o mes hasta actualidad. Verificar las fechas y el encabezado antes de generar. La actualidad utiliza el día de Perú; no se toma de la última fecha del Excel. Generar la vista previa y descargar el PDF. La fecha de corte permanece fijada en ese archivo aunque se abra otro día.
 
-Si no aparece la plantilla, el administrador debe cargar el original desde Configuración. Si el navegador del teléfono no muestra el visor incrustado, usar Descargar PDF y abrirlo en su visor. La acción Imprimir depende de las capacidades del visor/navegador.
+Si no aparece la plantilla, el administrador debe cargar el original desde Configuración. La vista previa dibuja las páginas directamente en la web: usar las flechas y Ampliación para revisarlas. Descargar PDF conserva el documento original; Abrir PDF / imprimir lo abre por separado y la impresión depende del visor del dispositivo. Si una página no se dibuja, usar Volver a mostrar o descargar el archivo.
 
 El resumen descargable permite comprobar asignaciones, filas, páginas, territorios sin movimientos y cierres recuperados del historial. Descargar un nuevo formulario después de una corrección no modifica los PDFs descargados anteriormente.
 

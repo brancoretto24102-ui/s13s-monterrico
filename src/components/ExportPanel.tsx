@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { FileCheck2, Download, Eye, Printer, CalendarDays } from "lucide-react";
+import {
+  FileCheck2,
+  Download,
+  Eye,
+  ExternalLink,
+  CalendarDays,
+} from "lucide-react";
 import {
   currentPeriod,
   customPeriod,
@@ -12,6 +18,7 @@ import { sha256 } from "../lib/importer";
 import { reportRows, reportSummary } from "../lib/report";
 import { downloadBlob, downloadJson, rpc, supabase } from "../lib/client";
 import type { Period, Snapshot } from "../lib/types";
+import PdfCanvasPreview from "./PdfCanvasPreview";
 export default function ExportPanel({
   snapshot,
   demo,
@@ -30,11 +37,12 @@ export default function ExportPanel({
     [end, setEnd] = useState(today),
     [month, setMonth] = useState(`${today.slice(0, 4)}-06`),
     [url, setUrl] = useState(""),
+    [pdfBytes, setPdfBytes] = useState<Uint8Array | null>(null),
     [busy, setBusy] = useState(false),
     [message, setMessage] = useState(""),
     [meta, setMeta] = useState<unknown>(null);
   const localTemplate = useRef<Uint8Array | null>(null);
-  const frame = useRef<HTMLIFrameElement>(null);
+  const generation = useRef(0);
   const computed = useMemo(() => {
     try {
       return {
@@ -57,9 +65,17 @@ export default function ExportPanel({
       )
     : null;
   useEffect(() => {
+    generation.current++;
     setUrl("");
+    setPdfBytes(null);
     setMeta(null);
-  }, [mode, year, start, end, month]);
+  }, [mode, year, start, end, month, canExport]);
+  useEffect(
+    () => () => {
+      generation.current++;
+    },
+    [],
+  );
   useEffect(
     () => () => {
       if (url) URL.revokeObjectURL(url);
@@ -80,6 +96,7 @@ export default function ExportPanel({
   async function generate() {
     if (!period || !canExport) return;
     setBusy(true);
+    const current = ++generation.current;
     setMessage("");
     try {
       let bytes = localTemplate.current;
@@ -100,7 +117,9 @@ export default function ExportPanel({
           "Selecciona la plantilla oficial para probar el generador en esta sesión de ejemplo.",
         );
       const result = await generateS13(bytes, snap, period as Period);
+      if (current !== generation.current) return;
       setMeta(result.metadata);
+      setPdfBytes(new Uint8Array(result.bytes));
       setUrl(
         URL.createObjectURL(
           new Blob([new Uint8Array(result.bytes)], { type: "application/pdf" }),
@@ -110,7 +129,7 @@ export default function ExportPanel({
         `Formulario preparado: ${result.summary.assignments} asignaciones y ${result.summary.pages} páginas. Corte: ${displayDate(period.end)}.`,
       );
     } catch (e) {
-      setMessage((e as Error).message);
+      if (current === generation.current) setMessage((e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -263,16 +282,15 @@ export default function ExportPanel({
             <h2>Vista previa</h2>
             {url && (
               <div className="button-row">
-                <button
+                <a
                   className="secondary"
-                  onClick={() => {
-                    frame.current?.contentWindow?.focus();
-                    frame.current?.contentWindow?.print();
-                  }}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
-                  <Printer size={16} />
-                  Imprimir
-                </button>
+                  <ExternalLink size={16} />
+                  Abrir PDF / imprimir
+                </a>
                 <a
                   className="primary"
                   href={url}
@@ -284,12 +302,8 @@ export default function ExportPanel({
               </div>
             )}
           </div>
-          {url ? (
-            <iframe
-              ref={frame}
-              title="Vista previa del formulario oficial S-13-S"
-              src={url}
-            />
+          {pdfBytes ? (
+            <PdfCanvasPreview bytes={pdfBytes} />
           ) : (
             <div className="empty-preview">
               <FileCheck2 size={52} />

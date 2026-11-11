@@ -16,7 +16,7 @@ La extracción de un PDF sin coordenadas GPS exige georreferenciación. Una alin
 
 1. En el maestro, buscar el territorio. «Dibujar» aparece si todavía no tiene polígono; «Editar» abre límites existentes.
 2. Hacer clic en el mapa para agregar vértices. Arrastrarlos o ajustar sus coordenadas WGS84. «Agregar parte» permite conservar manzanas separadas. Cada contorno se cierra al guardar.
-3. Indicar procedencia y motivo. Guardar siempre deja el área como borrador, aunque antes estuviera validada.
+3. Indicar procedencia y un motivo obligatorio de al menos 8 caracteres. Si falta, Guardar como borrador muestra el aviso y enfoca el campo; los vértices editados se conservan. Guardar siempre deja el área como borrador, aunque antes estuviera validada.
 4. Una persona con «Validar límites revisados» debe comprobar el área real, confirmar la revisión y registrar el motivo. Validar no certifica un levantamiento GPS.
 5. «Eliminar» envía el polígono a Papelera sin cambiar el territorio ni las asignaciones. Restaurarlo lo devuelve a borrador.
 
