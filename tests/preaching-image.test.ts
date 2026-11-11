@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   preachingDocument,
+  preachingColumnWidths,
   layoutPreachingDocument,
   scheduleDocumentTime,
   scheduleShortDate,
@@ -52,9 +53,78 @@ const week: PreachingWeek = {
 };
 const measure = (text: string) => Array.from(text).length * 8;
 describe("Imagen del cronograma", () => {
+  it("calcula cada ancho con el texto visualmente más ancho, aunque tenga menos letras", () => {
+    const proportional = (text: string) =>
+      [...text].reduce((w, c) => w + (c === "W" ? 15 : c === "i" ? 1 : 4), 0);
+    const base = preachingDocument(week, "conductors", proportional);
+    const doc = preachingDocument(
+      {
+        ...week,
+        rows: [
+          { ...week.rows[0], meeting_point: "W".repeat(20) },
+          { ...week.rows[1], meeting_point: "i".repeat(40) },
+          week.rows[2],
+        ],
+      },
+      "conductors",
+      proportional,
+    );
+    expect(doc.widths[3]).toBe(316);
+    expect(doc.widths[3]).toBeGreaterThan(base.widths[3]);
+    expect(doc.widths.slice(0, 3)).toEqual(base.widths.slice(0, 3));
+    expect(
+      preachingColumnWidths(
+        ["Campo"],
+        [["Corto\nW".repeat(2)]],
+        proportional,
+      )[0],
+    ).toBe(51);
+  });
+  it("reduce espacios vacíos al acortar el contenido y considera también los encabezados", () => {
+    const full = preachingDocument(week, "conductors", measure);
+    const short = preachingDocument(
+      {
+        ...week,
+        rows: week.rows.map((r) => ({
+          ...r,
+          conductor_names: ["A"],
+          meeting_point: "B",
+        })),
+      },
+      "conductors",
+      measure,
+    );
+    expect(short.widths[5]).toBe(measure("Conductor") + 16);
+    expect(short.widths[5]).toBeLessThan(full.widths[5]);
+    expect(short.widths[3]).toBe(measure("Punto de Reunión") + 16);
+  });
+  it("acota entradas extremas al límite seguro sin perder el texto al distribuirlo", () => {
+    const doc = preachingDocument(
+      {
+        ...week,
+        rows: [
+          {
+            ...week.rows[0],
+            meeting_point: "WW ".repeat(800),
+            conductor_names: ["Nombre ".repeat(400)],
+          },
+        ],
+      },
+      "conductors",
+      measure,
+    );
+    expect(doc.widths.reduce((a, b) => a + b)).toBeLessThanOrEqual(4096);
+    expect(doc.widths.every((w, i) => w >= measure(doc.headers[i]) + 16)).toBe(
+      true,
+    );
+    const row = layoutPreachingDocument(doc, measure)[0].rows[0];
+    expect(row.lines[3].join(" ").replace(/\s+/g, " ").trim()).toBe(
+      doc.rows[0].values[3].trim(),
+    );
+  });
   it("deriva ambas versiones de las mismas salidas y omite territorios y motivos en publicadores", () => {
-    const c = preachingDocument(week, "conductors"),
-      p = preachingDocument(week, "publishers");
+    const c = preachingDocument(week, "conductors", measure),
+      p = preachingDocument(week, "publishers", measure);
     expect(c.headers).toEqual([
       "Día",
       "Fecha",
@@ -84,8 +154,10 @@ describe("Imagen del cronograma", () => {
     expect(c.rows[2].values[1]).toBe("12 Nov");
     expect(c.rows.some((r) => r.day === 2)).toBe(false);
     expect(JSON.stringify(p)).not.toMatch(/private-id|Justificación|T: 73/);
-    expect(c.widths.reduce((a, b) => a + b)).toBe(868);
-    expect(p.widths.reduce((a, b) => a + b)).toBe(868);
+    expect(c.widths.every((w, i) => w >= measure(c.headers[i]) + 16)).toBe(
+      true,
+    );
+    expect(p.widths).toHaveLength(5);
   });
   it("formatea fechas y horas del modelo con cambio de año, sin cambiar el registro", () => {
     expect(scheduleShortDate("2027-01-03")).toBe("3 Ene");
@@ -118,7 +190,7 @@ describe("Imagen del cronograma", () => {
       day: i % 7,
       meeting_point: "Punto de reunión sintético extenso ".repeat(8),
     }));
-    const doc = preachingDocument({ ...week, rows }, "conductors"),
+    const doc = preachingDocument({ ...week, rows }, "conductors", measure),
       pages = layoutPreachingDocument(doc, measure, 500);
     expect(pages.length).toBeGreaterThan(1);
     expect(pages.flatMap((p) => p.rows.map((r) => r.id))).toEqual(
@@ -139,9 +211,10 @@ describe("Imagen del cronograma", () => {
     const doc = preachingDocument(
       {
         ...week,
-        rows: [{ ...week.rows[0], meeting_point: "Palabra ".repeat(1000) }],
+        rows: [{ ...week.rows[0], meeting_point: "Palabra ".repeat(3000) }],
       },
       "conductors",
+      measure,
     );
     expect(() => layoutPreachingDocument(doc, measure, 500)).toThrow(
       /demasiado texto/,

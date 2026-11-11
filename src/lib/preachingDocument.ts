@@ -40,40 +40,82 @@ function joined(values: readonly (string | number)[]) {
   if (values.length < 3) return values.join(" y ");
   return `${values.slice(0, -1).join(", ")} y ${values.at(-1)}`;
 }
+export function createPreachingMeasurer() {
+  const context = document.createElement("canvas").getContext("2d");
+  if (!context)
+    throw new Error("Este navegador no pudo preparar la previsualización.");
+  context.font = preachingFormat.font;
+  return (text: string) => context.measureText(text).width;
+}
+export function preachingColumnWidths(
+  headers: readonly string[],
+  values: readonly (readonly string[])[],
+  measure: (text: string) => number,
+) {
+  const minimum = headers.map((text) => Math.ceil(measure(text)) + 16);
+  const natural = headers.map(
+    (_, col) =>
+      Math.ceil(
+        Math.max(
+          measure(headers[col]),
+          ...values.flatMap((row) => row[col].split(/\r?\n/).map(measure)),
+        ),
+      ) + 16,
+  );
+  // Ordinary schedules use the longest rendered text in each column exactly.
+  // Bound exceptional inputs to a safe canvas width and wrap without clipping.
+  const maximum = 4096,
+    total = natural.reduce((sum, w) => sum + w, 0);
+  if (total <= maximum) return natural;
+  const base = minimum.reduce((sum, w) => sum + w, 0),
+    extra = total - base;
+  return natural.map(
+    (width, col) =>
+      minimum[col] +
+      Math.floor(((width - minimum[col]) * (maximum - base)) / extra),
+  );
+}
 export function preachingDocument(
   week: PreachingWeek,
   audience: PreachingAudience,
+  measure: (text: string) => number,
 ) {
   const dates = preachingWeekDates(week.week_start);
   const conductors = audience === "conductors";
-  return {
-    headers: [
-      "Día",
-      "Fecha",
-      "Hora",
-      "Punto de Reunión",
-      ...(conductors ? ["Territorio"] : []),
-      "Conductor",
+  const headers = [
+    "Día",
+    "Fecha",
+    "Hora",
+    "Punto de Reunión",
+    ...(conductors ? ["Territorio"] : []),
+    "Conductor",
+  ];
+  const rows = sortedPreachingRows(week.rows).map((r) => ({
+    id: r.id,
+    day: r.day,
+    values: [
+      preachingDays[r.day],
+      scheduleShortDate(dates[r.day]),
+      scheduleDocumentTime(r.time),
+      r.meeting_point,
+      ...(conductors
+        ? [
+            r.territory_numbers?.length
+              ? `T: ${joined(r.territory_numbers)}`
+              : "",
+          ]
+        : []),
+      joined((r.conductor_names ?? []).map(scheduleDisplayName)),
     ],
-    widths: conductors ? [86, 64, 80, 261, 142, 235] : [86, 64, 80, 332, 306],
-    rows: sortedPreachingRows(week.rows).map((r) => ({
-      id: r.id,
-      day: r.day,
-      values: [
-        preachingDays[r.day],
-        scheduleShortDate(dates[r.day]),
-        scheduleDocumentTime(r.time),
-        r.meeting_point,
-        ...(conductors
-          ? [
-              r.territory_numbers?.length
-                ? `T: ${joined(r.territory_numbers)}`
-                : "",
-            ]
-          : []),
-        joined((r.conductor_names ?? []).map(scheduleDisplayName)),
-      ],
-    })),
+  }));
+  return {
+    headers,
+    rows,
+    widths: preachingColumnWidths(
+      headers,
+      rows.map((r) => r.values),
+      measure,
+    ),
   };
 }
 export type PreachingDocument = ReturnType<typeof preachingDocument>;

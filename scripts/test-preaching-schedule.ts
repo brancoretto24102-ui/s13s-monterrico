@@ -190,9 +190,19 @@ export async function testPreachingSchedule({
       !access.permissions.includes("territories.view"),
   );
   ok((await scalar(custom, "select get_snapshot()")).assignments.length === 0);
+  const auditBeforePreview = await scalar(
+    root,
+    "select count(*) from audit_log where entity='preaching_schedules' and operation='EXPORT'",
+  );
   const data = await scalar(custom, "select get_preaching_context($1)", [
     monday,
   ]);
+  ok(
+    (await scalar(
+      root,
+      "select count(*) from audit_log where entity='preaching_schedules' and operation='EXPORT'",
+    )) === auditBeforePreview,
+  );
   ok(data.territories.some((t: any) => t.id === tids[0]));
   ok(data.conductors.some((c: any) => c.id === conductor));
   ok(

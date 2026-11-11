@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 70 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 359 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 75 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 360 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -102,3 +102,9 @@ Se reprodujo en la web anterior la pantalla en blanco al abrir el selector fuera
 Se eligió otro lunes con cambios pendientes, se canceló el cambio conservando los conductores y luego se confirmó el descarte para abrir la nueva semana. Se comprobó que un martes no habilita Abrir semana y que el lunes 28/12/2026 produce domingo 03/01/2027. El campo no recarga mientras se está eligiendo la fecha.
 
 Las pruebas automatizadas actuales reemplazan las dos del antiguo PDF de cronogramas por siete de su modelo de imagen: mismas salidas y privacidad de publicadores, formato y nombres sin alterar el registro, ajuste de texto con acentos y palabras largas, división sin pérdidas, aviso ante una salida desmesurada y selección de PNG/JPG por tamaño y MIME, incluido el fallback PNG. Las imágenes de ambas versiones se descargaron desde la interfaz; se revisaron dimensiones, colores y contenido visible. Se conserva la validación de permisos y plazos en el servidor antes de exportar. El formulario oficial S-13-S sigue generándose en PDF y su motor no se modifica.
+
+## Sugerencias, anchos y descarga elegida (0.8.2)
+
+Las cinco pruebas unitarias nuevas cubren la exclusión semanal de territorios, varias apariciones y retorno al retirar la última o desmarcar su día; anchos por medida real de glifos, incluidos textos con menos letras pero más anchos; reducción de espacios cuando se acorta el contenido; encabezados y líneas explícitas; y límites de lienzo sin pérdida de texto. La nueva comprobación PostgreSQL verifica que consultar el contexto para previsualizar no registra EXPORT.
+
+En navegador, con datos ficticios, se añadió y retiró un territorio desde sugerencias y se desmarcó y volvió a marcar su día. Se observó el retorno correcto de la tarjeta. Un punto de reunión largo amplió solo su columna. Se preparó una imagen sin evento de descarga automática, se cerró sin descargar y se preparó la otra versión. Después de pulsar Descargar se obtuvieron ambas imágenes y se comprobaron sus dimensiones variables, colores y contenido. El archivo descargado procede del mismo blob que se muestra en la previsualización.

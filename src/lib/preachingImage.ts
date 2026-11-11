@@ -2,6 +2,7 @@ import {
   preachingDocument,
   preachingFormat as format,
   layoutPreachingDocument,
+  createPreachingMeasurer,
   type PreachingAudience,
 } from "./preachingDocument";
 import type { PreachingWeek } from "./preachingSchedule";
@@ -37,19 +38,17 @@ export async function generatePreachingImages(
   audience: PreachingAudience,
 ): Promise<PreachingImage[]> {
   await document.fonts?.ready;
-  const doc = preachingDocument(week, audience),
-    scratch = document.createElement("canvas"),
-    measure = scratch.getContext("2d");
-  if (!measure)
-    throw new Error("Este navegador no pudo abrir el generador de imágenes.");
-  measure.font = format.font;
-  const pages = layoutPreachingDocument(
-      doc,
-      (text) => measure.measureText(text).width,
-    ),
+  const measure = createPreachingMeasurer(),
+    doc = preachingDocument(week, audience, measure),
     images: PreachingImage[] = [];
   const width = doc.widths.reduce((a, b) => a + b, 0),
     scale = 2;
+  const maxTableHeight = Math.min(
+    3500,
+    Math.floor(12_000_000 / (scale * scale * (width + format.marginX * 2))) -
+      format.marginY * 2,
+  );
+  const pages = layoutPreachingDocument(doc, measure, maxTableHeight);
   for (const page of pages) {
     const canvas = document.createElement("canvas");
     canvas.width = (width + format.marginX * 2) * scale;

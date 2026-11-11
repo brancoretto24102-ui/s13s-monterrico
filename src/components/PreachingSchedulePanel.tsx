@@ -10,6 +10,7 @@ import {
   ChevronDown,
   AlertTriangle,
   MapPinned,
+  Eye,
 } from "lucide-react";
 import { can } from "../lib/permissions";
 import { downloadBlob, rpc } from "../lib/client";
@@ -30,6 +31,7 @@ import {
   scheduleTime,
   sortedPreachingRows,
   territoryPlanStatus,
+  unplannedTerritories,
   type PreachingContext,
   type PreachingRow,
   type PreachingWeek,
@@ -38,7 +40,10 @@ import type { Profile, Snapshot } from "../lib/types";
 import ConductorSelect from "./ConductorSelect";
 import { CoverageDate } from "./TerritoryCoverage";
 import Modal from "./Modal";
-import { preachingDocument } from "../lib/preachingDocument";
+import {
+  preachingDocument,
+  createPreachingMeasurer,
+} from "../lib/preachingDocument";
 import type { PreachingImage } from "../lib/preachingImage";
 import "./PreachingSchedulePanel.css";
 
@@ -81,6 +86,7 @@ export function PreachingPreview({
   context: PreachingContext;
   publishers?: boolean;
 }) {
+  const [measure] = useState(() => createPreachingMeasurer());
   const dates = preachingWeekDates(week.week_start);
   const doc = preachingDocument(
     {
@@ -102,6 +108,7 @@ export function PreachingPreview({
       })),
     },
     publishers ? "publishers" : "conductors",
+    measure,
   );
   const rows = doc.rows;
   return (
@@ -114,7 +121,12 @@ export function PreachingPreview({
         </p>
       </div>
       <div className="table-wrap">
-        <table>
+        <table
+          style={{
+            width: doc.widths.reduce((a, b) => a + b, 0),
+            minWidth: doc.widths.reduce((a, b) => a + b, 0),
+          }}
+        >
           <colgroup>
             {doc.widths.map((width, i) => (
               <col
@@ -161,6 +173,97 @@ export function PreachingPreview({
         <p className="empty-inline">Sin salidas programadas esta semana.</p>
       )}
     </div>
+  );
+}
+
+function PreachingImagePreview({
+  images,
+  publishers,
+  onDownload,
+  onClose,
+  busy,
+}: {
+  images: PreachingImage[];
+  publishers: boolean;
+  onDownload: (image: PreachingImage, part?: number) => void;
+  onClose: () => void;
+  busy: boolean;
+}) {
+  const panel = useRef<HTMLElement>(null);
+  const [urls, setUrls] = useState<string[]>([]);
+  useEffect(() => {
+    const urls = images.map((image) => URL.createObjectURL(image.blob));
+    setUrls(urls);
+    panel.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [images]);
+  const audience = publishers ? "publicadores" : "conductores";
+  return (
+    <section
+      ref={panel}
+      className="panel preaching-image-previews"
+      aria-label={`Previsualización de ${audience}`}
+    >
+      <div className="panel-heading">
+        <div>
+          <h2>
+            Previsualización · {publishers ? "Publicadores" : "Conductores"}
+          </h2>
+          <p className="small muted">
+            Revisa la imagen antes de decidir si deseas descargarla.
+          </p>
+        </div>
+        <button className="text-button" disabled={busy} onClick={onClose}>
+          <X size={15} />
+          Cerrar previsualización
+        </button>
+      </div>
+      {images.map((image, i) => (
+        <figure key={i}>
+          <figcaption>
+            Imagen {i + 1} de {images.length} · {image.extension.toUpperCase()}{" "}
+            · {Math.ceil(image.blob.size / 1024)} KB
+          </figcaption>
+          {urls[i] && (
+            <a
+              href={urls[i]}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`Ampliar imagen ${i + 1} de ${audience}`}
+            >
+              <img
+                src={urls[i]}
+                alt={`Cronograma de ${audience}, imagen ${i + 1} de ${images.length}`}
+              />
+            </a>
+          )}
+          <div className="button-row">
+            <button
+              className="primary"
+              disabled={busy}
+              onClick={() =>
+                onDownload(image, images.length > 1 ? i + 1 : undefined)
+              }
+            >
+              <Download size={15} />
+              {images.length > 1
+                ? `Descargar parte ${i + 1}`
+                : `Descargar imagen de ${audience}`}
+            </button>
+            {urls[i] && (
+              <a
+                className="secondary preaching-image-zoom"
+                href={urls[i]}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ampliar imagen
+              </a>
+            )}
+          </div>
+        </figure>
+      ))}
+    </section>
   );
 }
 
@@ -283,6 +386,8 @@ export default function PreachingSchedulePanel({
   const [exported, setExported] = useState<{
     publishers: boolean;
     images: PreachingImage[];
+    weekId: string;
+    version: number;
   } | null>(null);
   const [context, setContext] = useState<PreachingContext | null>(null),
     [rows, setRows] = useState<PreachingRow[]>([]),
@@ -417,7 +522,7 @@ export default function PreachingSchedulePanel({
   const coverageDates = latestCompletedDates(context?.assignments ?? [], today);
   const suggestions = context
     ? filterCoverageTerritories(
-        context.territories.filter(
+        unplannedTerritories(context.territories, activeRows).filter(
           (t) =>
             t.active &&
             territoryPlanStatus(context.assignments, t.id, today).kind !==
@@ -535,33 +640,42 @@ export default function PreachingSchedulePanel({
       setBusy(false);
     }
   }
-  async function download(publishers: boolean) {
-    if (!saved || dirty || !canExport) return;
+  async function prepareImages(publishers: boolean) {
+    if (!saved || dirty || busy || conflict || !canExport) return;
     setBusy(true);
+    setExported(null);
     setMessage("");
     try {
-      const week = demo
-        ? saved
-        : await rpc<PreachingWeek>("export_preaching_schedule", {
-            p_id: saved.id,
-            p_expected_version: saved.version,
-          });
+      let week = saved;
+      if (!demo) {
+        const fresh = await rpc<PreachingContext>("get_preaching_context", {
+          p_week_start: weekStart,
+        });
+        if (
+          !fresh.schedule ||
+          fresh.schedule.id !== saved.id ||
+          fresh.schedule.version !== saved.version
+        )
+          throw new Error(
+            "El cronograma cambió. Actualiza la semana antes de previsualizar.",
+          );
+        week = fresh.schedule;
+        setContext(fresh);
+      }
       const { generatePreachingImages } = await import("../lib/preachingImage");
       const images = await generatePreachingImages(
         week,
         publishers ? "publishers" : "conductors",
       );
-      if (images.length === 1) {
-        downloadImage(images[0], publishers);
-        setMessage(
-          `Imagen de ${publishers ? "publicadores" : "conductores"} descargada (${images[0].extension.toUpperCase()}, ${Math.ceil(images[0].blob.size / 1024)} KB).`,
-        );
-      } else {
-        setExported({ publishers, images });
-        setMessage(
-          `El cronograma ocupa ${images.length} imágenes para conservar todo el texto. Descarga cada parte debajo.`,
-        );
-      }
+      setExported({
+        publishers,
+        images,
+        weekId: week.id,
+        version: week.version,
+      });
+      setMessage(
+        `Previsualización de ${publishers ? "publicadores" : "conductores"} lista. Revisa ${images.length === 1 ? "la imagen" : "las imágenes"} y pulsa Descargar solo si deseas conservarla${images.length === 1 ? "" : "s"}.`,
+      );
     } catch (e) {
       setMessage((e as Error).message);
       if (!demo) await load();
@@ -569,15 +683,44 @@ export default function PreachingSchedulePanel({
       setBusy(false);
     }
   }
-  function downloadImage(
+  async function downloadImage(
     image: PreachingImage,
     publishers: boolean,
     part?: number,
   ) {
-    downloadBlob(
-      image.blob,
-      `Cronograma_${publishers ? "Publicadores" : "Conductores"}_${weekStart}${part ? `_Parte_${part}` : ""}.${image.extension}`,
-    );
+    if (
+      !saved ||
+      !exported ||
+      busy ||
+      dirty ||
+      conflict ||
+      exported.weekId !== saved.id ||
+      exported.version !== saved.version ||
+      !canExport
+    )
+      return;
+    setBusy(true);
+    setMessage("");
+    try {
+      if (!demo)
+        await rpc("export_preaching_schedule", {
+          p_id: exported.weekId,
+          p_expected_version: exported.version,
+        });
+      downloadBlob(
+        image.blob,
+        `Cronograma_${publishers ? "Publicadores" : "Conductores"}_${weekStart}${part ? `_Parte_${part}` : ""}.${image.extension}`,
+      );
+      setMessage(
+        `Imagen de ${publishers ? "publicadores" : "conductores"} descargada (${image.extension.toUpperCase()}, ${Math.ceil(image.blob.size / 1024)} KB).`,
+      );
+    } catch (e) {
+      setMessage((e as Error).message);
+      setExported(null);
+      if (!demo) await load();
+    } finally {
+      setBusy(false);
+    }
   }
   const preview: PreachingWeek = {
     id: saved?.id ?? "draft",
@@ -793,6 +936,11 @@ export default function PreachingSchedulePanel({
                   ),
                 )}
               </div>
+              {!suggestions.length && (
+                <p className="small muted">
+                  No hay territorios pendientes de sugerir para esta semana.
+                </p>
+              )}
               {!!unplaced.length && (
                 <details className="preaching-unplaced">
                   <summary>
@@ -1172,18 +1320,18 @@ export default function PreachingSchedulePanel({
                     <button
                       className="secondary"
                       disabled={!saved || dirty || busy}
-                      onClick={() => void download(false)}
+                      onClick={() => void prepareImages(false)}
                     >
-                      <Download size={15} />
-                      Imagen conductores
+                      <Eye size={15} />
+                      Previsualizar conductores
                     </button>
                     <button
                       className="secondary"
                       disabled={!saved || dirty || busy}
-                      onClick={() => void download(true)}
+                      onClick={() => void prepareImages(true)}
                     >
-                      <Download size={15} />
-                      Imagen publicadores
+                      <Eye size={15} />
+                      Previsualizar publicadores
                     </button>
                   </>
                 )}
@@ -1201,29 +1349,25 @@ export default function PreachingSchedulePanel({
             </div>
             {canExport && (
               <p className="small muted">
-                Se descarga el JPG o PNG más ligero, conservando el formato y la
-                legibilidad.
+                Primero revisa la previsualización. Puedes descargar después el
+                JPG o PNG más ligero.
               </p>
             )}
-            {exported && !dirty && !conflict && (
-              <section className="panel">
-                <h2>Imágenes del cronograma</h2>
-                <div className="button-row">
-                  {exported.images.map((image, i) => (
-                    <button
-                      key={i}
-                      className="secondary"
-                      onClick={() =>
-                        downloadImage(image, exported.publishers, i + 1)
-                      }
-                    >
-                      Descargar parte {i + 1} · {image.extension.toUpperCase()}{" "}
-                      · {Math.ceil(image.blob.size / 1024)} KB
-                    </button>
-                  ))}
-                </div>
-              </section>
-            )}
+            {exported &&
+              !dirty &&
+              !conflict &&
+              exported.weekId === saved?.id &&
+              exported.version === saved.version && (
+                <PreachingImagePreview
+                  images={exported.images}
+                  publishers={exported.publishers}
+                  busy={busy}
+                  onClose={() => setExported(null)}
+                  onDownload={(image, part) =>
+                    void downloadImage(image, exported.publishers, part)
+                  }
+                />
+              )}
           </>
         )
       )}

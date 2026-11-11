@@ -265,6 +265,15 @@ export function sortedPreachingRows(rows: readonly PreachingRow[]) {
       a.id.localeCompare(b.id),
   );
 }
+export function unplannedTerritories(
+  territories: readonly Territory[],
+  rows: readonly PreachingRow[],
+) {
+  const included = new Set(
+    rows.flatMap((r) => r.territories.map((t) => t.territory_id)),
+  );
+  return territories.filter((t) => !included.has(t.id));
+}
 export function scheduleExceptionBody(
   monday: string,
   row: PreachingRow,

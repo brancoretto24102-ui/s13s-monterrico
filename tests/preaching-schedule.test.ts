@@ -3,6 +3,7 @@ import { addDays } from "../src/lib/assignmentTiming";
 import { can, completePermissions } from "../src/lib/permissions";
 import {
   mondayOf,
+  unplannedTerritories,
   newPreachingRow,
   preachingWeekDates,
   scheduleDefaults,
@@ -63,6 +64,35 @@ const assignment = (
   completed_at: completed,
 });
 describe("Cronograma semanal de predicación", () => {
+  it("retira sugerencias incluidas en cualquier salida de la semana y las devuelve al quitar su última aparición", () => {
+    const a = row(0, [{ territory_id: "t1", reason: "" }]);
+    const b = row(3, [
+      { territory_id: "t1", reason: "" },
+      { territory_id: "t2", reason: "" },
+    ]);
+    expect(
+      unplannedTerritories(context.territories, [a, b]).map((t) => t.id),
+    ).toEqual(["t3"]);
+    expect(
+      unplannedTerritories(context.territories, [b]).map((t) => t.id),
+    ).toEqual(["t3"]);
+    expect(
+      unplannedTerritories(context.territories, []).map((t) => t.id),
+    ).toEqual(["t1", "t2", "t3"]);
+    expect(context.territories).toHaveLength(3);
+  });
+  it("recupera sugerencias cuando se quita el día de su única salida", () => {
+    const rows = [
+      row(0, [{ territory_id: "t1", reason: "" }]),
+      row(2, [{ territory_id: "t2", reason: "" }]),
+    ];
+    expect(
+      unplannedTerritories(
+        context.territories,
+        rows.filter((r) => r.day !== 2),
+      ).map((t) => t.id),
+    ).toEqual(["t2", "t3"]);
+  });
   it("calcula lunes a domingo con fechas reales, incluidos cambios de mes y año", () => {
     expect(mondayOf("2026-11-10")).toBe(monday);
     expect(preachingWeekDates(monday)).toEqual([

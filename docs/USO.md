@@ -49,11 +49,11 @@ Las hojas de conductores, observaciones y cronogramas se reconocen, pero la impo
 
 ## Cronograma de predicación
 
-Abrir **Predicación → Procesos → Cronograma semanal**. Elegir el lunes y pulsar **Abrir semana** para calcular todas las fechas hasta domingo; marcar solo los días que se predica, agregar salidas y seleccionar conductores activos del maestro. Los territorios abiertos con una salida conocida aparecen por defecto y se pueden retirar. Arriba se muestran sugerencias del semáforo, sin obligación de seleccionarlas.
+Abrir **Predicación → Procesos → Cronograma semanal**. Elegir el lunes y pulsar **Abrir semana** para calcular todas las fechas hasta domingo; marcar solo los días que se predica, agregar salidas y seleccionar conductores activos del maestro. Los territorios abiertos con una salida conocida aparecen por defecto y se pueden retirar. Arriba se muestran sugerencias del semáforo, sin obligación de seleccionarlas. Los territorios ya programados se ocultan de esa lista y vuelven al retirarlos de todas las salidas de la semana.
 
 El cronograma avisa si todavía no pasaron 14 días desde el cierre y permite programar con un motivo obligatorio, conservado en observaciones y auditoría. Un territorio que siga abierto después de 3 meses debe cerrarse antes de programarlo; desde el cierre se revisan sus 14 días. La programación utiliza la fecha de cada salida y no crea inicios ni cierres reales en el S-13-S.
 
-Guardar y revisar las pestañas **Conductores** y **Publicadores**. La segunda se genera automáticamente con las mismas filas y sin Territorio. Usar **Imagen conductores** e **Imagen publicadores** desde la versión guardada. La web conserva el formato compacto de referencia y descarga el menor entre PNG y JPG. Si otra persona guardó primero, actualizar y revisar antes de guardar de nuevo. Inicialmente el módulo es administrativo; se delegan Visualizar, Crear, Editar y Descargar por separado en Perfiles. Ver [guía completa](CRONOGRAMA_PREDICACION.md).
+Guardar y revisar las pestañas **Conductores** y **Publicadores**. La segunda se genera automáticamente con las mismas filas y sin Territorio. Usar **Previsualizar conductores** y **Previsualizar publicadores** desde la versión guardada. La imagen se muestra antes de descargar y puede ampliarse o cerrarse. Para guardarla, pulsar su botón **Descargar imagen**. Los anchos se ajustan al texto más ancho de cada columna y se conserva el menor archivo entre PNG y JPG. Si otra persona guardó primero, actualizar y revisar antes de guardar de nuevo. Inicialmente el módulo es administrativo; se delegan Visualizar, Crear, Editar y Descargar por separado en Perfiles. Ver [guía completa](CRONOGRAMA_PREDICACION.md).
 
 ## Formulario
 

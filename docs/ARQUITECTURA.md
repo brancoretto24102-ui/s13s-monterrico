@@ -101,3 +101,11 @@ La semana y sus observaciones `schedule_exception` se confirman juntas. Estas ob
 La vista previa y el exportador utilizan `preachingDocument`, un modelo de presentación común. Resuelve filas, fechas cortas, horas y nombres; el estilo solo modifica la presentación, sin reescribir identidades o snapshots. El exportador utiliza Canvas local, sin servicios externos ni nuevas dependencias. Compara los tamaños reales de PNG y JPEG de alta calidad, conserva la extensión correspondiente al MIME recibido y descarga el menor. Los límites por imagen mantienen una resolución legible; las semanas largas se dividen sin omitir filas. Se repiten Día y Fecha cuando un grupo continúa en otra imagen. No se incluyen motivos internos ni identificadores en el texto exportado.
 
 El selector de conductores mide el espacio disponible en el viewport y, cuando existe, en el diálogo contenedor. Admite ambos contextos y reacciona al desplazamiento de sus antecesores. Elegir un lunes cambia solo un campo local; Abrir semana valida y carga explícitamente, conservando la semana abierta mientras la nueva fecha es incompleta o se decide sobre cambios sin guardar.
+
+## Sugerencias y previsualizaciones (0.8.2)
+
+Las sugerencias excluyen el conjunto de UUID de territorios de las salidas de los días marcados. La exclusión se recalcula desde el cronograma completo, sin flags persistentes ni escrituras adicionales. Retirar la última aparición o su día devuelve el territorio a la lista conservando el orden de prioridad.
+
+El modelo común calcula cada ancho con Canvas `measureText`, tomando la línea más ancha entre todos los valores y el encabezado, más el margen de celda. No se utilizan longitudes de cadenas como sustituto de la medida de la fuente. Los límites de lienzo y área por imagen permiten conservar texto extenso mediante ajuste de líneas y división, sin reducir la fuente ni omitir salidas.
+
+Previsualizar utiliza `get_preaching_context`, verifica la versión guardada y crea imágenes/URL blob temporales solo en el cliente. El componente revoca las URL al reemplazarse o desmontarse. La descarga explícita utiliza `export_preaching_schedule`, que revalida acceso, versión y plazos y registra EXPORT. La previsualización se invalida al editar, cambiar de semana o recibir otra versión. No hay cambios de esquema ni permisos en esta versión.

@@ -368,10 +368,45 @@
   color: #7c8c99;
 }
 .enterprise-shell .preaching-preview table {
-  width: 868px;
-  min-width: 868px;
   table-layout: fixed;
   border: 2px solid #000;
+}
+.preaching-image-previews {
+  padding: 20px;
+  margin-top: 20px;
+}
+.preaching-image-previews .panel-heading {
+  padding: 0 0 14px;
+}
+.preaching-image-previews figure {
+  margin: 0 0 24px;
+  min-width: 0;
+}
+.preaching-image-previews figcaption {
+  font-size: 12px;
+  color: #60758e;
+  margin-bottom: 10px;
+}
+.preaching-image-previews img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #fff;
+  cursor: zoom-in;
+  border: 1px solid #d9e2e9;
+}
+.preaching-image-previews .button-row {
+  margin-top: 12px;
+}
+.preaching-image-zoom {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  padding: 9px 12px;
+  font-size: 12px;
+  border: 1px solid #d7e1e8;
+  border-radius: 4px;
+  color: #476278;
 }
 .enterprise-shell .preaching-preview th,
 .enterprise-shell .preaching-preview td {
