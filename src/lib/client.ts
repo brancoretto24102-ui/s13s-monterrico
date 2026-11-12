@@ -56,7 +56,9 @@ export async function rpc<T>(
           ? "Otro administrador actualizó este conductor. Revisa la lista y vuelve a abrir el formulario."
           : ["manage_user", "manage_access_profile"].includes(fn)
             ? "Otro administrador actualizó el registro. Revisa la lista y vuelve a abrir el formulario."
-            : "Otro usuario actualizó el registro o la selección. Se actualizarán los datos; revisa el formulario antes de volver a guardar.",
+            : fn === "get_territory_map_pdf"
+              ? "El mapa o sus fechas cambiaron. Prepara otra vista previa antes de descargar."
+              : "Otro usuario actualizó el registro o la selección. Se actualizarán los datos; revisa el formulario antes de volver a guardar.",
       );
     throw new Error(error.message);
   }

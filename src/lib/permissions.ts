@@ -1,4 +1,5 @@
 import type { Profile } from "./types";
+export const MAP_PDF_PERMISSION = "maps.export_pdf";
 
 export const permissionGroups = [
   {
@@ -24,6 +25,7 @@ export const permissionGroups = [
       ["delete", "Eliminar / restaurar polígonos"],
       ["import", "Importar GeoJSON"],
       ["export", "Exportar GeoJSON y KML"],
+      ["export_pdf", "Exportar mapa PDF"],
     ],
   },
   {

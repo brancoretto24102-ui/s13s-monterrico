@@ -1,0 +1,96 @@
+.modal.map-pdf-modal {
+  width: min(1200px, calc(100vw - 36px));
+  max-width: none;
+  max-height: calc(100dvh - 36px);
+  padding: 0;
+  overflow: auto;
+}
+.map-pdf-modal > header {
+  padding: 20px 24px;
+  margin: 0;
+  position: sticky;
+  top: 0;
+  background: white;
+  z-index: 2;
+  border-bottom: 1px solid #dce4eb;
+}
+.map-pdf-body {
+  padding: 22px 24px;
+  min-width: 0;
+}
+.map-pdf-intro {
+  color: #36516a;
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 0 0 16px;
+}
+.map-pdf-options {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  min-width: 0;
+}
+.map-pdf-options label {
+  margin: 0;
+  min-width: 0;
+  font-size: 12px;
+}
+.map-pdf-options select {
+  width: 100%;
+  min-width: 0;
+}
+.map-pdf-options .checkbox {
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+}
+.map-pdf-options input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  min-height: 16px;
+}
+.map-pdf-note {
+  font-size: 11px;
+  line-height: 1.8;
+  color: #657c87;
+  margin: 15px 0;
+}
+.map-pdf-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 18px 0;
+}
+.map-pdf-summary {
+  font-size: 12px;
+  color: #365b47;
+  background: #f0f7f1;
+  padding: 12px;
+  border-radius: 4px;
+  line-height: 1.7;
+}
+.map-pdf-preview {
+  min-width: 0;
+}
+@media (max-width: 560px) {
+  .modal.map-pdf-modal {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .map-pdf-modal > header {
+    padding: 16px;
+  }
+  .map-pdf-body {
+    padding: 16px;
+  }
+  .map-pdf-options {
+    grid-template-columns: 1fr;
+  }
+  .map-pdf-actions button {
+    flex: 1;
+    justify-content: center;
+  }
+}

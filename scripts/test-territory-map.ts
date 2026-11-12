@@ -127,6 +127,10 @@ export async function testTerritoryMap({
     await denied(c.query("select get_territory_map()"));
     await denied(manage(c, "create", 0));
     await denied(c.query("select export_territory_geometries('{}')"));
+    await denied(c.query("select get_territory_map_pdf()"));
+    await denied(
+      c.query("select get_territory_map_pdf(true,$1)", ["0".repeat(32)]),
+    );
   }
   await denied(
     custom.query("select private.validate_territory_geometry($1)", [geometry]),
@@ -479,6 +483,84 @@ export async function testTerritoryMap({
       ),
     ) === 1,
   );
+  // PDF export has a separate permission; preview is not an audited download.
+  const pdfAuditCount = () =>
+    scalar(
+      root,
+      "select count(*)::integer from audit_log where entity='territory_map_pdf'",
+    );
+  await denied(custom.query("select get_territory_map_pdf()"));
+  await profile(["maps.export_pdf"]);
+  await denied(exportMap(custom));
+  let pdfPreview = await scalar(custom, "select get_territory_map_pdf()");
+  ok(
+    pdfPreview.context.shapes.length === 3 &&
+      /^[0-9a-f]{32}$/.test(pdfPreview.fingerprint),
+  );
+  ok(
+    !JSON.stringify(pdfPreview).includes(source) &&
+      !JSON.stringify(pdfPreview).includes(hash),
+  );
+  ok(
+    !("people" in pdfPreview.context) &&
+      !("visit_restrictions" in pdfPreview.context),
+  );
+  await manage(admin, "update", await version());
+  await denied(
+    custom.query("select get_territory_map_pdf(true,$1)", [
+      pdfPreview.fingerprint,
+    ]),
+    /cambiaron/,
+  );
+  pdfPreview = await scalar(custom, "select get_territory_map_pdf()");
+  const countBeforePdf = await pdfAuditCount();
+  await scalar(custom, "select get_territory_map_pdf()");
+  ok((await pdfAuditCount()) === countBeforePdf);
+  await denied(
+    custom.query("select get_territory_map_pdf(true,null)"),
+    /vista previa/,
+  );
+  await denied(
+    custom.query("select get_territory_map_pdf(null,null)"),
+    /operación/,
+  );
+  await denied(
+    custom.query("select get_territory_map_pdf(true,$1)", ["0".repeat(32)]),
+    /cambiaron/,
+  );
+  await root.query("update territories set active=false where id=$1", [
+    tids[0],
+  ]);
+  await denied(
+    custom.query("select get_territory_map_pdf(true,$1)", [
+      pdfPreview.fingerprint,
+    ]),
+    /cambiaron/,
+  );
+  await root.query("update territories set active=true where id=$1", [tids[0]]);
+  const freshPdf = await scalar(custom, "select get_territory_map_pdf()");
+  const downloadedPdf = await scalar(
+    custom,
+    "select get_territory_map_pdf(true,$1)",
+    [freshPdf.fingerprint],
+  );
+  ok(
+    downloadedPdf.fingerprint === freshPdf.fingerprint &&
+      !downloadedPdf.context,
+  );
+  ok((await pdfAuditCount()) === countBeforePdf + 1);
+  // Only the admin base role bypasses profile grants; revocation takes effect
+  // even if the browser still has bytes from a previously authorized preview.
+  const adminPdf = await scalar(admin, "select get_territory_map_pdf()");
+  ok(adminPdf.context.shapes.length === 3);
+  await profile(["maps.export"]);
+  await denied(custom.query("select get_territory_map_pdf()"));
+  await denied(
+    custom.query("select get_territory_map_pdf(true,$1)", [
+      freshPdf.fingerprint,
+    ]),
+  );
+  ok((await pdfAuditCount()) === countBeforePdf + 1);
   const backup = await scalar(admin, "select backup_data()");
   ok(
     backup.territory_geometries.length === 3 &&

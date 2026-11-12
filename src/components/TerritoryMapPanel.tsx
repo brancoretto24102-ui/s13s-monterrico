@@ -50,6 +50,7 @@ import {
 import type { Profile, Snapshot } from "../lib/types";
 import TerritoryMapCanvas from "./TerritoryMapCanvas";
 import TerritoryCoverage from "./TerritoryCoverage";
+import TerritoryMapPdfExport from "./TerritoryMapPdfExport";
 import Modal from "./Modal";
 import DataPager from "./DataPager";
 import { TerritoryVisitNotice } from "./VisitRestrictionsPanel";
@@ -720,6 +721,17 @@ export default function TerritoryMapPanel({
               <Upload size={15} />
               Importar GeoJSON
             </button>
+          )}
+          {context && (
+            <TerritoryMapPdfExport
+              profile={profile}
+              context={context}
+              filteredIds={filtered.map((t) => t.id)}
+              colorMode={colorMode}
+              today={today}
+              demo={demo}
+              disabled={busy || !!form || !shapes.some((s) => !s.deleted_at)}
+            />
           )}
           {canExport && (
             <>

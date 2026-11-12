@@ -41,15 +41,16 @@ No se permite trasladar una geometría a otro territorio, cambiar su huella orig
 
 **Seguridad → Maestros → Perfiles → Nuevo perfil → CONFIGURACIÓN → Territorios geográficos.**
 
-| Acceso                         | Permiso        | Alcance                                                              |
-| ------------------------------ | -------------- | -------------------------------------------------------------------- |
-| Visualizar mapa y prioridades  | `maps.view`    | Consultar límites, catálogo y fechas agregadas                       |
-| Crear polígonos                | `maps.create`  | Dibujar límites donde no existan                                     |
-| Editar límites                 | `maps.edit`    | Cambiar contornos con motivo                                         |
-| Validar límites revisados      | `maps.approve` | Confirmar una revisión con motivo                                    |
-| Eliminar / restaurar polígonos | `maps.delete`  | Consultar Papelera y recuperar contornos                             |
-| Importar GeoJSON               | `maps.import`  | Ejecutar lotes; necesita también crear y/o editar según su contenido |
-| Exportar GeoJSON y KML         | `maps.export`  | Descargar límites con revalidación y auditoría                       |
+| Acceso                         | Permiso           | Alcance                                                              |
+| ------------------------------ | ----------------- | -------------------------------------------------------------------- |
+| Visualizar mapa y prioridades  | `maps.view`       | Consultar límites, catálogo y fechas agregadas                       |
+| Crear polígonos                | `maps.create`     | Dibujar límites donde no existan                                     |
+| Editar límites                 | `maps.edit`       | Cambiar contornos con motivo                                         |
+| Validar límites revisados      | `maps.approve`    | Confirmar una revisión con motivo                                    |
+| Eliminar / restaurar polígonos | `maps.delete`     | Consultar Papelera y recuperar contornos                             |
+| Importar GeoJSON               | `maps.import`     | Ejecutar lotes; necesita también crear y/o editar según su contenido |
+| Exportar GeoJSON y KML         | `maps.export`     | Descargar límites con revalidación y auditoría                       |
+| Exportar mapa PDF              | `maps.export_pdf` | Preparar y descargar el atlas con permiso independiente              |
 
 Seleccionar una acción agrega visualización. Los roles base editor y lector no reciben acceso nuevo automáticamente. El administrador ve el catálogo completo; los perfiles personalizados conservan solo sus acciones asignadas. Las excepciones de 14 días / 3 meses siguen siendo independientes del mapa.
 
@@ -83,10 +84,32 @@ Las etiquetas del plano se incorporan de forma privada, vinculando cada texto co
 
 GeoJSON conserva las etiquetas en `properties.part_labels`, una lista en el mismo orden que `geometry.coordinates`. KML incluye la misma lista como metadatos. Los archivos anteriores pueden conservar las etiquetas existentes si no cambian los contornos. Si se modifican, reordenan, agregan o retiran partes, se debe incluir la lista explícita para evitar asociar una etiqueta a otra manzana. El servidor valida la longitud, el tipo, la versión y los permisos; un lote inválido se revierte completo. El respaldo incluye las etiquetas.
 
-## Exportación cartográfica PDF: propuesta pendiente
+## Exportar mapa PDF (0.13.0)
 
-La versión 0.12.0 conserva GeoJSON y KML. El nuevo botón PDF de alta calidad queda pendiente de autorización, conforme a la solicitud del usuario.
+En **Territorios geográficos**, el botón **Exportar mapa PDF** aparece en la parte superior, junto a las exportaciones de límites. Solo lo ve el administrador o un usuario con **Exportar mapa PDF** (`maps.export_pdf`). Este permiso es independiente de GeoJSON/KML, del formulario S-13-S y del cronograma.
 
-La propuesta consiste en generar y previsualizar un PDF vectorial en el navegador: límites y etiquetas privados obtenidos con permisos vigentes, calles públicas vectoriales con atribución y páginas de detalle para evitar superposición de textos. Antes de descargar, se revalidarán permisos y versiones. No se almacenarán los PDFs en Supabase ni se contratarán servicios de mapas de pago. No se harán descargas masivas de teselas de OpenStreetMap.
+Para habilitarlo a otra persona:
 
-El peso del PDF generado localmente afecta memoria y tiempo del dispositivo; no se convierte en transferencia del archivo completo desde Supabase. Sí cuentan las consultas autorizadas y la auditoría. El consumo mensual depende también del uso normal de la aplicación y de las actualizaciones periódicas del mapa; la permanencia en el plan gratuito depende de las cuotas vigentes. La medición del tráfico acumulado debe consultarse en el panel de uso de Supabase antes de ampliar el número de usuarios o la frecuencia de consultas.
+1. Ir a **Seguridad → Maestros → Perfiles** y crear o editar su perfil.
+2. En **CONFIGURACIÓN → Territorios geográficos**, marcar **Exportar mapa PDF**. Se agrega automáticamente **Visualizar mapa y prioridades**; no se habilitan GeoJSON/KML ni edición.
+3. Guardar con motivo y asignar ese perfil al usuario desde **Usuarios → Web**. Los perfiles existentes conservan sus accesos; no se concede el permiso nuevo de forma automática. El administrador ya lo tiene.
+
+### Preparación y descarga
+
+1. Elegir todos los territorios activos o los incluidos por los filtros actuales del mapa.
+2. Elegir colores por estado de asignación o antigüedad, y si se incluyen sectores ampliados y manzanas/referencias.
+3. Pulsar **Preparar vista previa**. El servidor revalida el permiso y devuelve el corte actual con los datos mínimos. No registra una descarga por preparar la vista.
+4. Revisar las páginas con las flechas y ampliar a 150 % o 200 %. La previsualización dibuja una sola página y limita el tamaño del lienzo, también en pantallas estrechas.
+5. Pulsar **Descargar PDF**. El servidor vuelve a comprobar el permiso y la huella del mapa, incluidos estado, fechas, etiquetas y versiones de geometría. Si cambiaron o se revocó el acceso, se rechaza la descarga; preparar otra vista previa. Una descarga aprobada registra auditoría.
+
+El mapa general usa formato A1 horizontal; los cuatro sectores, A2 horizontal, con área de solape para conservar referencias en los bordes. El índice usa A3 horizontal e incluye las referencias completas, fechas y estados. El número de páginas del índice depende de la selección. Puede imprimirse a menor escala, con la reducción de tamaño de letras correspondiente.
+
+El PDF conserva líneas y textos vectoriales con fuentes incorporadas: no es una captura ampliada de teselas. Las etiquetas de territorios, manzanas y calles se distribuyen evitando intersecciones entre sus cajas de texto; cuando una etiqueta se desplaza, una línea indica su ubicación. En áreas pequeñas o muy densas, consultar también los sectores y el índice. Los bordes discontinuos siguen identificando límites pendientes de revisión. Los caracteres no disponibles en la fuente generan un aviso explícito para revisar la referencia.
+
+Las calles proceden de una **instantánea pública de OpenStreetMap**, cuya fecha se muestra en el PDF. El trazado público puede estar incompleto o cambiar con el tiempo; no certifica los límites privados. El recurso público y su licencia están documentados en [map-assets](../public/map-assets/README.md). No se descargan teselas masivamente ni se usa una API de pago.
+
+### Seguridad y consumo
+
+Los polígonos y etiquetas privados se obtienen con `maps.export_pdf`, solo en memoria. El PDF no incorpora conductores, domicilios sin visitas, observaciones privadas ni las notas técnicas de procedencia. No se guarda en Supabase, GitHub ni almacenamiento persistente del navegador. Al cerrar la ventana o revocarse el permiso se retira la vista previa.
+
+La generación y descarga del archivo se hacen en el dispositivo. La base pública de calles y las fuentes se sirven como recursos estáticos; su carga no consume la transferencia de Supabase. La preparación realiza una consulta autorizada y la descarga revalida mediante una respuesta pequeña, sin retransmitir todos los límites. El historial de auditoría sí crece por las descargas aprobadas. No se contrataron servicios de pago; seguir dentro del plan gratuito depende del uso total de la aplicación y de las cuotas vigentes.

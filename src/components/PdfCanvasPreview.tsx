@@ -8,7 +8,13 @@ import type {
 import { pdfPreviewSize } from "../lib/pdfPreview";
 import "./PdfCanvasPreview.css";
 
-export default function PdfCanvasPreview({ bytes }: { bytes: Uint8Array }) {
+export default function PdfCanvasPreview({
+  bytes,
+  documentName = "formulario S-13-S",
+}: {
+  bytes: Uint8Array;
+  documentName?: string;
+}) {
   const [doc, setDoc] = useState<PDFDocumentProxy | null>(null),
     [page, setPage] = useState(1),
     [zoom, setZoom] = useState(1),
@@ -82,7 +88,7 @@ export default function PdfCanvasPreview({ bytes }: { bytes: Uint8Array }) {
         canvas.setAttribute("role", "img");
         canvas.setAttribute(
           "aria-label",
-          `Página ${page} de ${doc.numPages} del formulario S-13-S`,
+          `Página ${page} de ${doc.numPages} del ${documentName}`,
         );
         render = pdfPage.render({
           canvas,
@@ -110,7 +116,7 @@ export default function PdfCanvasPreview({ bytes }: { bytes: Uint8Array }) {
       cancelled = true;
       render?.cancel();
     };
-  }, [doc, page, width, zoom]);
+  }, [doc, page, width, zoom, documentName]);
   return (
     <div className="pdf-canvas-preview">
       <div

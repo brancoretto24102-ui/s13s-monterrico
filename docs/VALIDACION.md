@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 185 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 569 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 199 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 594 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -163,4 +163,16 @@ Se añadieron 23 casos unitarios para descanso hasta el día 13, disponibilidad 
 
 En navegador se comprobaron los colores de relleno y borde, filtro por tarjeta, selección sin cambiar el color, detalle con fecha y días restantes, cambio entre los dos modos, prioridad por alerta y fechas del maestro. Se revisó con un ancho de 454 píxeles CSS mediante zoom del navegador, sin desbordamiento horizontal de la página. No equivale a una prueba en teléfono físico. La compilación y revisión del paquete público pasaron; no se modificó el esquema de base de datos ni se escribieron asignaciones de prueba en la base alojada.
 
-La exportación PDF cartográfica de alta calidad no forma parte de esta entrega; requiere la aprobación solicitada para su propuesta y consumo estimado.
+La exportación PDF cartográfica se incorpora en la versión 0.13.0, descrita a continuación.
+
+## Exportación PDF del mapa y permiso independiente (0.13.0)
+
+Las 14 pruebas unitarias añadidas verifican que el permiso `maps.export_pdf` no se hereda de GeoJSON/KML, del PDF S-13-S ni de editor/lector; solo agrega visualización como dependencia. Comprueban proyección, orientación, recorte de calles, unión de segmentos, sectores solapados, colisiones de etiquetas, validación de datos públicos, referencias completas, selección vacía/desconocida/en Papelera, generación y cancelación del documento. Las fuentes se incorporan desde los recursos locales bajo licencia.
+
+Las 25 comprobaciones PostgreSQL nuevas comprueban acceso anónimo y de roles base, independencia de los permisos, preparación sin evento de exportación, descarga con huella vigente, respuesta mínima de descarga, rechazo de huellas vacías o antiguas, cambios de versión/estado y revocación del permiso, sin variar el historial de asignaciones.
+
+El atlas completo se renderizó y revisó visualmente: mapa general, sectores y listado. Se verificó que fuera vectorial, sin imágenes rasterizadas, con las fuentes incorporadas y etiquetas sin intersecciones en el plan de distribución. El tamaño y cantidad de páginas dependen de la selección. Los insumos y resultados privados de esa revisión quedan fuera del repositorio.
+
+En navegador se preparó y descargó un PDF con datos ficticios, con navegación de páginas y ampliación. Se revisó a 454 píxeles CSS mediante zoom, sin desbordamiento horizontal general ni de la ventana. Se comprobó en el árbol de perfiles que elegir Exportar mapa PDF marca únicamente esa acción y Visualizar mapa. No se concedieron accesos a usuarios reales durante esas pruebas.
+
+La revisión alojada confirmó el acceso administrativo y la prohibición de ejecución anónima. Las huellas de asignaciones, geometrías y perfiles personalizados se mantuvieron iguales al aplicar la migración. No se modificaron límites ni registros reales para probar el exportador. No se probó un teléfono físico.
