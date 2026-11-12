@@ -2,6 +2,7 @@ import type { Snapshot, VisitRestrictionSummary } from "./types";
 import { visitSummary } from "./visitRestrictions";
 import { assignmentDeadline, addDays } from "./assignmentTiming";
 import { coveragePriority, latestCompletedDates } from "./territoryCoverage";
+import { displayDate } from "./dates";
 
 export type MapPoint = [number, number]; // GeoJSON longitude, latitude (WGS84).
 export interface MapGeometry {
@@ -44,6 +45,57 @@ export const mapColors = {
   orange: "#ed852b",
   red: "#dd5059",
 };
+export type MapColorMode = "assignment" | "coverage";
+export const mapStatusLegend = [
+  {
+    key: "available",
+    label: "Disponible",
+    description: "Sin asignación abierta ni descanso",
+    color: "#36a158",
+    rank: 4,
+  },
+  {
+    key: "rest",
+    label: "En descanso",
+    description: "14 días desde la última finalización",
+    color: "#7c5aa6",
+    rank: 3,
+  },
+  {
+    key: "assigned",
+    label: "Abierto",
+    description: "Faltan más de 14 días para el límite",
+    color: "#2b76b7",
+    rank: 2,
+  },
+  {
+    key: "closing-soon",
+    label: "Por vencer",
+    description: "Faltan entre 1 y 14 días para el límite",
+    color: "#d49b13",
+    rank: 1,
+  },
+  {
+    key: "limit",
+    label: "Límite alcanzado",
+    description: "Vence hoy o superó los 3 meses",
+    color: "#d74958",
+    rank: 0,
+  },
+  {
+    key: "inactive",
+    label: "Inactivo",
+    description: "Territorio inactivo",
+    color: "#81939c",
+    rank: 5,
+  },
+] as const;
+export type MapStatusKey = (typeof mapStatusLegend)[number]["key"];
+const daysBetween = (from: string, to: string) =>
+  Math.round(
+    (Date.parse(`${to}T12:00:00Z`) - Date.parse(`${from}T12:00:00Z`)) /
+      86400000,
+  );
 export const MAX_MAP_VERTICES = 4096;
 
 export function normalizePartLabels(
@@ -252,14 +304,77 @@ export function googleMapsUrl(geometry: MapGeometry) {
   return `https://www.google.com/maps/search/?api=1&query=${lat.toFixed(7)},${lng.toFixed(7)}`;
 }
 export function mapTerritoryStatus(t: MapTerritory, today: string) {
-  if (!t.active) return { key: "inactive", label: "Inactivo" };
-  if (t.assigned_at)
-    return today > assignmentDeadline(t.assigned_at)
-      ? { key: "overdue", label: "Plazo de 3 meses vencido" }
-      : { key: "assigned", label: "Asignado" };
-  if (t.last_completed && today < addDays(t.last_completed, 14))
-    return { key: "rest", label: "En descanso" };
-  return { key: "available", label: "Disponible" };
+  let key: MapStatusKey = "available",
+    detail = "Sin asignación abierta ni descanso pendiente.",
+    deadline: string | null = null,
+    availableOn: string | null = null,
+    daysRemaining: number | null = null;
+  if (!t.active) {
+    key = "inactive";
+    detail = "El territorio está inactivo.";
+  } else if (t.assigned_at) {
+    deadline = assignmentDeadline(t.assigned_at);
+    daysRemaining = daysBetween(today, deadline);
+    key =
+      daysRemaining <= 0
+        ? "limit"
+        : daysRemaining <= 14
+          ? "closing-soon"
+          : "assigned";
+    detail =
+      daysRemaining < 0
+        ? `El plazo de 3 meses se superó hace ${-daysRemaining} ${daysRemaining === -1 ? "día" : "días"}. Fecha límite: ${displayDate(deadline)}. Revisa el cierre de la asignación.`
+        : daysRemaining === 0
+          ? `Hoy, ${displayDate(deadline)}, se cumplen los 3 meses. Revisa el cierre de la asignación.`
+          : `Fecha límite: ${displayDate(deadline)}. ${daysRemaining === 1 ? "Falta 1 día" : `Faltan ${daysRemaining} días`} para completar los 3 meses.`;
+  } else if (t.last_completed && today < addDays(t.last_completed, 14)) {
+    key = "rest";
+    availableOn = addDays(t.last_completed, 14);
+    daysRemaining = daysBetween(today, availableOn);
+    detail = `Descanso de 14 días. Disponible desde el ${displayDate(availableOn)}; ${daysRemaining === 1 ? "falta 1 día" : `faltan ${daysRemaining} días`}.`;
+  }
+  const legend = mapStatusLegend.find((s) => s.key === key)!;
+  const label =
+    key === "limit"
+      ? daysRemaining === 0
+        ? "Vence hoy"
+        : "Plazo de 3 meses superado"
+      : legend.label;
+  return { ...legend, label, detail, deadline, availableOn, daysRemaining };
+}
+export function mapTerritoryAppearance(
+  t: MapTerritory,
+  today: string,
+  mode: MapColorMode,
+) {
+  const status = mapTerritoryStatus(t, today);
+  if (mode === "assignment" || !t.active) return status;
+  const priority = coveragePriority(t.last_completed, today);
+  return { ...priority, color: mapColors[priority.color] };
+}
+export function compareMapTerritories(
+  a: MapTerritory,
+  b: MapTerritory,
+  today: string,
+  mode: MapColorMode,
+  priority: boolean,
+) {
+  if (priority) {
+    const difference =
+      mapTerritoryAppearance(a, today, mode).rank -
+      mapTerritoryAppearance(b, today, mode).rank;
+    if (difference) return difference;
+    const date = (t: MapTerritory) =>
+      mode === "assignment"
+        ? (mapTerritoryStatus(t, today).deadline ??
+          mapTerritoryStatus(t, today).availableOn ??
+          t.last_completed ??
+          "")
+        : (t.last_completed ?? "");
+    const older = date(a).localeCompare(date(b));
+    if (older) return older;
+  }
+  return a.territory_number - b.territory_number;
 }
 export interface MapImportRow {
   id: string;

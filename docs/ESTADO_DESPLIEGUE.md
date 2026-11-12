@@ -1,4 +1,4 @@
-# Estado funcional — versión 0.10.1
+# Estado funcional — versión 0.12.0
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
@@ -12,7 +12,7 @@ Se avisa del descanso de 14 días y se permite justificar la programación antic
 
 ## Validación
 
-- 145 pruebas unitarias y 534 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- 185 pruebas unitarias y 569 comprobaciones PostgreSQL aprobadas con datos sintéticos.
 - Conflictos de creación y edición verificados con conexiones independientes.
 - Imágenes de conductores y publicadores descargadas desde la interfaz y revisadas visualmente, con el diseño compacto solicitado.
 - Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
@@ -33,3 +33,5 @@ La versión 0.10.1 corrige el guardado de vértices con una validación visible 
 La versión 0.10.2 conserva el foco al escribir en las ventanas, simplifica la ficha geográfica y muestra sus avisos de domicilios según permisos. Agrega Cerrar al listado de asignaciones, oculta el menú por completo con dobles flechas y utiliza el símbolo de la aplicación en la pestaña. No cambia los permisos existentes ni los registros históricos.
 
 La versión 0.11.0 añade etiquetas opcionales de manzana por cada parte del territorio, con visualización en el mapa y en el maestro. La carga inicial desde el plano queda pendiente de revisión humana. Las etiquetas conservan permisos, motivo, auditoría y control de concurrencia; no se modifican los vértices ni las asignaciones.
+
+La versión 0.12.0 añade el modo inicial **Estado de asignación** en el mapa: descanso de 14 días, abierto, alerta desde 14 días antes del vencimiento y límite de 3 meses alcanzado o superado. Incluye leyenda con filtros, orden por alerta y fechas en la ficha. Permite alternar con el semáforo de antigüedad existente. El botón PDF cartográfico de alta calidad queda pendiente de autorización tras el análisis de consumo; no se activaron servicios de pago.

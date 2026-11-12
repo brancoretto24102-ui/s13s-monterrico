@@ -4,7 +4,7 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 162 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 185 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
 - 569 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
@@ -156,3 +156,11 @@ Las comprobaciones PostgreSQL adicionales ejercitan el RPC con etiquetas, denega
 En navegador, con datos ficticios, se verificaron escritura, guardado, reapertura, etiqueta vacía, cambio de parte, retiro de una parte sin desplazar etiquetas de otra, visualización en el mapa y control para mostrar u ocultar manzanas. La incorporación privada se contrastó con los contornos del PDF original y mantiene las huellas de geometría, procedencia, asignaciones y domicilios.
 
 En la comprobación final se guardó una etiqueta desde una vista de 449 píxeles CSS, se verificó su lectura en la ficha y se ocultaron y mostraron las etiquetas con el control del mapa. No hubo desbordamiento horizontal general; no se probó un teléfono físico.
+
+## Estados y alertas del mapa (0.12.0)
+
+Se añadieron 23 casos unitarios para descanso hasta el día 13, disponibilidad exacta al día 14, alerta inclusiva a 14 días del límite, día anterior, vencimiento exacto, plazo superado, fin de mes, febrero bisiesto y cambio de año. La alerta roja **Vence hoy** no convierte el cierre de ese día en una excepción fuera de plazo. También se verificaron precedencia de asignaciones abiertas, gris para inactivos, conservación de los cuatro colores de antigüedad, orden por alerta frente al orden numérico y los cinco estados en datos ficticios.
+
+En navegador se comprobaron los colores de relleno y borde, filtro por tarjeta, selección sin cambiar el color, detalle con fecha y días restantes, cambio entre los dos modos, prioridad por alerta y fechas del maestro. Se revisó con un ancho de 454 píxeles CSS mediante zoom del navegador, sin desbordamiento horizontal de la página. No equivale a una prueba en teléfono físico. La compilación y revisión del paquete público pasaron; no se modificó el esquema de base de datos ni se escribieron asignaciones de prueba en la base alojada.
+
+La exportación PDF cartográfica de alta calidad no forma parte de esta entrega; requiere la aprobación solicitada para su propuesta y consumo estimado.

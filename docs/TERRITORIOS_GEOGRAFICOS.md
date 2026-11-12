@@ -4,9 +4,24 @@ Disponible en **Configuración → Maestros → Territorios geográficos**. El m
 
 ## Mapa y prioridades
 
-El color procede de la última finalización registrada: verde antes de 4 meses, amarillo desde 4, anaranjado desde 8 y rojo desde 12 meses o sin registro. Son meses calendario; se excluyen finalizaciones futuras y anuladas. El color representa antigüedad, no calidad de los límites.
+El mapa abre en **Estado de asignación**. Los colores reflejan la situación actual, con la fecha del día en Perú:
 
-Las cuatro tarjetas filtran por color. También se puede buscar, filtrar fechas y consultar disponibles, asignados, en descanso, vencidos e inactivos. El orden inicial es por número; «Ordenar por prioridad» coloca primero rojo, anaranjado, amarillo y verde, con las fechas más antiguas primero. Seleccionar un área o una ficha muestra fechas, estado y revisión, sin el texto técnico de procedencia. «Ver historial» requiere además visualizar el registro de asignaciones.
+| Color    | Estado           | Regla                                                |
+| -------- | ---------------- | ---------------------------------------------------- |
+| Verde    | Disponible       | Sin asignación abierta ni descanso pendiente         |
+| Morado   | En descanso      | Hasta completar 14 días desde la última finalización |
+| Azul     | Abierto          | Faltan más de 14 días para cumplir 3 meses           |
+| Amarillo | Por vencer       | Faltan de 1 a 14 días para cumplir 3 meses           |
+| Rojo     | Límite alcanzado | Se cumplen hoy los 3 meses o se superó ese plazo     |
+| Gris     | Inactivo         | Territorio desactivado                               |
+
+Los 3 meses son calendario, con ajuste al último día del mes; no equivalen siempre a 90 días. Por ejemplo, un inicio del 31/01 vence el 30/04: azul hasta el 15/04, amarillo del 16/04 al 29/04 y rojo desde el 30/04. El rojo de ese último día se identifica como **Vence hoy**: cerrar ese día sigue permitido por la validación vigente. Una finalización del 01/01 mantiene el descanso hasta el 14/01 inclusive; el 15/01 vuelve a disponible. Una asignación abierta tiene precedencia sobre el descanso y la antigüedad de la finalización anterior.
+
+Las cinco tarjetas de la leyenda filtran el mapa y el maestro; pulsar la misma tarjeta retira el filtro. **Ordenar por alerta** coloca primero límite alcanzado, por vencer, abierto, descanso y disponible; dentro de cada grupo, primero la fecha límite más próxima. El orden inicial sigue siendo por número. La ficha muestra el inicio, fecha límite y días restantes, o la fecha en que termina el descanso. Los avisos son visuales dentro de la aplicación; no se envían correos. Cambiar colores no altera los permisos de excepción, fechas ni registros.
+
+**Antigüedad de predicación** conserva la vista anterior: verde antes de 4 meses, amarillo desde 4, anaranjado desde 8 y rojo desde 12 meses o sin registro. Se calcula desde la última finalización válida, excluyendo futuras y anuladas. En esta vista, **Ordenar por prioridad** mantiene rojo, anaranjado, amarillo y verde, con las fechas más antiguas primero. Cambiar de vista limpia el filtro de estado y color para evitar combinaciones ocultas; conserva búsqueda, rango de fechas y revisión.
+
+En ambas vistas se puede buscar y filtrar la última fecha predicada, estados y revisión. Seleccionar un área o una ficha muestra fechas, estado y revisión. El borde seleccionado conserva el color de su estado. **Ver historial** requiere además visualizar el registro de asignaciones. Los datos se actualizan con la consulta compartida del mapa y al cambiar el día peruano.
 
 Los borradores llevan borde discontinuo. El fondo de calles es OpenStreetMap; «Mostrar calles» permite ocultarlo. Si el proveedor no responde, siguen disponibles los polígonos. El servicio de calles es comunitario, sin garantía de disponibilidad; no se descarga masivamente ni para uso sin conexión.
 
@@ -67,3 +82,11 @@ La ficha muestra la relación de partes y etiquetas; el maestro incluye la colum
 Las etiquetas del plano se incorporan de forma privada, vinculando cada texto con su contorno de origen y después con la parte geográfica correspondiente. No se presupone que dos archivos enumeren las partes en el mismo orden. Las referencias dudosas o ausentes se dejan vacías; la carga queda pendiente de revisión humana y conserva los vértices y la huella de procedencia.
 
 GeoJSON conserva las etiquetas en `properties.part_labels`, una lista en el mismo orden que `geometry.coordinates`. KML incluye la misma lista como metadatos. Los archivos anteriores pueden conservar las etiquetas existentes si no cambian los contornos. Si se modifican, reordenan, agregan o retiran partes, se debe incluir la lista explícita para evitar asociar una etiqueta a otra manzana. El servidor valida la longitud, el tipo, la versión y los permisos; un lote inválido se revierte completo. El respaldo incluye las etiquetas.
+
+## Exportación cartográfica PDF: propuesta pendiente
+
+La versión 0.12.0 conserva GeoJSON y KML. El nuevo botón PDF de alta calidad queda pendiente de autorización, conforme a la solicitud del usuario.
+
+La propuesta consiste en generar y previsualizar un PDF vectorial en el navegador: límites y etiquetas privados obtenidos con permisos vigentes, calles públicas vectoriales con atribución y páginas de detalle para evitar superposición de textos. Antes de descargar, se revalidarán permisos y versiones. No se almacenarán los PDFs en Supabase ni se contratarán servicios de mapas de pago. No se harán descargas masivas de teselas de OpenStreetMap.
+
+El peso del PDF generado localmente afecta memoria y tiempo del dispositivo; no se convierte en transferencia del archivo completo desde Supabase. Sí cuentan las consultas autorizadas y la auditoría. El consumo mensual depende también del uso normal de la aplicación y de las actualizaciones periódicas del mapa; la permanencia en el plan gratuito depende de las cuotas vigentes. La medición del tráfico acumulado debe consultarse en el panel de uso de Supabase antes de ampliar el número de usuarios o la frecuencia de consultas.

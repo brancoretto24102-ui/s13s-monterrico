@@ -292,8 +292,8 @@ describe("Operational status and granular map permissions", () => {
     expect(mapTerritoryStatus(finished, "2026-01-14").key).toBe("rest");
     expect(mapTerritoryStatus(finished, "2026-01-15").key).toBe("available");
     const opened = { ...finished, assigned_at: "2026-01-31" };
-    expect(mapTerritoryStatus(opened, "2026-04-30").key).toBe("assigned");
-    expect(mapTerritoryStatus(opened, "2026-05-01").key).toBe("overdue");
+    expect(mapTerritoryStatus(opened, "2026-04-30").key).toBe("limit");
+    expect(mapTerritoryStatus(opened, "2026-05-01").key).toBe("limit");
     expect(
       mapTerritoryStatus({ ...opened, active: false }, "2026-05-01").key,
     ).toBe("inactive");

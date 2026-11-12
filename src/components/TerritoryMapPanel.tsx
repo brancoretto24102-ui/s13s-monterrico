@@ -31,6 +31,10 @@ import {
   geometryFromParts,
   googleMapsUrl,
   mapColors,
+  mapStatusLegend,
+  mapTerritoryAppearance,
+  compareMapTerritories,
+  type MapColorMode,
   mapChangeReasonError,
   mapFeatureCollection,
   mapKml,
@@ -116,6 +120,7 @@ export default function TerritoryMapPanel({
     [selected, setSelected] = useState(""),
     [query, setQuery] = useState(""),
     [state, setState] = useState("all"),
+    [colorMode, setColorMode] = useState<MapColorMode>("assignment"),
     [review, setReview] = useState("all"),
     [coverage, setCoverage] = useState<CoverageOptions>(emptyCoverageOptions),
     [streets, setStreets] = useState(true),
@@ -245,17 +250,25 @@ export default function TerritoryMapPanel({
           );
         })
         .sort((a, b) =>
-          coverage.priority
-            ? coveragePriority(a.last_completed, today).rank -
-                coveragePriority(b.last_completed, today).rank ||
-              (a.last_completed ?? "").localeCompare(b.last_completed ?? "") ||
-              a.territory_number - b.territory_number
-            : a.territory_number - b.territory_number,
+          compareMapTerritories(a, b, today, colorMode, coverage.priority),
         ),
-    [territories, shapes, query, state, review, coverage, today, rangeError],
+    [
+      territories,
+      shapes,
+      query,
+      state,
+      review,
+      coverage,
+      today,
+      rangeError,
+      colorMode,
+    ],
   );
   const selectedTerritory = territories.find((t) => t.id === selected),
-    selectedShape = shapeFor(selected);
+    selectedShape = shapeFor(selected),
+    selectedStatus = selectedTerritory
+      ? mapTerritoryStatus(selectedTerritory, today)
+      : null;
   const visibleShapes = useMemo(
     () =>
       shapes.filter(
@@ -272,6 +285,18 @@ export default function TerritoryMapPanel({
             (t) =>
               t.active &&
               coveragePriority(t.last_completed, today).color === color,
+          ).length,
+        ]),
+      ),
+    [territories, today],
+  );
+  const statusCounts = useMemo(
+    () =>
+      Object.fromEntries(
+        mapStatusLegend.map((item) => [
+          item.key,
+          territories.filter(
+            (t) => t.active && mapTerritoryStatus(t, today).key === item.key,
           ).length,
         ]),
       ),
@@ -748,40 +773,98 @@ export default function TerritoryMapPanel({
       ) : (
         <>
           <div
-            className="map-priority-cards"
-            aria-label="Prioridades de predicación"
+            className="map-color-mode"
+            role="group"
+            aria-label="Colorear mapa por"
           >
-            {colors.map((color) => (
+            <span>Colorear por</span>
+            {(
+              [
+                ["assignment", "Estado de asignación"],
+                ["coverage", "Antigüedad de predicación"],
+              ] as const
+            ).map(([mode, label]) => (
               <button
-                key={color}
-                className={`map-priority-card ${coverage.color === color ? "selected" : ""}`}
-                style={
-                  {
-                    "--priority-color": mapColors[color],
-                  } as React.CSSProperties
-                }
+                key={mode}
+                type="button"
+                aria-pressed={colorMode === mode}
                 disabled={!!form}
-                onClick={() =>
-                  setCoverage((v) => ({
-                    ...v,
-                    color: v.color === color ? "all" : color,
-                  }))
-                }
+                onClick={() => {
+                  setColorMode(mode);
+                  setState("all");
+                  setCoverage((v) => ({ ...v, color: "all" }));
+                  setPage(1);
+                }}
               >
-                <span>{colorLabel[color]}</span>
-                <strong>{counts[color]}</strong>
-                <small>
-                  {color === "red"
-                    ? "12 meses o sin registro"
-                    : color === "orange"
-                      ? "8 a menos de 12 meses"
-                      : color === "yellow"
-                        ? "4 a menos de 8 meses"
-                        : "Menos de 4 meses"}
-                </small>
+                {label}
               </button>
             ))}
           </div>
+          {colorMode === "assignment" ? (
+            <div
+              className="map-priority-cards map-status-cards"
+              aria-label="Leyenda de estados de asignación"
+            >
+              {mapStatusLegend
+                .filter((item) => item.key !== "inactive")
+                .map((item) => (
+                  <button
+                    key={item.key}
+                    className={`map-priority-card ${state === item.key ? "selected" : ""}`}
+                    style={
+                      { "--priority-color": item.color } as React.CSSProperties
+                    }
+                    aria-pressed={state === item.key}
+                    disabled={!!form}
+                    onClick={() => {
+                      setState((v) => (v === item.key ? "all" : item.key));
+                      setPage(1);
+                    }}
+                  >
+                    <span>{item.label}</span>
+                    <strong>{statusCounts[item.key]}</strong>
+                    <small>{item.description}</small>
+                  </button>
+                ))}
+            </div>
+          ) : (
+            <div
+              className="map-priority-cards"
+              aria-label="Prioridades de predicación"
+            >
+              {colors.map((color) => (
+                <button
+                  key={color}
+                  className={`map-priority-card ${coverage.color === color ? "selected" : ""}`}
+                  style={
+                    {
+                      "--priority-color": mapColors[color],
+                    } as React.CSSProperties
+                  }
+                  disabled={!!form}
+                  aria-pressed={coverage.color === color}
+                  onClick={() =>
+                    setCoverage((v) => ({
+                      ...v,
+                      color: v.color === color ? "all" : color,
+                    }))
+                  }
+                >
+                  <span>{colorLabel[color]}</span>
+                  <strong>{counts[color]}</strong>
+                  <small>
+                    {color === "red"
+                      ? "12 meses o sin registro"
+                      : color === "orange"
+                        ? "8 a menos de 12 meses"
+                        : color === "yellow"
+                          ? "4 a menos de 8 meses"
+                          : "Menos de 4 meses"}
+                  </small>
+                </button>
+              ))}
+            </div>
+          )}
           <section className="panel map-filter-panel">
             <div className="map-search-row">
               <label className="search">
@@ -808,9 +891,10 @@ export default function TerritoryMapPanel({
               >
                 <option value="all">Todos los activos</option>
                 <option value="available">Disponibles</option>
-                <option value="assigned">Asignados</option>
-                <option value="rest">En descanso</option>
-                <option value="overdue">Plazo vencido</option>
+                <option value="rest">En descanso · 14 días</option>
+                <option value="assigned">Abiertos · dentro de plazo</option>
+                <option value="closing-soon">Por vencer · hasta 14 días</option>
+                <option value="limit">Límite alcanzado o superado</option>
                 <option value="inactive">Inactivos</option>
               </select>
               <select
@@ -832,7 +916,11 @@ export default function TerritoryMapPanel({
             <fieldset disabled={!!form} className="map-coverage-fieldset">
               <TerritoryCoverage
                 options={coverage}
-                onChange={setCoverage}
+                priorityKind={colorMode}
+                onChange={(v) => {
+                  setCoverage(v);
+                  setPage(1);
+                }}
                 today={today}
               />
             </fieldset>
@@ -935,6 +1023,7 @@ export default function TerritoryMapPanel({
                     territories={filtered}
                     shapes={visibleShapes}
                     today={today}
+                    colorMode={colorMode}
                     selected={selected}
                     onSelect={choose}
                     fitKey={fitKey}
@@ -952,9 +1041,10 @@ export default function TerritoryMapPanel({
                     }
                   />
                   <p className="map-map-caption">
-                    Selecciona un polígono o el territorio del listado. La fecha
-                    y el semáforo se calculan desde las finalizaciones
-                    registradas.
+                    {colorMode === "assignment"
+                      ? "Colores según el estado actual de la asignación. La alerta empieza 14 días antes de cumplir 3 meses calendario. Gris: territorio inactivo."
+                      : "Colores según la última finalización registrada: 4, 8 y 12 meses calendario. Gris: territorio inactivo."}{" "}
+                    Selecciona un área para consultar sus fechas y avisos.
                   </p>
                 </section>
                 <aside className="map-detail-column">
@@ -1187,13 +1277,11 @@ export default function TerritoryMapPanel({
                       <div className="map-detail-title">
                         <span
                           style={{
-                            background:
-                              mapColors[
-                                coveragePriority(
-                                  selectedTerritory.last_completed,
-                                  today,
-                                ).color
-                              ],
+                            background: mapTerritoryAppearance(
+                              selectedTerritory,
+                              today,
+                              colorMode,
+                            ).color,
                           }}
                         />
                         <h2>Territorio {selectedTerritory.territory_number}</h2>
@@ -1227,15 +1315,38 @@ export default function TerritoryMapPanel({
                         </div>
                         <div>
                           <dt>Estado</dt>
-                          <dd>
-                            {mapTerritoryStatus(selectedTerritory, today).label}
-                          </dd>
+                          <dd>{selectedStatus?.label}</dd>
                         </div>
                         <div>
                           <dt>Límites</dt>
                           <dd>{reviewLabel(selectedShape)}</dd>
                         </div>
                       </dl>
+                      {selectedStatus && (
+                        <div
+                          className={`map-status-notice map-status-${selectedStatus.key}`}
+                          style={
+                            {
+                              "--status-color": selectedStatus.color,
+                            } as React.CSSProperties
+                          }
+                          role={
+                            selectedStatus.key === "closing-soon" ||
+                            selectedStatus.key === "limit"
+                              ? "status"
+                              : undefined
+                          }
+                        >
+                          <strong>{selectedStatus.label}</strong>
+                          {selectedTerritory.assigned_at && (
+                            <span>
+                              Fecha de Inicio:{" "}
+                              {displayDate(selectedTerritory.assigned_at)}
+                            </span>
+                          )}
+                          <p>{selectedStatus.detail}</p>
+                        </div>
+                      )}
                       {selectedShape?.part_labels?.some(Boolean) && (
                         <ul
                           className="map-part-label-list"
@@ -1311,9 +1422,10 @@ export default function TerritoryMapPanel({
                     </h2>
                     <div>
                       {filtered.map((t) => {
-                        const priority = coveragePriority(
-                          t.last_completed,
+                        const appearance = mapTerritoryAppearance(
+                          t,
                           today,
+                          colorMode,
                         );
                         return (
                           <button
@@ -1325,14 +1437,15 @@ export default function TerritoryMapPanel({
                             <span
                               className="map-list-number"
                               style={{
-                                borderColor: mapColors[priority.color],
-                                color: mapColors[priority.color],
+                                borderColor: appearance.color,
+                                color: appearance.color,
                               }}
                             >
                               {t.territory_number}
                             </span>
                             <span>
                               <strong>Territorio {t.territory_number}</strong>
+                              <small>{appearance.label}</small>
                               <small>
                                 {t.last_completed
                                   ? displayDate(t.last_completed)
@@ -1383,14 +1496,19 @@ export default function TerritoryMapPanel({
                       )
                       .map((t) => {
                         const shape = shapeFor(t.id),
-                          priority = coveragePriority(t.last_completed, today);
+                          appearance = mapTerritoryAppearance(
+                            t,
+                            today,
+                            colorMode,
+                          ),
+                          status = mapTerritoryStatus(t, today);
                         return (
                           <tr key={t.id}>
                             <td>
                               <span
                                 className="map-table-dot"
                                 style={{
-                                  background: mapColors[priority.color],
+                                  background: appearance.color,
                                 }}
                               />
                               Territorio {t.territory_number}
@@ -1400,7 +1518,19 @@ export default function TerritoryMapPanel({
                                 ? displayDate(t.last_completed)
                                 : "Sin registro"}
                             </td>
-                            <td>{mapTerritoryStatus(t, today).label}</td>
+                            <td title={status.detail}>
+                              {status.label}
+                              {status.deadline && (
+                                <small className="map-table-deadline">
+                                  Límite: {displayDate(status.deadline)}
+                                </small>
+                              )}
+                              {status.availableOn && (
+                                <small className="map-table-deadline">
+                                  Disponible: {displayDate(status.availableOn)}
+                                </small>
+                              )}
+                            </td>
                             <td>{reviewLabel(shape)}</td>
                             <td>{shape?.geometry.coordinates.length ?? "—"}</td>
                             <td className="map-master-labels">

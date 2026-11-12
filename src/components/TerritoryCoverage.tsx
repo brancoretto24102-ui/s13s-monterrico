@@ -32,7 +32,9 @@ export default function TerritoryCoverage({
   options,
   onChange,
   today,
+  priorityKind = "coverage",
 }: {
+  priorityKind?: "coverage" | "assignment";
   options: CoverageOptions;
   onChange: (options: CoverageOptions) => void;
   today: string;
@@ -83,23 +85,28 @@ export default function TerritoryCoverage({
             />
           </label>
         </div>
-        <label className="coverage-color-filter">
-          Antigüedad
-          <select
-            aria-label="Filtrar por color de prioridad"
-            value={options.color}
-            onChange={(e) =>
-              onChange({ ...options, color: e.target.value as CoverageFilter })
-            }
-          >
-            <option value="all">Todos los colores</option>
-            <option value="red">Rojo · 12 meses o sin registro</option>
-            <option value="orange">Anaranjado · 8 a menos de 12 meses</option>
-            <option value="yellow">Amarillo · 4 a menos de 8 meses</option>
-            <option value="green">Verde · Menos de 4 meses</option>
-            <option value="unrecorded">Solo sin registro</option>
-          </select>
-        </label>
+        {priorityKind === "coverage" && (
+          <label className="coverage-color-filter">
+            Antigüedad
+            <select
+              aria-label="Filtrar por color de prioridad"
+              value={options.color}
+              onChange={(e) =>
+                onChange({
+                  ...options,
+                  color: e.target.value as CoverageFilter,
+                })
+              }
+            >
+              <option value="all">Todos los colores</option>
+              <option value="red">Rojo · 12 meses o sin registro</option>
+              <option value="orange">Anaranjado · 8 a menos de 12 meses</option>
+              <option value="yellow">Amarillo · 4 a menos de 8 meses</option>
+              <option value="green">Verde · Menos de 4 meses</option>
+              <option value="unrecorded">Solo sin registro</option>
+            </select>
+          </label>
+        )}
         <button
           type="button"
           className={`secondary coverage-order ${options.priority ? "is-priority" : ""}`}
@@ -107,12 +114,16 @@ export default function TerritoryCoverage({
           title={
             options.priority
               ? "Volver al orden por número de territorio"
-              : "Rojo, anaranjado, amarillo y verde; más antiguos primero"
+              : priorityKind === "assignment"
+                ? "Límite alcanzado, por vencer, abierto, descanso y disponible; fechas más próximas primero"
+                : "Rojo, anaranjado, amarillo y verde; más antiguos primero"
           }
           onClick={() => onChange({ ...options, priority: !options.priority })}
         >
           <ArrowDownWideNarrow size={15} />
-          Ordenar por prioridad
+          {priorityKind === "assignment"
+            ? "Ordenar por alerta"
+            : "Ordenar por prioridad"}
         </button>
         {filtered && (
           <button
@@ -123,7 +134,9 @@ export default function TerritoryCoverage({
             }
           >
             <RotateCcw size={14} />
-            Limpiar fechas y color
+            {priorityKind === "assignment"
+              ? "Limpiar fechas"
+              : "Limpiar fechas y color"}
           </button>
         )}
       </div>
@@ -132,29 +145,33 @@ export default function TerritoryCoverage({
           {error}
         </p>
       )}
-      <div
-        className="coverage-key"
-        aria-label="Leyenda de antigüedad de predicación"
-      >
-        <span className="coverage-green">
-          <i aria-hidden="true" />
-          Menos de 4 meses
-        </span>
-        <span className="coverage-yellow">
-          <i aria-hidden="true" />4 a menos de 8 meses
-        </span>
-        <span className="coverage-orange">
-          <i aria-hidden="true" />8 a menos de 12 meses
-        </span>
-        <span className="coverage-red">
-          <i aria-hidden="true" />
-          12 meses o sin registro
-        </span>
-      </div>
+      {priorityKind === "coverage" && (
+        <div
+          className="coverage-key"
+          aria-label="Leyenda de antigüedad de predicación"
+        >
+          <span className="coverage-green">
+            <i aria-hidden="true" />
+            Menos de 4 meses
+          </span>
+          <span className="coverage-yellow">
+            <i aria-hidden="true" />4 a menos de 8 meses
+          </span>
+          <span className="coverage-orange">
+            <i aria-hidden="true" />8 a menos de 12 meses
+          </span>
+          <span className="coverage-red">
+            <i aria-hidden="true" />
+            12 meses o sin registro
+          </span>
+        </div>
+      )}
       <p className="coverage-help">
         Última vez predicado: última finalización registrada.{" "}
         {options.priority
-          ? "Orden por prioridad y fecha más antigua."
+          ? priorityKind === "assignment"
+            ? "Orden por alerta y fecha más próxima al límite."
+            : "Orden por prioridad y fecha más antigua."
           : "Orden por número de territorio."}
       </p>
     </div>

@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { coveragePriority } from "../lib/territoryCoverage";
 import {
-  mapColors,
+  mapTerritoryAppearance,
+  mapTerritoryStatus,
   partLabelPoint,
+  type MapColorMode,
   type MapPoint,
   type MapShape,
   type MapTerritory,
@@ -14,6 +15,7 @@ interface Props {
   territories: MapTerritory[];
   shapes: MapShape[];
   today: string;
+  colorMode: MapColorMode;
   selected: string;
   onSelect: (id: string) => void;
   fitKey: number;
@@ -128,15 +130,19 @@ export default function TerritoryMapCanvas(props: Props) {
         (t) => t.id === shape.territory_id,
       );
       if (!territory) continue;
-      const priority = coveragePriority(territory.last_completed, props.today),
+      const appearance = mapTerritoryAppearance(
+          territory,
+          props.today,
+          props.colorMode,
+        ),
         selected = shape.territory_id === props.selected;
       const polygon = L.polygon(
         shape.geometry.coordinates.map((part) =>
           part.map((ring) => ring.map(latLng)),
         ),
         {
-          color: selected ? "#17466f" : mapColors[priority.color],
-          fillColor: mapColors[priority.color],
+          color: appearance.color,
+          fillColor: appearance.color,
           fillOpacity: selected ? 0.56 : 0.3,
           weight: selected ? 3 : 1.7,
           dashArray: shape.review_status === "draft" ? "5 4" : undefined,
@@ -160,7 +166,7 @@ export default function TerritoryMapCanvas(props: Props) {
         path.setAttribute("tabindex", "0");
         path.setAttribute(
           "aria-label",
-          `Seleccionar territorio ${territory.territory_number}, ${priority.label}`,
+          `Seleccionar territorio ${territory.territory_number}, ${appearance.label}${props.colorMode === "coverage" ? `, ${mapTerritoryStatus(territory, props.today).label}` : ""}`,
         );
         path.addEventListener("keydown", (event) => {
           const key = (event as KeyboardEvent).key;
@@ -199,6 +205,7 @@ export default function TerritoryMapCanvas(props: Props) {
     props.territories,
     props.shapes,
     props.today,
+    props.colorMode,
     props.selected,
     props.showPartLabels,
     detailZoom,

@@ -39,7 +39,9 @@ export function demoSnapshot(): Snapshot {
                     ? 420
                     : i === 3
                       ? 110
-                      : 12 + (i % 30),
+                      : i === 6
+                        ? 80
+                        : 12 + (i % 30),
             ),
             completed_at:
               i % 3 === 0
