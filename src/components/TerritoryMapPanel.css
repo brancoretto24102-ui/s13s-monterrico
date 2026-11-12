@@ -564,3 +564,53 @@
 .map-detail-column .visit-house-list strong {
   overflow-wrap: anywhere;
 }
+.territory-map-block-label {
+  width: max-content !important;
+  height: auto !important;
+  pointer-events: none;
+}
+.territory-map-block-label span {
+  display: block;
+  transform: translateX(-50%);
+  max-width: 150px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.93);
+  color: #263e4b;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.3;
+  text-align: center;
+  overflow-wrap: anywhere;
+  box-shadow: 0 1px 3px #193b2b26;
+}
+.territory-map-block-label.is-editing span {
+  background: #eaf3ff;
+  color: #1f5d92;
+}
+.map-part-label-list {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+.map-part-label-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid #edf0f4;
+}
+.map-part-label-list span {
+  color: #6d7f8f;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.map-part-label-list strong,
+.map-master-labels {
+  overflow-wrap: anywhere;
+}
+.map-master-labels {
+  max-width: 220px;
+  white-space: normal !important;
+}

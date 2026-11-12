@@ -31,3 +31,5 @@ La versión 0.10.0 agrega **Configuración → Maestros → Territorios geográf
 La versión 0.10.1 corrige el guardado de vértices con una validación visible y foco en el motivo obligatorio. La vista previa del S-13-S dibuja una página a la vez y permite avanzar o ampliar sin depender del visor PDF incrustado del teléfono. Se verificaron ambas imágenes del cronograma a 449 px; no se probó un dispositivo físico ni el navegador Brave de la captura.
 
 La versión 0.10.2 conserva el foco al escribir en las ventanas, simplifica la ficha geográfica y muestra sus avisos de domicilios según permisos. Agrega Cerrar al listado de asignaciones, oculta el menú por completo con dobles flechas y utiliza el símbolo de la aplicación en la pestaña. No cambia los permisos existentes ni los registros históricos.
+
+La versión 0.11.0 añade etiquetas opcionales de manzana por cada parte del territorio, con visualización en el mapa y en el maestro. La carga inicial desde el plano queda pendiente de revisión humana. Las etiquetas conservan permisos, motivo, auditoría y control de concurrencia; no se modifican los vértices ni las asignaciones.

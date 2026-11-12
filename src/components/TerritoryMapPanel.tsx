@@ -35,6 +35,7 @@ import {
   mapFeatureCollection,
   mapKml,
   mapTerritoryStatus,
+  normalizePartLabels,
   prepareMapImport,
   type MapImportRow,
   type MapPoint,
@@ -55,6 +56,7 @@ interface EditForm {
   version: number;
   territory_id: string;
   parts: MapPoint[][];
+  partLabels: (string | null)[];
   currentPart: number;
   source: string;
   reason: string;
@@ -117,6 +119,7 @@ export default function TerritoryMapPanel({
     [review, setReview] = useState("all"),
     [coverage, setCoverage] = useState<CoverageOptions>(emptyCoverageOptions),
     [streets, setStreets] = useState(true),
+    [blockLabels, setBlockLabels] = useState(true),
     [fitKey, setFitKey] = useState(0),
     [focusKey, setFocusKey] = useState(0),
     [form, setForm] = useState<EditForm | null>(null),
@@ -324,6 +327,10 @@ export default function TerritoryMapPanel({
           )
         : [[]],
       currentPart: 0,
+      partLabels: normalizePartLabels(
+        s?.part_labels,
+        s?.geometry.coordinates.length ?? 1,
+      ),
       source: s?.source ?? "Dibujo manual sobre mapa de calles",
       reason: "",
     });
@@ -355,6 +362,7 @@ export default function TerritoryMapPanel({
     setMessage("");
     try {
       const geometry = geometryFromParts(form.parts),
+        part_labels = normalizePartLabels(form.partLabels, form.parts.length),
         source = form.source.trim();
       if (source.length < 3 || source.length > 1500)
         throw new Error("Indica la procedencia de los límites.");
@@ -367,6 +375,7 @@ export default function TerritoryMapPanel({
           id: form.id,
           territory_id: form.territory_id,
           geometry,
+          part_labels,
           source,
           source_hash: old?.source_hash ?? null,
           review_status: "draft",
@@ -388,6 +397,7 @@ export default function TerritoryMapPanel({
           p_action: form.version ? "update" : "create",
           p_reason: form.reason,
           p_source_hash: null,
+          p_part_labels: part_labels,
         });
       setForm(null);
       setMessage(
@@ -507,6 +517,7 @@ export default function TerritoryMapPanel({
             id: row.id,
             territory_id: t.id,
             geometry: row.geometry,
+            part_labels: row.part_labels,
             source: importForm.source,
             source_hash: old?.source_hash ?? null,
             version: row.expected_version + 1,
@@ -903,6 +914,14 @@ export default function TerritoryMapPanel({
                         />
                         Mostrar calles
                       </label>
+                      <label className="checkbox">
+                        <input
+                          type="checkbox"
+                          checked={blockLabels}
+                          onChange={(e) => setBlockLabels(e.target.checked)}
+                        />
+                        Mostrar manzanas
+                      </label>
                       <button
                         className="secondary"
                         onClick={() => setFitKey((v) => v + 1)}
@@ -921,6 +940,8 @@ export default function TerritoryMapPanel({
                     fitKey={fitKey}
                     focusKey={focusKey}
                     streets={streets}
+                    showPartLabels={blockLabels}
+                    editLabels={form?.partLabels ?? null}
                     editParts={form?.parts ?? null}
                     currentPart={form?.currentPart ?? 0}
                     onAddPoint={(p) => changeParts((part) => [...part, p])}
@@ -980,6 +1001,7 @@ export default function TerritoryMapPanel({
                                   ? {
                                       ...f,
                                       parts: [...f.parts, []],
+                                      partLabels: [...f.partLabels, null],
                                       currentPart: f.parts.length,
                                     }
                                   : f,
@@ -1014,6 +1036,12 @@ export default function TerritoryMapPanel({
                                               (_, i) => i !== f.currentPart,
                                             )
                                           : [[]],
+                                      partLabels:
+                                        f.parts.length > 1
+                                          ? f.partLabels.filter(
+                                              (_, i) => i !== f.currentPart,
+                                            )
+                                          : [null],
                                       currentPart: 0,
                                     }
                                   : f,
@@ -1023,6 +1051,35 @@ export default function TerritoryMapPanel({
                             Quitar parte
                           </button>
                         </div>
+                        <label>
+                          Manzana o referencia (opcional)
+                          <input
+                            value={form.partLabels[form.currentPart] ?? ""}
+                            maxLength={80}
+                            placeholder="Ej.: H, I, W o A1"
+                            aria-describedby="map-part-label-help"
+                            onChange={(e) =>
+                              setForm((f) =>
+                                f
+                                  ? {
+                                      ...f,
+                                      partLabels: f.partLabels.map(
+                                        (label, index) =>
+                                          index === f.currentPart
+                                            ? e.target.value
+                                            : label,
+                                      ),
+                                    }
+                                  : f,
+                              )
+                            }
+                          />
+                        </label>
+                        <p id="map-part-label-help" className="help-text">
+                          Se muestra dentro de esta parte al acercar el mapa o
+                          seleccionar el territorio. Hasta 40 caracteres; puedes
+                          dejarlo vacío.
+                        </p>
                         <details className="map-coordinate-editor">
                           <summary>Coordenadas de los vértices</summary>
                           <div>
@@ -1179,6 +1236,22 @@ export default function TerritoryMapPanel({
                           <dd>{reviewLabel(selectedShape)}</dd>
                         </div>
                       </dl>
+                      {selectedShape?.part_labels?.some(Boolean) && (
+                        <ul
+                          className="map-part-label-list"
+                          aria-label="Manzanas y referencias del territorio"
+                        >
+                          {selectedShape.part_labels.map(
+                            (label, index) =>
+                              label && (
+                                <li key={index}>
+                                  <span>Parte {index + 1}</span>
+                                  <strong>{label}</strong>
+                                </li>
+                              ),
+                          )}
+                        </ul>
+                      )}
                       {selectedShape && !selectedShape.deleted_at && (
                         <>
                           <small>
@@ -1290,6 +1363,7 @@ export default function TerritoryMapPanel({
                       <th>Estado</th>
                       <th>Revisión de límites</th>
                       <th>Partes</th>
+                      <th>Manzanas / referencias</th>
                       <th>Acciones</th>
                     </tr>
                   </thead>
@@ -1329,6 +1403,11 @@ export default function TerritoryMapPanel({
                             <td>{mapTerritoryStatus(t, today).label}</td>
                             <td>{reviewLabel(shape)}</td>
                             <td>{shape?.geometry.coordinates.length ?? "—"}</td>
+                            <td className="map-master-labels">
+                              {shape?.part_labels
+                                ?.filter(Boolean)
+                                .join(" · ") || "—"}
+                            </td>
                             <td>{actions(t, shape)}</td>
                           </tr>
                         );

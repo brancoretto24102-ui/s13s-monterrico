@@ -12,6 +12,7 @@ export interface MapShape {
   id: string;
   territory_id: string;
   geometry: MapGeometry;
+  part_labels?: (string | null)[];
   source: string;
   source_hash: string | null;
   review_status: "draft" | "verified";
@@ -44,6 +45,59 @@ export const mapColors = {
   red: "#dd5059",
 };
 export const MAX_MAP_VERTICES = 4096;
+
+export function normalizePartLabels(
+  value: unknown,
+  parts: number,
+): (string | null)[] {
+  if (value == null) return Array.from({ length: parts }, () => null);
+  if (!Array.isArray(value) || value.length > parts)
+    throw new Error(
+      "Indica una etiqueta opcional por cada parte del territorio.",
+    );
+  return Array.from({ length: parts }, (_, index) => {
+    const item = value[index];
+    if (item == null) return null;
+    if (typeof item !== "string")
+      throw new Error("La etiqueta de manzana debe ser texto.");
+    const text = item.replace(/\s+/gu, " ").trim();
+    if (Array.from(text).length > 40 || /[\u0000-\u001f\u007f]/u.test(text))
+      throw new Error(
+        "La etiqueta de manzana admite hasta 40 caracteres de texto.",
+      );
+    return text || null;
+  });
+}
+
+// Keep labels inside concave parts instead of falling back to a boundary vertex.
+export function partLabelPoint(ring: MapPoint[]): MapPoint {
+  const center = geometryCenter({
+    type: "MultiPolygon",
+    coordinates: [[ring]],
+  });
+  if (center !== ring[0] && inside(center, ring)) return center;
+  const ys = ring.map((p) => p[1]),
+    min = Math.min(...ys),
+    max = Math.max(...ys);
+  let best: { width: number; point: MapPoint } | undefined;
+  for (const fraction of [0.5, 0.25, 0.75, 0.125, 0.875]) {
+    const y = min + (max - min) * fraction,
+      xs: number[] = [];
+    for (let i = 0; i < ring.length - 1; i++) {
+      const a = ring[i],
+        b = ring[i + 1];
+      if (a[1] > y !== b[1] > y)
+        xs.push(a[0] + ((y - a[1]) * (b[0] - a[0])) / (b[1] - a[1]));
+    }
+    xs.sort((a, b) => a - b);
+    for (let i = 0; i + 1 < xs.length; i += 2) {
+      const width = xs[i + 1] - xs[i];
+      if (!best || width > best.width)
+        best = { width, point: [(xs[i] + xs[i + 1]) / 2, y] };
+    }
+  }
+  return best?.point ?? center;
+}
 
 export function mapChangeReasonError(reason: string) {
   const normalized = reason.replace(/\s+/gu, " ").trim();
@@ -212,6 +266,7 @@ export interface MapImportRow {
   territory_number: number;
   expected_version: number;
   geometry: MapGeometry;
+  part_labels?: (string | null)[];
 }
 export function prepareMapImport(
   text: string,
@@ -254,11 +309,28 @@ export function prepareMapImport(
     );
     if (existing?.deleted_at)
       throw new Error(`Restaura primero el polígono del territorio ${n}.`);
+    const geometry = normalizeMapGeometry(feature.geometry);
+    if (
+      feature.properties?.part_labels === undefined &&
+      existing?.part_labels?.some(Boolean) &&
+      JSON.stringify(existing.geometry.coordinates) !==
+        JSON.stringify(geometry.coordinates)
+    )
+      throw new Error(
+        `Incluye las etiquetas de cada parte para cambiar los límites del territorio ${n}.`,
+      );
     return {
       id: existing?.id ?? crypto.randomUUID(),
       territory_number: n,
       expected_version: existing?.version ?? 0,
-      geometry: normalizeMapGeometry(feature.geometry),
+      geometry,
+      part_labels: normalizePartLabels(
+        feature.properties?.part_labels === undefined &&
+          existing?.geometry.coordinates.length === geometry.coordinates.length
+          ? existing.part_labels
+          : feature.properties?.part_labels,
+        geometry.coordinates.length,
+      ),
     };
   });
 }
@@ -277,6 +349,10 @@ export function mapFeatureCollection(
             ?.territory_number,
           review_status: s.review_status,
           source: s.source,
+          part_labels: normalizePartLabels(
+            s.part_labels,
+            s.geometry.coordinates.length,
+          ),
         },
         geometry: s.geometry,
       })),
@@ -309,7 +385,13 @@ export function mapKml(shapes: MapShape[], territories: MapTerritory[]) {
               ? "Límites revisados"
               : "Borrador: límites pendientes de revisión",
           ) +
-          "</description><MultiGeometry>" +
+          '</description><ExtendedData><Data name="part_labels"><value>' +
+          xml(
+            JSON.stringify(
+              normalizePartLabels(s.part_labels, s.geometry.coordinates.length),
+            ),
+          ) +
+          "</value></Data></ExtendedData><MultiGeometry>" +
           s.geometry.coordinates
             .map(
               (p) =>
@@ -368,6 +450,7 @@ export function demoMapContext(
           }),
           source:
             "Cuadrícula ficticia para probar la interfaz; no procede del PDF",
+          part_labels: i === 0 ? ["A1"] : [null],
           source_hash: null,
           review_status: "draft",
           reviewed_at: null,

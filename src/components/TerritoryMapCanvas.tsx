@@ -4,6 +4,7 @@ import "leaflet/dist/leaflet.css";
 import { coveragePriority } from "../lib/territoryCoverage";
 import {
   mapColors,
+  partLabelPoint,
   type MapPoint,
   type MapShape,
   type MapTerritory,
@@ -18,6 +19,8 @@ interface Props {
   fitKey: number;
   focusKey: number;
   streets: boolean;
+  showPartLabels: boolean;
+  editLabels: (string | null)[] | null;
   editParts: MapPoint[][] | null;
   currentPart: number;
   onAddPoint: (point: MapPoint) => void;
@@ -28,6 +31,25 @@ const point = (latlng: L.LatLng): MapPoint => [
   Number(latlng.lng.toFixed(8)),
   Number(latlng.lat.toFixed(8)),
 ];
+function blockMarker(
+  group: L.LayerGroup,
+  ring: MapPoint[],
+  text: string,
+  editing = false,
+) {
+  const label = document.createElement("span");
+  label.textContent = `Mz. ${text}`;
+  L.marker(latLng(partLabelPoint(ring)), {
+    keyboard: false,
+    interactive: false,
+    icon: L.divIcon({
+      className: `territory-map-block-label${editing ? " is-editing" : ""}`,
+      html: label,
+      iconSize: undefined,
+      iconAnchor: [0, -12],
+    }),
+  }).addTo(group);
+}
 export default function TerritoryMapCanvas(props: Props) {
   const element = useRef<HTMLDivElement>(null),
     map = useRef<L.Map | null>(null),
@@ -38,6 +60,7 @@ export default function TerritoryMapCanvas(props: Props) {
     current = useRef(props),
     fitted = useRef(false);
   const [tileError, setTileError] = useState(false);
+  const [detailZoom, setDetailZoom] = useState(false);
   current.current = props;
   useEffect(() => {
     const instance = L.map(element.current!, {
@@ -47,6 +70,7 @@ export default function TerritoryMapCanvas(props: Props) {
       attributionControl: true,
     });
     map.current = instance;
+    instance.on("zoomend", () => setDetailZoom(instance.getZoom() >= 17));
     fitted.current = false;
     instance.attributionControl.setPrefix(
       '<a href="https://leafletjs.com" target="_blank" rel="noopener noreferrer">Leaflet</a>',
@@ -147,6 +171,15 @@ export default function TerritoryMapCanvas(props: Props) {
         });
       }
       paths.current.set(shape.territory_id, polygon);
+      if (
+        props.showPartLabels &&
+        (selected || detailZoom) &&
+        !(selected && props.editParts)
+      )
+        shape.geometry.coordinates.forEach((part, index) => {
+          const label = shape.part_labels?.[index];
+          if (label) blockMarker(catalog.current!, part[0], label);
+        });
     }
     if (!fitted.current && paths.current.size) {
       const bounds = L.latLngBounds(
@@ -162,7 +195,15 @@ export default function TerritoryMapCanvas(props: Props) {
       });
       fitted.current = true;
     }
-  }, [props.territories, props.shapes, props.today, props.selected]);
+  }, [
+    props.territories,
+    props.shapes,
+    props.today,
+    props.selected,
+    props.showPartLabels,
+    detailZoom,
+    !!props.editParts,
+  ]);
   useEffect(() => {
     const polygon = paths.current.get(props.selected);
     if (polygon && map.current)
@@ -208,6 +249,9 @@ export default function TerritoryMapCanvas(props: Props) {
           weight: 3,
           interactive: false,
         }).addTo(group);
+      const text = props.editLabels?.[index]?.trim();
+      if (props.showPartLabels && text && part.length >= 3)
+        blockMarker(group, [...part, part[0]], text, true);
       if (!currentPart) return;
       part.forEach((p, i) => {
         const handle = L.marker(latLng(p), {
@@ -226,7 +270,12 @@ export default function TerritoryMapCanvas(props: Props) {
         );
       });
     });
-  }, [props.editParts, props.currentPart]);
+  }, [
+    props.editParts,
+    props.currentPart,
+    props.editLabels,
+    props.showPartLabels,
+  ]);
   return (
     <div
       className={`territory-map-canvas-wrap ${props.editParts ? "is-drawing" : ""}`}

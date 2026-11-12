@@ -515,6 +515,156 @@ export async function testTerritoryMap({
       (r) => r.status === "rejected" && (r.reason as any).code === "23505",
     ).length === 1,
   );
+  // Labels use the same transaction, permission and optimistic version as bounds.
+  const labeled = (
+    c: Client,
+    labels: unknown,
+    v: number,
+    g: unknown = geometry,
+  ) =>
+    scalar(
+      c,
+      "select manage_territory_geometry($1,$2,$3,$4,$5,'update',$6,$7,$8)",
+      [
+        id,
+        v,
+        tids[0],
+        g,
+        source,
+        "Revisión sintética de manzanas",
+        hash,
+        JSON.stringify(labels),
+      ],
+    );
+  await profile(["maps.view"]);
+  await denied(labeled(custom, ["H", "I"], await version()));
+  await denied(labeled(anon, ["H", "I"], await version()));
+  await denied(
+    custom.query("select private.normalize_territory_part_labels('[]',$1)", [
+      geometry,
+    ]),
+  );
+  const labelVersion = await version();
+  for (const invalid of [
+    true,
+    {},
+    [1],
+    ["A".repeat(41)],
+    ["H", "I", "W"],
+    ["\u0001"],
+  ])
+    await denied(labeled(admin, invalid, labelVersion), /etiqueta|etiquetas/);
+  ok((await version()) === labelVersion);
+  await labeled(admin, [" A1 ", "\u00a0H\u00a0"], labelVersion);
+  const readLabels = async () =>
+    scalar(root, "select part_labels from territory_geometries where id=$1", [
+      id,
+    ]);
+  ok(JSON.stringify(await readLabels()) === '["A1","H"]');
+  const boundsBeforeLabels = await scalar(
+    root,
+    "select geometry from territory_geometries where id=$1",
+    [id],
+  );
+  await manage(admin, "approve", await version());
+  ok(
+    (await scalar(
+      root,
+      "select review_status from territory_geometries where id=$1",
+      [id],
+    )) === "verified",
+  );
+  await labeled(admin, ["I", "W"], await version());
+  ok(
+    (await scalar(
+      root,
+      "select review_status from territory_geometries where id=$1",
+      [id],
+    )) === "draft",
+  );
+  ok(
+    JSON.stringify(
+      await scalar(
+        root,
+        "select geometry from territory_geometries where id=$1",
+        [id],
+      ),
+    ) === JSON.stringify(boundsBeforeLabels),
+  );
+  ok(
+    JSON.stringify(
+      (await scalar(custom, "select get_territory_map()")).shapes.find(
+        (s: any) => s.id === id,
+      ).part_labels,
+    ) === '["I","W"]',
+  );
+  await manage(admin, "update", await version());
+  ok(JSON.stringify(await readLabels()) === '["I","W"]');
+  await denied(
+    manage(admin, "update", await version(), id, tids[0], polygon),
+    /etiquetas/,
+  );
+  await denied(
+    manage(admin, "update", await version(), id, tids[0], {
+      type: "MultiPolygon",
+      coordinates: [[square(-80.641)], [square(-80.63)]],
+    }),
+    /etiquetas/,
+  );
+  const beforeConcurrentLabels = await version();
+  const labelRaces = await Promise.allSettled([
+    labeled(admin, ["H", "I"], beforeConcurrentLabels),
+    labeled(admin2, ["Z", "W2"], beforeConcurrentLabels),
+  ]);
+  ok(labelRaces.filter((r) => r.status === "fulfilled").length === 1);
+  ok(
+    labelRaces.filter(
+      (r) => r.status === "rejected" && (r.reason as any).code === "40001",
+    ).length === 1,
+  );
+  const secondV = await version(second),
+    thirdV = await version(third);
+  await denied(
+    batch([
+      { ...row(max + 2, second, geometry, secondV), part_labels: ["X", "Y"] },
+      {
+        ...row(max + 3, third, geometry, thirdV),
+        part_labels: ["too", "many", "labels"],
+      },
+    ]),
+    /etiquetas/,
+  );
+  ok((await version(second)) === secondV);
+  ok(
+    (await batch([
+      { ...row(max + 2, second, geometry, secondV), part_labels: ["X", "Y"] },
+    ])) === 1,
+  );
+  const labeledBackup = await scalar(admin, "select backup_data()");
+  ok(
+    JSON.stringify(
+      labeledBackup.territory_geometries.find((g: any) => g.id === second)
+        .part_labels,
+    ) === '["X","Y"]',
+  );
+  ok(
+    Number(
+      await scalar(
+        root,
+        "select count(*) from audit_log where entity='territory_geometries' and entity_id=$1 and reason='Revisión sintética de manzanas'",
+        [id],
+      ),
+    ) >= 2,
+  );
+  await labeled(admin, [""], await version(), polygon);
+  ok(JSON.stringify(await readLabels()) === "[null]");
+  ok(
+    (await scalar(
+      root,
+      "select source_hash from territory_geometries where id=$1",
+      [id],
+    )) === hash,
+  );
   await profile(["conductors.view"]);
   await denied(custom.query("select get_territory_map()"));
   ok(

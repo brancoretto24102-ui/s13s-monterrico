@@ -57,3 +57,13 @@ No se usa clave de Google Maps ni se activa facturación. Leaflet 1.9.4 se empaq
 ## Domicilios sin visitas
 
 Al seleccionar un territorio se muestra su aviso de domicilios: solicitudes vigentes, plazo cumplido o ausencia de restricciones activas. Los recuentos excluyen solicitudes archivadas y en Papelera. El mapa recibe solo recuentos por territorio; las referencias y fechas de cada domicilio requieren el permiso **Visualizar** del maestro Domicilios sin visitas (`visits.view`). Con ese permiso, **Ver maestro de domicilios** abre el maestro filtrado por el territorio seleccionado. El aniversario de un año se mantiene como fecha de revisión.
+
+## Manzanas y referencias opcionales
+
+En **Editar → Parte del territorio** se puede escribir **Manzana o referencia (opcional)**. Admite letras, números o una referencia breve de hasta 40 caracteres; dejarla vacía no impide guardar. Cada parte conserva su propia etiqueta al mover sus vértices, agregar partes o retirar otra parte. Se exige el mismo motivo y permiso de creación o edición que para los límites.
+
+La ficha muestra la relación de partes y etiquetas; el maestro incluye la columna **Manzanas / referencias**. **Mostrar manzanas** permite ocultarlas o verlas: aparecen al seleccionar un territorio o al acercar el mapa. El texto se trata como texto plano. Guardar cambios deja la ficha como borrador y la validación requiere el permiso existente de revisión.
+
+Las etiquetas del plano se incorporan de forma privada, vinculando cada texto con su contorno de origen y después con la parte geográfica correspondiente. No se presupone que dos archivos enumeren las partes en el mismo orden. Las referencias dudosas o ausentes se dejan vacías; la carga queda pendiente de revisión humana y conserva los vértices y la huella de procedencia.
+
+GeoJSON conserva las etiquetas en `properties.part_labels`, una lista en el mismo orden que `geometry.coordinates`. KML incluye la misma lista como metadatos. Los archivos anteriores pueden conservar las etiquetas existentes si no cambian los contornos. Si se modifican, reordenan, agregan o retiran partes, se debe incluir la lista explícita para evitar asociar una etiqueta a otra manzana. El servidor valida la longitud, el tipo, la versión y los permisos; un lote inválido se revierte completo. El respaldo incluye las etiquetas.

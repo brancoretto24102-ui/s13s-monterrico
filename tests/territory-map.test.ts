@@ -274,6 +274,7 @@ describe("Geographic import and private exports", () => {
       "territory_number",
       "review_status",
       "source",
+      "part_labels",
     ]);
     const kml = mapKml(rows, [
       { ...territory, description: "PRIVATE_SENTINEL" },

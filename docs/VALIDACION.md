@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 150 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 542 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 162 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 569 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -146,3 +146,13 @@ Con datos ficticios se comprobó el botón Cerrar desde el listado, el cierre no
 El menú se oculta completamente y recupera su ancho mediante las dobles flechas. A 449 píxeles CSS se verificaron apertura, cierre por Escape y por navegación, retorno del foco, recorrido de teclado dentro del panel y ausencia de desbordamiento horizontal general. También se guardó un borrador desde ese ancho. Se comprobó el icono SVG de la pestaña con el símbolo de la aplicación. No se utilizó un teléfono físico.
 
 La migración alojada se verificó con una consulta autenticada: el mapa conserva sus 82 territorios y 82 polígonos y recibe los recuentos de los territorios con avisos, sin campos de dirección. Las huellas completas de asignaciones, domicilios y geometrías coinciden antes y después de la migración.
+
+## Etiquetas de manzana (0.11.0)
+
+Doce pruebas unitarias adicionales verifican etiquetas vacías, espacios normalizados, letras y números, longitud, tipos inválidos, posición interior en una parte cóncava, exportación e importación GeoJSON y escape de texto en KML. Se comprueba que un archivo anterior no pueda cambiar o reordenar contornos etiquetados sin indicar la correspondencia de sus etiquetas.
+
+Las comprobaciones PostgreSQL adicionales ejercitan el RPC con etiquetas, denegaciones por permisos y acceso anónimo, validación del servidor, auditoría, conservación de la geometría y procedencia, respaldo, importación atómica y compatibilidad con clientes anteriores. Dos conexiones modificando la misma versión producen un guardado y un conflicto. La consulta del mapa conserva la protección de las direcciones.
+
+En navegador, con datos ficticios, se verificaron escritura, guardado, reapertura, etiqueta vacía, cambio de parte, retiro de una parte sin desplazar etiquetas de otra, visualización en el mapa y control para mostrar u ocultar manzanas. La incorporación privada se contrastó con los contornos del PDF original y mantiene las huellas de geometría, procedencia, asignaciones y domicilios.
+
+En la comprobación final se guardó una etiqueta desde una vista de 449 píxeles CSS, se verificó su lectura en la ficha y se ocultaron y mostraron las etiquetas con el control del mapa. No hubo desbordamiento horizontal general; no se probó un teléfono físico.
