@@ -6,17 +6,17 @@ Disponible en **Configuración → Maestros → Territorios geográficos**. El m
 
 El color procede de la última finalización registrada: verde antes de 4 meses, amarillo desde 4, anaranjado desde 8 y rojo desde 12 meses o sin registro. Son meses calendario; se excluyen finalizaciones futuras y anuladas. El color representa antigüedad, no calidad de los límites.
 
-Las cuatro tarjetas filtran por color. También se puede buscar, filtrar fechas y consultar disponibles, asignados, en descanso, vencidos e inactivos. El orden inicial es por número; «Ordenar por prioridad» coloca primero rojo, anaranjado, amarillo y verde, con las fechas más antiguas primero. Seleccionar un área o una ficha muestra fechas, estado, procedencia y revisión. «Ver historial» requiere además visualizar el registro de asignaciones.
+Las cuatro tarjetas filtran por color. También se puede buscar, filtrar fechas y consultar disponibles, asignados, en descanso, vencidos e inactivos. El orden inicial es por número; «Ordenar por prioridad» coloca primero rojo, anaranjado, amarillo y verde, con las fechas más antiguas primero. Seleccionar un área o una ficha muestra fechas, estado y revisión, sin el texto técnico de procedencia. «Ver historial» requiere además visualizar el registro de asignaciones.
 
 Los borradores llevan borde discontinuo. El fondo de calles es OpenStreetMap; «Mostrar calles» permite ocultarlo. Si el proveedor no responde, siguen disponibles los polígonos. El servicio de calles es comunitario, sin garantía de disponibilidad; no se descarga masivamente ni para uso sin conexión.
 
 ## Revisar y corregir límites
 
-La extracción de un PDF sin coordenadas GPS exige georreferenciación. Una alineación aproximada no es una medición de campo. Revisar también la fecha impresa del plano y los cambios de calles, manzanas y numeración. La procedencia se conserva en cada ficha y se consulta encima del mapa.
+La extracción de un PDF sin coordenadas GPS exige georreferenciación. Una alineación aproximada no es una medición de campo. Revisar también la fecha impresa del plano y los cambios de calles, manzanas y numeración. La procedencia original se conserva para trazabilidad; la ficha de consulta muestra solo la información operativa.
 
 1. En el maestro, buscar el territorio. «Dibujar» aparece si todavía no tiene polígono; «Editar» abre límites existentes.
 2. Hacer clic en el mapa para agregar vértices. Arrastrarlos o ajustar sus coordenadas WGS84. «Agregar parte» permite conservar manzanas separadas. Cada contorno se cierra al guardar.
-3. Indicar procedencia y un motivo obligatorio de al menos 8 caracteres. Si falta, Guardar como borrador muestra el aviso y enfoca el campo; los vértices editados se conservan. Guardar siempre deja el área como borrador, aunque antes estuviera validada.
+3. Indicar un motivo obligatorio de al menos 8 caracteres. La procedencia se conserva automáticamente. Si falta, Guardar como borrador muestra el aviso y enfoca el campo; los vértices editados se conservan. Guardar siempre deja el área como borrador, aunque antes estuviera validada.
 4. Una persona con «Validar límites revisados» debe comprobar el área real, confirmar la revisión y registrar el motivo. Validar no certifica un levantamiento GPS.
 5. «Eliminar» envía el polígono a Papelera sin cambiar el territorio ni las asignaciones. Restaurarlo lo devuelve a borrador.
 
@@ -26,15 +26,15 @@ No se permite trasladar una geometría a otro territorio, cambiar su huella orig
 
 **Seguridad → Maestros → Perfiles → Nuevo perfil → CONFIGURACIÓN → Territorios geográficos.**
 
-| Acceso | Permiso | Alcance |
-| --- | --- | --- |
-| Visualizar mapa y prioridades | `maps.view` | Consultar límites, catálogo y fechas agregadas |
-| Crear polígonos | `maps.create` | Dibujar límites donde no existan |
-| Editar límites | `maps.edit` | Cambiar contornos y procedencia |
-| Validar límites revisados | `maps.approve` | Confirmar una revisión con motivo |
-| Eliminar / restaurar polígonos | `maps.delete` | Consultar Papelera y recuperar contornos |
-| Importar GeoJSON | `maps.import` | Ejecutar lotes; necesita también crear y/o editar según su contenido |
-| Exportar GeoJSON y KML | `maps.export` | Descargar límites con revalidación y auditoría |
+| Acceso                         | Permiso        | Alcance                                                              |
+| ------------------------------ | -------------- | -------------------------------------------------------------------- |
+| Visualizar mapa y prioridades  | `maps.view`    | Consultar límites, catálogo y fechas agregadas                       |
+| Crear polígonos                | `maps.create`  | Dibujar límites donde no existan                                     |
+| Editar límites                 | `maps.edit`    | Cambiar contornos con motivo                                         |
+| Validar límites revisados      | `maps.approve` | Confirmar una revisión con motivo                                    |
+| Eliminar / restaurar polígonos | `maps.delete`  | Consultar Papelera y recuperar contornos                             |
+| Importar GeoJSON               | `maps.import`  | Ejecutar lotes; necesita también crear y/o editar según su contenido |
+| Exportar GeoJSON y KML         | `maps.export`  | Descargar límites con revalidación y auditoría                       |
 
 Seleccionar una acción agrega visualización. Los roles base editor y lector no reciben acceso nuevo automáticamente. El administrador ve el catálogo completo; los perfiles personalizados conservan solo sus acciones asignadas. Las excepciones de 14 días / 3 meses siguen siendo independientes del mapa.
 
@@ -53,3 +53,7 @@ Las geometrías se guardan en Supabase con RLS, no en GitHub Pages, el repositor
 El respaldo administrativo incluye `territory_geometries`, sus versiones, revisión, huella y Papelera. KML no sustituye ese respaldo. Conservar el PDF y los controles de calibración de forma privada por separado.
 
 No se usa clave de Google Maps ni se activa facturación. Leaflet 1.9.4 se empaqueta localmente. Las teselas reciben solo el origen público como Referer, sin rutas de sesión ni datos de personas. Consultar la [política de teselas](https://operations.osmfoundation.org/policies/tiles/) y la [referencia de Leaflet](https://leafletjs.com/reference-1.9.4.html).
+
+## Domicilios sin visitas
+
+Al seleccionar un territorio se muestra su aviso de domicilios: solicitudes vigentes, plazo cumplido o ausencia de restricciones activas. Los recuentos excluyen solicitudes archivadas y en Papelera. El mapa recibe solo recuentos por territorio; las referencias y fechas de cada domicilio requieren el permiso **Visualizar** del maestro Domicilios sin visitas (`visits.view`). Con ese permiso, **Ver maestro de domicilios** abre el maestro filtrado por el territorio seleccionado. El aniversario de un año se mantiene como fecha de revisión.

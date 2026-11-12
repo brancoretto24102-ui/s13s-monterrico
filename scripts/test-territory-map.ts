@@ -148,7 +148,65 @@ export async function testTerritoryMap({
       snapshot.people.length === 0 &&
       snapshot.territories.length === 0,
   );
+  const currentDate = await scalar(
+    root,
+    "select to_char((now() at time zone 'America/Lima')::date,'YYYY-MM-DD')",
+  );
+  const anniversary = await scalar(
+    root,
+    "select to_char((now() at time zone 'America/Lima')::date-interval '1 year','YYYY-MM-DD')",
+  );
+  const visitIds = Array.from({ length: 5 }, () => crypto.randomUUID());
+  for (let i = 0; i < visitIds.length; i++)
+    await admin.query(
+      "select manage_visit_restriction($1,0,$2,$3,$4,'create','Alta sintética de aviso geográfico')",
+      [
+        visitIds[i],
+        tids[i === 4 ? 1 : 0],
+        `UI_PRIVATE_ADDRESS_${i}`,
+        i === 1 || i === 2 ? anniversary : currentDate,
+      ],
+    );
+  await admin.query(
+    "select manage_visit_restriction($1,1,null,'',null,'archive','Archivo sintético de domicilio')",
+    [visitIds[2]],
+  );
+  await admin.query(
+    "select manage_visit_restriction($1,1,null,'',null,'delete','Papelera sintética de domicilio')",
+    [visitIds[3]],
+  );
   const initial = await scalar(custom, "select get_territory_map()");
+  const visits = initial.visit_restriction_summary;
+  ok(
+    visits.find((row: any) => row.territory_id === tids[0]).blocking_count ===
+      1,
+  );
+  ok(
+    visits.find((row: any) => row.territory_id === tids[0]).eligible_count ===
+      1,
+  );
+  ok(
+    visits.find((row: any) => row.territory_id === tids[1]).blocking_count ===
+      1,
+  );
+  ok(
+    visits.find((row: any) => row.territory_id === tids[1]).eligible_count ===
+      0,
+  );
+  ok(
+    visits.every(
+      (row: any) =>
+        Object.keys(row).sort().join("|") ===
+        ["territory_id", "blocking_count", "eligible_count"].sort().join("|"),
+    ),
+  );
+  ok(!JSON.stringify(initial).includes("UI_PRIVATE_ADDRESS_"));
+  ok((await scalar(custom, "select count(*) from visit_restrictions")) === "0");
+  ok(
+    !JSON.stringify(await scalar(custom, "select get_snapshot()")).includes(
+      "UI_PRIVATE_ADDRESS_",
+    ),
+  );
   ok(initial.territories.length > 0 && initial.shapes.length === 0);
   for (const t of initial.territories)
     ok(

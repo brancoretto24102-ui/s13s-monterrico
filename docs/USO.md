@@ -21,7 +21,7 @@ El administrador puede activar o retirar la exportación de editores y lectores.
 
 El listado muestra **Última vez predicado**, calculada desde el último cierre. Permite filtrar esa fecha con **Desde / Hasta** y consultar colores según antigüedad: verde antes de 4 meses, amarillo desde 4, anaranjado desde 8 y rojo desde 12 o sin registro. Mantiene el orden numérico; **Ordenar por prioridad** pone primero los rojos y, al pulsar otra vez, devuelve el orden habitual. Ver [ejemplos, filtros y permisos](PRIORIDAD_TERRITORIOS.md).
 
-Se puede **Asignar** directamente desde la fila. Si hay una asignación abierta, **Editar inicio** y **Eliminar inicio** aparecen según los permisos independientes del perfil. Eliminar anula con motivo y confirmación, conservando auditoría y el resto del historial. **Ver detalle** sigue disponible.
+Se puede **Asignar** directamente desde la fila. Si hay una asignación abierta, **Cerrar**, **Editar inicio** y **Eliminar inicio** aparecen según los permisos independientes del perfil. **Cerrar** requiere `territories.complete` y usa las mismas fechas, excepciones con motivo y auditoría del cierre desde el historial. Eliminar anula con motivo y confirmación, conservando auditoría y el resto del historial. **Ver detalle** sigue disponible.
 
 1. Abrir Territorios, buscar un número o responsable y revisar su estado.
 2. Entrar al detalle y elegir Asignar si está disponible. Seleccionar un conductor activo del maestro en **Nombre del conductor** e indicar la **Fecha de Inicio**. Buscar por nombre o código; desplazar la lista para ver más opciones. Si no aparece, registrarlo o activarlo en el maestro antes de asignar.
@@ -82,3 +82,7 @@ Abrir Configuración → Maestros → Domicilios sin visitas. Registrar Territor
 Renovar solicitud registra un aviso posterior y calcula un nuevo año. Archivar retira un caso revisado de los recordatorios después de cumplir el plazo. Eliminar se reserva para registros incorrectos o duplicados y utiliza una Papelera recuperable. Cada cambio requiere un motivo y conserva auditoría.
 
 Inicialmente, el administrador gestiona el maestro. Otros usuarios necesitan permisos específicos de este módulo para consultar referencias o realizar cambios. Sin acceso a direcciones, el historial muestra los recuentos de avisos del territorio. Ver [guía del maestro](DOMICILIOS_SIN_VISITAS.md).
+
+## Menú lateral
+
+El botón **<<** oculta por completo el menú; **>>** vuelve a mostrarlo. En pantallas pequeñas se abre como panel sobre la página y se cierra con **<<**, al seleccionar una sección, al tocar fuera o con Escape. Los controles ocultos quedan fuera de la navegación por teclado.

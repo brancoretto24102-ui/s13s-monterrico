@@ -1,4 +1,5 @@
-import type { Snapshot } from "./types";
+import type { Snapshot, VisitRestrictionSummary } from "./types";
+import { visitSummary } from "./visitRestrictions";
 import { assignmentDeadline, addDays } from "./assignmentTiming";
 import { coveragePriority, latestCompletedDates } from "./territoryCoverage";
 
@@ -33,6 +34,7 @@ export interface TerritoryMapContext {
   territories: MapTerritory[];
   shapes: MapShape[];
   revision: string;
+  visit_restriction_summary?: VisitRestrictionSummary[];
 }
 const EPS = 1e-13;
 export const mapColors = {
@@ -340,6 +342,10 @@ export function demoMapContext(
   return {
     territories,
     revision: now,
+    visit_restriction_summary: visitSummary(
+      snapshot.visit_restrictions ?? [],
+      today,
+    ),
     shapes:
       shapes ??
       territories.map((t, i) => {

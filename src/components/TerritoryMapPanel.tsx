@@ -47,6 +47,7 @@ import TerritoryMapCanvas from "./TerritoryMapCanvas";
 import TerritoryCoverage from "./TerritoryCoverage";
 import Modal from "./Modal";
 import DataPager from "./DataPager";
+import { TerritoryVisitNotice } from "./VisitRestrictionsPanel";
 import "./TerritoryMapPanel.css";
 
 interface EditForm {
@@ -93,6 +94,7 @@ export default function TerritoryMapPanel({
   demoShapes,
   onDemoShapes,
   onOpenTerritory,
+  onOpenVisits,
 }: {
   profile: Profile;
   snapshot: Snapshot;
@@ -101,6 +103,7 @@ export default function TerritoryMapPanel({
   demoShapes: MapShape[] | undefined;
   onDemoShapes: (shapes: MapShape[]) => void;
   onOpenTerritory: (id: string) => void;
+  onOpenVisits: (id: string) => void;
 }) {
   const [context, setContext] = useState<TerritoryMapContext | null>(null),
     [loading, setLoading] = useState(true),
@@ -126,8 +129,7 @@ export default function TerritoryMapPanel({
   const request = useRef(0),
     formRef = useRef(form),
     fileInput = useRef<HTMLInputElement>(null),
-    reasonInput = useRef<HTMLTextAreaElement>(null),
-    sourceInput = useRef<HTMLTextAreaElement>(null);
+    reasonInput = useRef<HTMLTextAreaElement>(null);
   formRef.current = form;
   const canCreate = can(profile, "maps.create"),
     canEdit = can(profile, "maps.edit"),
@@ -343,7 +345,6 @@ export default function TerritoryMapPanel({
       setEditError(
         "Indica la procedencia de los límites (3 a 1500 caracteres).",
       );
-      sourceInput.current?.focus();
       return;
     }
     if (formError) {
@@ -856,24 +857,10 @@ export default function TerritoryMapPanel({
                 <p className="map-draft-banner">
                   <ShieldCheck size={17} />
                   <span>
-                    Los límites con borde discontinuo son borradores. La
-                    ubicación extraída de un plano puede ser aproximada: revisa
-                    su procedencia y alineación antes de validarla o usarla para
-                    una visita.
+                    Los límites con borde discontinuo están pendientes de
+                    revisión. Compruébalos antes de validarlos.
                   </span>
                 </p>
-              )}
-              {!!shapes.length && (
-                <details className="map-provenance">
-                  <summary>Consultar la procedencia de los límites</summary>
-                  {[
-                    ...new Set(
-                      shapes.filter((s) => !s.deleted_at).map((s) => s.source),
-                    ),
-                  ].map((source) => (
-                    <p key={source}>{source}</p>
-                  ))}
-                </details>
               )}
               {form && (
                 <section className="panel map-editor-heading">
@@ -1091,21 +1078,6 @@ export default function TerritoryMapPanel({
                           </div>
                         </details>
                         <label>
-                          Procedencia de los límites (obligatoria)
-                          <textarea
-                            ref={sourceInput}
-                            required
-                            value={form.source}
-                            maxLength={1500}
-                            onChange={(e) => {
-                              setEditError("");
-                              setForm((f) =>
-                                f ? { ...f, source: e.target.value } : f,
-                              );
-                            }}
-                          />
-                        </label>
-                        <label>
                           Motivo del cambio (obligatorio)
                           <textarea
                             ref={reasonInput}
@@ -1209,7 +1181,6 @@ export default function TerritoryMapPanel({
                       </dl>
                       {selectedShape && !selectedShape.deleted_at && (
                         <>
-                          <p className="map-source">{selectedShape.source}</p>
                           <small>
                             {selectedShape.geometry.coordinates.length} partes ·
                             versión {selectedShape.version}
@@ -1244,6 +1215,22 @@ export default function TerritoryMapPanel({
                         estado.
                       </p>
                     </section>
+                  )}
+                  {selectedTerritory && !form && (
+                    <TerritoryVisitNotice
+                      territoryId={selectedTerritory.id}
+                      rows={snapshot.visit_restrictions ?? []}
+                      summary={context.visit_restriction_summary?.find(
+                        (row) => row.territory_id === selectedTerritory.id,
+                      )}
+                      today={today}
+                      canView={can(profile, "visits.view")}
+                      onManage={
+                        can(profile, "visits.view")
+                          ? () => onOpenVisits(selectedTerritory.id)
+                          : undefined
+                      }
+                    />
                   )}
                   <section className="panel map-territory-list">
                     <h2>

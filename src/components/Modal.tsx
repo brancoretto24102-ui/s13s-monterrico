@@ -10,24 +10,31 @@ export default function Modal({
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
     const d = ref.current!;
     d.showModal();
     const h = (event: Event) => {
       event.preventDefault();
-      onClose();
+      close.current();
     };
     d.addEventListener("cancel", h);
     return () => {
       d.removeEventListener("cancel", h);
       d.close();
     };
-  }, [onClose]);
+  }, []);
   return (
     <dialog ref={ref} className="modal">
       <header>
         <h2>{title}</h2>
-        <button className="icon" aria-label="Cerrar ventana" onClick={onClose}>
+        <button
+          type="button"
+          className="icon"
+          aria-label="Cerrar ventana"
+          onClick={onClose}
+        >
           <X size={20} />
         </button>
       </header>

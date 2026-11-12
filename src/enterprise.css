@@ -720,46 +720,40 @@ body {
   color: #8b9aab;
   margin-left: auto;
 }
-.sidebar-collapsed .sidebar {
-  width: 72px;
+/* Full-width drawer; hidden menus leave no icon rail or reserved space. */
+.enterprise-shell .sidebar {
+  transition: transform 0.22s ease;
 }
-.sidebar-collapsed .main-shell {
-  margin-left: 72px;
-  width: calc(100% - 72px);
+.enterprise-shell .main-shell {
+  transition:
+    margin-left 0.22s ease,
+    width 0.22s ease;
 }
-.sidebar-collapsed .sidebar .brand > span:last-of-type,
-.sidebar-collapsed .sidebar .nav-leaf > span,
-.sidebar-collapsed .nav-module h2,
-.sidebar-collapsed .nav-module summary > span,
-.sidebar-collapsed .nav-module summary > svg:last-child,
-.sidebar-collapsed .private-label > span,
-.sidebar-collapsed .sidebar-logout > span {
-  display: none;
+.enterprise-shell.sidebar-collapsed .sidebar {
+  transform: translateX(-100%);
+  pointer-events: none;
 }
-.sidebar-collapsed .sidebar .brand-mark {
-  width: 44px;
-  height: 44px;
+.enterprise-shell.sidebar-collapsed .main-shell {
+  margin-left: 0;
+  width: 100%;
 }
-.sidebar-collapsed .nav-module {
-  margin-top: 15px;
+@media (prefers-reduced-motion: reduce) {
+  .enterprise-shell .sidebar,
+  .enterprise-shell .main-shell {
+    transition: none;
+  }
 }
-.sidebar-collapsed .sidebar nav button,
-.sidebar-collapsed .nav-module summary,
-.sidebar-collapsed .nav-module details > div > .nav-leaf {
-  justify-content: center;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
-}
-.sidebar-collapsed .private-label,
-.sidebar-collapsed .sidebar-logout {
-  justify-content: center;
-}
-.sidebar-collapsed .nav-module details > div > .nav-leaf svg {
-  height: 18px;
-  width: 18px;
-}
-.sidebar-collapsed .nav-module details > summary {
-  display: none;
+.quick-complete {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 9px;
+  border: 1px solid #bcdcc3;
+  border-radius: 4px;
+  background: #eff8f0;
+  color: #247b35;
+  font-size: 11px;
+  cursor: pointer;
 }
 .enterprise-shell .menu-toggle {
   display: inline-flex;

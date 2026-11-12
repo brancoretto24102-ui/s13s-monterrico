@@ -257,13 +257,7 @@
   margin: 0;
   color: #304d52;
 }
-.map-source {
-  font-size: 10px;
-  color: #788b89;
-  line-height: 1.8;
-  overflow-wrap: anywhere;
-  margin: 14px 0 6px;
-}
+
 .map-selected-detail > small {
   font-size: 10px;
   color: #8a969d;
@@ -546,25 +540,7 @@
     flex-wrap: wrap;
   }
 }
-.map-provenance {
-  margin: 0 0 14px;
-  padding: 10px 14px;
-  background: #fff;
-  border: 1px solid #dce4eb;
-  border-radius: 5px;
-  color: #526777;
-  font-size: 12px;
-}
-.map-provenance summary {
-  cursor: pointer;
-  font-weight: 600;
-  color: #294c64;
-}
-.map-provenance p {
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  line-height: 1.6;
-}
+
 .map-edit-form fieldset {
   border: 0;
   margin: 0;
@@ -576,4 +552,15 @@
   line-height: 1.6;
   color: #607687;
   margin: -7px 0 14px;
+}
+.map-detail-column .visit-territory h2 {
+  font-size: 13px;
+  line-height: 1.5;
+}
+.map-detail-column .visit-house-list {
+  max-height: 240px;
+  overflow: auto;
+}
+.map-detail-column .visit-house-list strong {
+  overflow-wrap: anywhere;
 }

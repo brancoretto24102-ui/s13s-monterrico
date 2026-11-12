@@ -4,8 +4,8 @@ La documentación pública describe las comprobaciones reproducibles con datos s
 
 ## Pruebas automatizadas
 
-- 145 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
-- 534 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
+- 150 pruebas unitarias: fechas, día peruano, año de servicio, rangos, actualidad, cierres al corte, historial previo, continuidad, previsualización de errores Excel, plazos y excepciones, última predicación, semáforo, orden y filtros combinados.
+- 542 comprobaciones PostgreSQL: permisos, acceso anónimo e inactivo, roles, reglas de fechas, plazos y excepciones, conflictos de versión, auditoría, importación atómica, deduplicación, crecimiento del catálogo, respaldo, historial con más de mil registros y acceso privado a la plantilla.
 - Ejecución con PostgreSQL 17 en la validación automática y PostgreSQL 18.6 en la validación local.
 - Compilación TypeScript/Vite y revisión del paquete público aprobadas. La auditoría de dependencias de producción no detectó vulnerabilidades conocidas en esta entrega; ese resultado depende de los avisos disponibles en la fecha de ejecución.
 
@@ -134,3 +134,15 @@ Se verificó que Guardar como borrador con motivo vacío muestra el requisito y 
 La vista previa PDF usa PDF.js 6.5.438 con worker y fuentes locales, sin CDN ni iframe. Dibuja solo la página seleccionada, limita su bitmap a 3 millones de píxeles y permite ampliación. El buffer se copia antes de entregarlo al worker para conservar la descarga. Las solicitudes antiguas se descartan si cambia el periodo. Las pruebas cubren el límite de memoria, proporciones y motivos inválidos.
 
 En el navegador con la política de seguridad de producción se mostraron páginas de un S-13-S de ejemplo, se cambió de página y se amplió. El PDF descargado conservó cinco páginas legibles con sus encabezados. Las imágenes de conductores y publicadores cargaron correctamente. A 449 px no hubo desborde horizontal; esta comprobación no sustituye una prueba física en Brave/Android. Solo se usaron datos ficticios y la plantilla oficial privada cargada localmente. No se modificaron registros reales ni se añadieron migraciones de base de datos.
+
+## Validación, avisos del mapa y navegación (0.10.2)
+
+Se comprobó en navegador que escribir el motivo carácter a carácter conserva el foco y el texto, que validar guarda la revisión y que Escape cierra la ventana. La ventana mantiene una sola apertura mientras se edita; un cambio del manejador de cierre ya no la vuelve a abrir.
+
+La ficha geográfica muestra restricciones vigentes y plazos cumplidos del territorio seleccionado, y abre el maestro filtrado. El texto técnico original no aparece en la ficha ni sobre el mapa. La procedencia y la huella se conservan en los registros. Cinco pruebas unitarias y ocho comprobaciones SQL cubren avisos por territorio, archivo, Papelera y la ausencia de referencias privadas para un perfil limitado al mapa. La consulta del mapa devuelve únicamente recuentos, sin direcciones.
+
+Con datos ficticios se comprobó el botón Cerrar desde el listado, el cierre normal y la solicitud de motivo al superar los tres meses. Se reutilizan el permiso `territories.complete`, el formulario y la operación existentes. Las comprobaciones previas de roles cubren la denegación de cierre a un perfil que solo puede asignar.
+
+El menú se oculta completamente y recupera su ancho mediante las dobles flechas. A 449 píxeles CSS se verificaron apertura, cierre por Escape y por navegación, retorno del foco, recorrido de teclado dentro del panel y ausencia de desbordamiento horizontal general. También se guardó un borrador desde ese ancho. Se comprobó el icono SVG de la pestaña con el símbolo de la aplicación. No se utilizó un teléfono físico.
+
+La migración alojada se verificó con una consulta autenticada: el mapa conserva sus 82 territorios y 82 polígonos y recibe los recuentos de los territorios con avisos, sin campos de dirección. Las huellas completas de asignaciones, domicilios y geometrías coinciden antes y después de la migración.

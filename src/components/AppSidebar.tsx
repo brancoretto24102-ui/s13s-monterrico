@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Database,
   ChevronDown,
+  ChevronsLeft,
   Home,
   Layers,
   MapPinned,
@@ -14,7 +15,6 @@ import {
   History,
   Settings,
   LogOut,
-  X,
   House,
   CalendarDays,
 } from "lucide-react";
@@ -106,6 +106,8 @@ export default function AppSidebar({
   profile,
   view,
   menu,
+  open,
+  mobile,
   onClose,
   navigate,
   logout,
@@ -113,10 +115,47 @@ export default function AppSidebar({
   profile: Profile;
   view: AppView;
   menu: boolean;
+  open: boolean;
+  mobile: boolean;
   onClose: () => void;
   navigate: (v: AppView) => void;
   logout: () => void;
 }) {
+  const sidebar = useRef<HTMLElement>(null),
+    close = useRef(onClose);
+  close.current = onClose;
+  useEffect(() => {
+    if (!open || !mobile) return;
+    const previous = document.activeElement as HTMLElement | null;
+    sidebar.current?.querySelector<HTMLButtonElement>(".mobile-close")?.focus();
+    const escape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        close.current();
+      }
+      if (event.key === "Tab") {
+        const items = [
+          ...sidebar.current!.querySelectorAll<HTMLElement>(
+            "button:not([disabled]),a[href],summary",
+          ),
+        ].filter((el) => el.getClientRects().length && el.tabIndex >= 0);
+        const first = items[0],
+          last = items.at(-1);
+        if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last?.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first?.focus();
+        }
+      }
+    };
+    document.addEventListener("keydown", escape);
+    return () => {
+      document.removeEventListener("keydown", escape);
+      previous?.focus();
+    };
+  }, [open, mobile]);
   const [scrollbarActive, setScrollbarActive] = useState(false);
   const scrollbarTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -158,7 +197,16 @@ export default function AppSidebar({
     security = ["access-profiles", "users", "audit"] as AppView[];
   return (
     <>
-      <aside className={`sidebar ${menu ? "is-open" : ""}`}>
+      <aside
+        ref={sidebar}
+        id="app-sidebar"
+        className={`sidebar ${menu ? "is-open" : ""}`}
+        inert={!open}
+        aria-hidden={!open}
+        role={mobile && open ? "dialog" : undefined}
+        aria-modal={mobile && open ? true : undefined}
+        aria-label={mobile && open ? "Menú principal" : undefined}
+      >
         <div className="brand">
           <span className="brand-mark">
             <MapPinned size={31} />
@@ -168,10 +216,10 @@ export default function AppSidebar({
           </span>
           <button
             className="mobile-close icon"
-            aria-label="Cerrar menú"
+            aria-label="Ocultar menú lateral"
             onClick={onClose}
           >
-            <X size={20} />
+            <ChevronsLeft size={20} />
           </button>
         </div>
         <nav
@@ -295,6 +343,7 @@ export default function AppSidebar({
       {menu && (
         <button
           className="sidebar-scrim"
+          tabIndex={-1}
           aria-label="Cerrar menú"
           onClick={onClose}
         />

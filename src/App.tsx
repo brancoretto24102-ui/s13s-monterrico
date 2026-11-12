@@ -21,6 +21,8 @@ import {
   Plus,
   ArrowUpRight,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Check,
   RefreshCw,
   Clock3,
@@ -29,7 +31,6 @@ import {
   ShieldCheck,
   MessageSquare,
   WifiOff,
-  Menu,
   X,
   UsersRound,
   Pencil,
@@ -142,6 +143,19 @@ export default function App() {
     Record<string, PreachingWeek>
   >({});
   const [collapsed, setCollapsed] = useState(false);
+  const [narrowMenu, setNarrowMenu] = useState(
+    () => window.matchMedia("(max-width: 850px)").matches,
+  );
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 850px)");
+    const changed = () => {
+      setNarrowMenu(media.matches);
+      setMenu(false);
+    };
+    media.addEventListener("change", changed);
+    return () => media.removeEventListener("change", changed);
+  }, []);
+  const sidebarOpen = narrowMenu ? menu : !collapsed;
   const [creatingTerritory, setCreatingTerritory] = useState(false);
   const [demoSecurity, setDemoSecurity] = useState(initialDemoSecurity);
   const [demoMapShapes, setDemoMapShapes] = useState<MapShape[] | undefined>();
@@ -791,6 +805,22 @@ export default function App() {
                           Asignar
                         </button>
                       )}
+                      {a && canComplete && (
+                        <button
+                          className="quick-complete"
+                          aria-label={`Cerrar territorio ${t.territory_number}`}
+                          onClick={() =>
+                            openAction({
+                              kind: "complete",
+                              territory: t,
+                              assignment: a,
+                            })
+                          }
+                        >
+                          <CheckCircle2 size={13} />
+                          Cerrar
+                        </button>
+                      )}
                       {a && canCorrect && (
                         <button
                           className="quick-edit"
@@ -848,29 +878,39 @@ export default function App() {
   }
   return (
     <div
-      className={`app-shell enterprise-shell ${collapsed ? "sidebar-collapsed" : ""}`}
+      className={`app-shell enterprise-shell ${!sidebarOpen ? "sidebar-collapsed" : ""}`}
     >
       <AppSidebar
         profile={profile}
         view={view}
         menu={menu}
-        onClose={() => setMenu(false)}
+        open={sidebarOpen}
+        mobile={narrowMenu}
+        onClose={() => (narrowMenu ? setMenu(false) : setCollapsed(true))}
         navigate={navigate}
         logout={() => void logout()}
       />
-      <div className="main-shell">
+      <div className="main-shell" inert={narrowMenu && sidebarOpen}>
         <header className="topbar">
           <div>
             <button
               className="menu-toggle icon"
-              aria-label="Mostrar u ocultar menú"
+              aria-label={
+                sidebarOpen ? "Ocultar menú lateral" : "Mostrar menú lateral"
+              }
+              aria-expanded={sidebarOpen}
+              aria-controls="app-sidebar"
+              title={sidebarOpen ? "Ocultar menú <<" : "Mostrar menú >>"}
               onClick={() => {
-                if (window.matchMedia("(max-width: 850px)").matches)
-                  setMenu(!menu);
+                if (narrowMenu) setMenu(!menu);
                 else setCollapsed(!collapsed);
               }}
             >
-              <Menu size={22} />
+              {sidebarOpen ? (
+                <ChevronsLeft size={22} />
+              ) : (
+                <ChevronsRight size={22} />
+              )}
             </button>
             <span className="breadcrumb">
               <span>{viewInfo[view].section}</span>
@@ -1482,6 +1522,7 @@ export default function App() {
                     demo={demo}
                     demoShapes={demoMapShapes}
                     onDemoShapes={setDemoMapShapes}
+                    onOpenVisits={openVisits}
                     onOpenTerritory={(id) => {
                       navigate("territories");
                       setDetail(id);
