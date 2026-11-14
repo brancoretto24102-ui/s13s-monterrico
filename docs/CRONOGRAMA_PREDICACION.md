@@ -6,7 +6,7 @@ Abrir **Predicación → Procesos → Cronograma semanal**. Se prepara una sola 
 
 1. Elegir el lunes y pulsar **Abrir semana**. Se puede seleccionar libremente otro lunes; cambiar el campo no descarta las ediciones de la semana abierta. Si hay cambios pendientes, permite seguir editando o descartarlos expresamente antes de abrir la otra semana. La aplicación calcula las fechas hasta el domingo, con cambios de mes y año incluidos.
 2. Marcar los días con predicación. Desmarcar un día lo retira de las dos versiones y las imágenes. Se pueden volver a marcar sus salidas antes de guardar; después de guardar, la auditoría conserva la versión anterior.
-3. Agregar las salidas necesarias de cada día, su hora y punto de reunión. Una salida admite varios conductores activos del maestro y varios territorios; también puede quedar sin territorio, por ejemplo para una reunión virtual. Se permiten salidas simultáneas con distintos conductores y territorios.
+3. Agregar las salidas necesarias de cada día, su hora y punto de reunión. Una salida admite de cero a ocho conductores activos del maestro y varios territorios; también puede quedar sin territorio, por ejemplo para una reunión virtual. Se permiten salidas simultáneas con distintos conductores y territorios.
 4. Revisar los territorios sugeridos arriba. El semáforo usa la última finalización real: rojo desde 12 meses o sin registro, anaranjado desde 8, amarillo desde 4 y verde antes de 4 meses. Es una sugerencia ordenada por prioridad; no obliga a programar esos territorios. Elegir la salida de destino antes de agregar una sugerencia. Al incluir un territorio, desaparece de las sugerencias de toda la semana. Vuelve al retirarlo de todas sus salidas o al desmarcar su único día; si todavía está en otra salida, permanece oculto.
 5. Guardar. Cambiar a **Conductores** o **Publicadores** para revisar, y usar **Previsualizar conductores** o **Previsualizar publicadores**. La imagen final aparece en pantalla, se puede ampliar o cerrar y no se descarga automáticamente. Para conservarla, pulsar **Descargar imagen** dentro de la previsualización. Es necesario guardar los cambios antes de preparar las imágenes.
 
@@ -18,7 +18,7 @@ Una nueva semana utiliza la estructura de la última semana guardada anteriormen
 
 Un territorio que sigue abierto en la fecha de salida se propone en su ubicación conocida de la semana anterior o de la estructura inicial. Se puede retirarlo o cambiarlo de salida. Los territorios que ya se cerraron no se arrastran automáticamente.
 
-Los registros antiguos solo guardan una fecha de inicio, sin horario. Cuando no hay una ubicación previa, solo se propone automáticamente una salida si coinciden el día de la semana y el conductor identificado por UUID y hay una sola opción. Si existen varias opciones, aparece en **Territorios abiertos sin ubicación en este cronograma**, para colocarlo manualmente. No se inventa una hora a partir de la fecha.
+Los registros antiguos solo guardan una fecha de inicio, sin horario. Cuando no hay una ubicación previa, solo se propone automáticamente una salida si coinciden el día de la semana y el conductor identificado por UUID y hay una sola opción. Si existen varias opciones, aparece en **Territorios abiertos pendientes de programar**, para colocarlo manualmente. No se inventa una hora a partir de la fecha.
 
 ## Plazos en la fecha programada
 
@@ -53,3 +53,9 @@ El servidor vuelve a validar conductores activos, plazos y versión al guardar. 
 El respaldo JSON incluye semanas, estructura inicial privada, observaciones y auditoría. Las imágenes descargadas deben conservarse y compartirse únicamente con sus destinatarios autorizados.
 
 Desde la versión 0.8.2, preparar una previsualización consulta la semana guardada y genera las imágenes solo en memoria. No registra una descarga ni escribe en la base. La descarga elegida vuelve a comprobar permisos, versión y plazos en el servidor antes de entregar el archivo y registrar la exportación. Si se edita la semana o cambia su versión, hay que preparar otra previsualización. Los enlaces temporales de imagen se liberan al cerrar, reemplazar o descartar la vista.
+
+## Salidas sin conductor y abiertos pendientes (0.14.0)
+
+La sección **Territorios abiertos pendientes de programar** permanece visible e incluye un contador. Retira un territorio cuando aparece en cualquier salida de los días seleccionados; lo recupera al quitar su última aparición o desmarcar ese día. Excluye cerrados, anulados, territorios inactivos e inicios posteriores al domingo elegido. Un abierto vencido conserva su aviso y acceso al historial; sigue siendo necesario cerrarlo antes de volver a programarlo.
+
+El conductor es opcional en el cronograma. Se puede guardar una salida con su lista vacía y retirar todos los conductores seleccionados. Antes de generar cualquiera de las dos imágenes, el sistema enumera las salidas sin conductor y permite **Volver a revisar** o **Generar de todos modos**. El campo queda vacío en el documento exportado; el aviso solo aparece dentro del sistema. La validación de maestros activos, reservas simultáneas y demás reglas se mantiene cuando se selecciona algún conductor.

@@ -176,3 +176,9 @@ El atlas completo se renderizó y revisó visualmente: mapa general, sectores y 
 En navegador se preparó y descargó un PDF con datos ficticios, con navegación de páginas y ampliación. Se revisó a 454 píxeles CSS mediante zoom, sin desbordamiento horizontal general ni de la ventana. Se comprobó en el árbol de perfiles que elegir Exportar mapa PDF marca únicamente esa acción y Visualizar mapa. No se concedieron accesos a usuarios reales durante esas pruebas.
 
 La revisión alojada confirmó el acceso administrativo y la prohibición de ejecución anónima. Las huellas de asignaciones, geometrías y perfiles personalizados se mantuvieron iguales al aplicar la migración. No se modificaron límites ni registros reales para probar el exportador. No se probó un teléfono físico.
+
+## Cronograma y correcciones históricas (0.14.0)
+
+203 pruebas unitarias y 620 comprobaciones PostgreSQL con datos sintéticos. Se verificaron la lista de abiertos pendientes y su exclusión/reactivación según todas las salidas seleccionadas, la aceptación de conductor vacío y su ausencia de avisos en los documentos de ambas audiencias. La normalización del servidor descarta nombres inyectados cuando no hay identidades seleccionadas.
+
+La nueva consulta y corrección histórica rechazan anónimo y usuarios sin permiso, aceptan un perfil con corrección sin gestión de conductores, permiten elegir inactivos sin reactivarlos, rechazan eliminados, nombres inventados e identidades inexistentes, conservan historiales sin vínculo y registran identidad/motivo en auditoría. Dos correcciones de la misma versión producen un éxito y un conflicto; la revocación del perfil surte efecto sin refrescar el token. Las pruebas locales utilizan una base vacía y nunca modifican registros de producción.

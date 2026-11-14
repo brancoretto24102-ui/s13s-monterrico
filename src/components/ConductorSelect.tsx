@@ -16,11 +16,17 @@ export default function ConductorSelect({
   value,
   disabled,
   onChange,
+  includeInactive = false,
+  required = true,
+  fallbackName = "",
 }: {
   conductors: Conductor[];
   value: string;
   disabled: boolean;
   onChange: (personId: string, name: string) => void;
+  includeInactive?: boolean;
+  required?: boolean;
+  fallbackName?: string;
 }) {
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
@@ -31,12 +37,12 @@ export default function ConductorSelect({
   const [highlight, setHighlight] = useState(-1);
   const [placement, setPlacement] = useState({ above: false, height: 240 });
   const available = useMemo(
-    () => assignableConductors(conductors),
-    [conductors],
+    () => assignableConductors(conductors, "", includeInactive),
+    [conductors, includeInactive],
   );
   const options = useMemo(
-    () => assignableConductors(conductors, query ?? ""),
-    [conductors, query],
+    () => assignableConductors(conductors, query ?? "", includeInactive),
+    [conductors, query, includeInactive],
   );
   const selected = available.find((c) => c.person_id === value);
   const expanded = open && !disabled;
@@ -108,7 +114,9 @@ export default function ConductorSelect({
 
   return (
     <div className="conductor-field">
-      <label htmlFor={`${id}-input`}>Nombre del conductor</label>
+      <label htmlFor={`${id}-input`}>
+        Nombre del conductor{!required ? " (opcional)" : ""}
+      </label>
       <div
         ref={root}
         className="conductor-select"
@@ -122,7 +130,7 @@ export default function ConductorSelect({
             ref={input}
             id={`${id}-input`}
             role="combobox"
-            aria-required="true"
+            aria-required={required}
             aria-autocomplete="list"
             aria-expanded={expanded}
             aria-controls={expanded ? `${id}-list` : undefined}
@@ -132,11 +140,13 @@ export default function ConductorSelect({
             aria-describedby={`${id}-help`}
             autoComplete="off"
             disabled={disabled || available.length === 0}
-            value={query ?? selected?.display_name ?? ""}
+            value={query ?? selected?.display_name ?? fallbackName}
             placeholder={
               available.length
                 ? "Seleccione o busque un conductor…"
-                : "No hay conductores activos"
+                : includeInactive
+                  ? "No hay conductores disponibles"
+                  : "No hay conductores activos"
             }
             onFocus={(e) => e.currentTarget.select()}
             onClick={() => {
@@ -229,7 +239,12 @@ export default function ConductorSelect({
                   onClick={() => choose(conductor)}
                 >
                   <span>{conductor.display_name}</span>
-                  <small>{conductorCode(conductor.code)}</small>
+                  <small>
+                    {conductorCode(conductor.code)}
+                    {includeInactive
+                      ? ` · ${conductor.active ? "Activo" : "Inactivo"}`
+                      : ""}
+                  </small>
                   {conductor.person_id === value && (
                     <Check size={15} aria-hidden="true" />
                   )}
@@ -246,11 +261,15 @@ export default function ConductorSelect({
         )}
       </div>
       <span id={`${id}-help`} className="conductor-select-help">
-        {!available.length
-          ? "Cree o active un conductor en Configuración → Maestros → Conductores."
-          : value && !selected
-            ? "Este conductor ya no está disponible. Seleccione otro del maestro."
-            : "Seleccione un conductor activo del maestro. Puede buscar por nombre o código."}
+        {!required
+          ? "Puedes dejar esta salida sin conductor. El sistema avisará antes de generar el cronograma."
+          : includeInactive
+            ? "Para corregir el historial puedes seleccionar conductores activos o inactivos. Busca por nombre o código."
+            : !available.length
+              ? "Cree o active un conductor en Configuración → Maestros → Conductores."
+              : value && !selected
+                ? "Este conductor ya no está disponible. Seleccione otro del maestro."
+                : "Seleccione un conductor activo del maestro. Puede buscar por nombre o código."}
       </span>
     </div>
   );

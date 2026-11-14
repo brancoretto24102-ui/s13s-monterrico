@@ -341,7 +341,9 @@ export async function testPreachingSchedule({
     /punto/,
   );
   await denied(
-    save(custom, weekId, 4, monday, [{ ...r[0], conductor_ids: [] }]),
+    save(custom, weekId, 4, monday, [
+      { ...r[0], conductor_ids: Array(9).fill(conductor) },
+    ]),
     /conductores/,
   );
   await denied(
@@ -503,5 +505,33 @@ export async function testPreachingSchedule({
     root.query("delete from preaching_schedules where id=$1", [weekId]),
     /borrado físico|foreign key/,
   );
+  const beforeConductorless = await fingerprint();
+  const conductorless = await save(
+    admin,
+    crypto.randomUUID(),
+    0,
+    addDays(monday, 42),
+    [
+      {
+        ...rows(tids[3])[0],
+        conductor_ids: [],
+        conductor_names: ["Nombre inyectado"],
+      },
+    ],
+  );
+  ok(
+    conductorless.rows[0].conductor_ids.length === 0 &&
+      conductorless.rows[0].conductor_names.length === 0,
+  );
+  const exportedEmpty = await scalar(
+    admin,
+    "select export_preaching_schedule($1,1)",
+    [conductorless.id],
+  );
+  ok(
+    exportedEmpty.rows[0].conductor_ids.length === 0 &&
+      exportedEmpty.rows[0].conductor_names.length === 0,
+  );
+  ok((await fingerprint()) === beforeConductorless);
   return checks;
 }

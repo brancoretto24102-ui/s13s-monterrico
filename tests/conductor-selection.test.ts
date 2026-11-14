@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   assignableConductors,
   requireAssignableConductor,
+  requireCorrectionConductor,
 } from "../src/lib/conductors";
 import { demoSnapshot } from "../src/lib/demo";
 
@@ -34,5 +35,29 @@ describe("selección obligatoria del maestro", () => {
     expect(requireAssignableConductor(homonyms, homonyms[1].person_id)).toBe(
       homonyms[1],
     );
+  });
+  it("permite inactivos solo para corrección y conserva las identidades de homónimos", () => {
+    const changed = rows
+      .slice(0, 3)
+      .map((c, i) => ({
+        ...c,
+        display_name: "Conductor homónimo",
+        active: i === 0,
+        deleted_at: i === 2 ? "2026-01-01" : null,
+      }));
+    expect(assignableConductors(changed)).toEqual([changed[0]]);
+    expect(assignableConductors(changed, "homonimo", true)).toEqual(
+      changed.slice(0, 2),
+    );
+    expect(requireCorrectionConductor(changed, changed[1].person_id)).toBe(
+      changed[1],
+    );
+    expect(() =>
+      requireAssignableConductor(changed, changed[1].person_id),
+    ).toThrow();
+    expect(() =>
+      requireCorrectionConductor(changed, changed[2].person_id),
+    ).toThrow();
+    expect(() => requireCorrectionConductor(changed, "nombre libre")).toThrow();
   });
 });

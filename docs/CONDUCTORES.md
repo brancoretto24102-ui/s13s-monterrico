@@ -24,3 +24,9 @@ No se fusionan personas por tener el mismo nombre: revisar el código antes de c
 La carga inicial del maestro se realiza expresamente con los nombres existentes, evitando repetir fichas por cambios de mayúsculas o espacios. Las variantes de nombre distintas se mantienen separadas. Esta incorporación no vincula ni modifica las asignaciones antiguas: el historial del Excel se conserva tal como fue validado. Las siguientes importaciones históricas no crean fichas automáticamente. La eliminación usa una papelera recuperable para mantener las referencias y la auditoría; no existe una función de purga definitiva en la aplicación.
 
 La vista de ejemplo permite probar temporalmente el maestro con datos ficticios. Se reinicia al salir o recargar y no guarda fichas en Supabase.
+
+## Corrección del responsable histórico (0.14.0)
+
+En **Historial → Corregir**, el campo del responsable es un selector del maestro, con búsqueda por nombre/código y estados Activo e Inactivo. Incluye todos los conductores no eliminados; los inactivos se pueden seleccionar sin reactivarlos. Las asignaciones nuevas y el cronograma siguen seleccionando solo activos.
+
+La consulta histórica y la corrección están protegidas por `territories.correct`, sin conceder gestión del maestro. La corrección guarda el UUID de la persona elegida y su nombre del catálogo. No admite cambiar el responsable mediante texto libre; permite conservar el nombre original de un registro histórico sin vínculo para corregir únicamente las fechas. Mantiene motivo, control de versión, auditoría y reglas de plazos. Las fichas eliminadas requieren restauración antes de seleccionarlas.

@@ -1,6 +1,7 @@
 import { fixtureDate } from "./fixture-date";
 import { bootstrapTestDb } from "./bootstrap-test-db";
 import { testConductors } from "./test-conductors";
+import { testHistoricalCorrections } from "./test-historical-corrections";
 import { testAccess } from "./test-access";
 import { testAssignmentTiming } from "./test-assignment-timing";
 import { testPreachingSchedule } from "./test-preaching-schedule";
@@ -396,6 +397,15 @@ try {
     reader,
     editor: ed1,
     inactive,
+    anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testHistoricalCorrections({
+    root,
+    admin,
+    admin2,
+    reader,
+    editor: ed1,
     anon,
     connect: (uid) => connection("authenticated", uid),
   });

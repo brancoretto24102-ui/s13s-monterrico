@@ -10,6 +10,8 @@ import {
   scheduleErrors,
   scheduleTime,
   territoryPlanStatus,
+  unplannedOpenAssignments,
+  outingsWithoutConductor,
   type PreachingContext,
   type PreachingRow,
   type PlanningAssignment,
@@ -64,6 +66,62 @@ const assignment = (
   completed_at: completed,
 });
 describe("Cronograma semanal de predicación", () => {
+  it("muestra abiertos pendientes, excluye cerrados, anulados, inactivos y futuros, y devuelve el retirado", () => {
+    const openContext = {
+      ...context,
+      assignments: [
+        assignment("open", "t1", monday, null),
+        assignment("closed", "t2", "2026-10-01", "2026-11-01"),
+        { ...assignment("void", "t2", monday, null), voided_at: "2026-11-10" },
+        assignment("future", "t3", "2026-11-16", null),
+      ],
+    };
+    const scheduled = row(0, [{ territory_id: "t1", reason: "" }]);
+    expect(
+      unplannedOpenAssignments(openContext, [], monday).map((a) => a.id),
+    ).toEqual(["open"]);
+    expect(unplannedOpenAssignments(openContext, [scheduled], monday)).toEqual(
+      [],
+    );
+    expect(
+      unplannedOpenAssignments(
+        openContext,
+        [scheduled, row(1, scheduled.territories)],
+        monday,
+      ),
+    ).toEqual([]);
+    expect(
+      unplannedOpenAssignments(openContext, [], monday).map((a) => a.id),
+    ).toEqual(["open"]);
+    expect(
+      unplannedOpenAssignments(
+        {
+          ...openContext,
+          territories: context.territories.map((t) => ({
+            ...t,
+            active: false,
+          })),
+        },
+        [],
+        monday,
+      ),
+    ).toEqual([]);
+  });
+  it("admite salidas sin conductor y avisa solo de las salidas incluidas en la semana", () => {
+    const missing = row(0, [{ territory_id: "t1", reason: "" }], {
+      conductor_ids: [],
+    });
+    expect(scheduleErrors([missing], context, monday)).toEqual([]);
+    expect(outingsWithoutConductor([missing, row(1)])).toEqual([missing]);
+    expect(outingsWithoutConductor([row(1)])).toEqual([]);
+    expect(
+      scheduleErrors(
+        [row(0, [], { conductor_ids: Array(9).fill("c1") })],
+        context,
+        monday,
+      ).join(" "),
+    ).toMatch(/hasta 8/);
+  });
   it("retira sugerencias incluidas en cualquier salida de la semana y las devuelve al quitar su última aparición", () => {
     const a = row(0, [{ territory_id: "t1", reason: "" }]);
     const b = row(3, [
@@ -275,7 +333,7 @@ describe("Cronograma semanal de predicación", () => {
         context,
         monday,
       ),
-    ).toHaveLength(3);
+    ).toHaveLength(2);
     expect(
       scheduleErrors(
         [row()],

@@ -1,4 +1,4 @@
-# Estado funcional — versión 0.13.0
+# Estado funcional — versión 0.14.0
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
@@ -12,7 +12,7 @@ Se avisa del descanso de 14 días y se permite justificar la programación antic
 
 ## Validación
 
-- 199 pruebas unitarias y 594 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- 203 pruebas unitarias y 620 comprobaciones PostgreSQL aprobadas con datos sintéticos.
 - Conflictos de creación y edición verificados con conexiones independientes.
 - Imágenes de conductores y publicadores descargadas desde la interfaz y revisadas visualmente, con el diseño compacto solicitado.
 - Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
@@ -37,3 +37,5 @@ La versión 0.11.0 añade etiquetas opcionales de manzana por cada parte del ter
 La versión 0.12.0 añade el modo inicial **Estado de asignación** en el mapa: descanso de 14 días, abierto, alerta desde 14 días antes del vencimiento y límite de 3 meses alcanzado o superado. Incluye leyenda con filtros, orden por alerta y fechas en la ficha. Permite alternar con el semáforo de antigüedad existente. El botón PDF cartográfico de alta calidad queda pendiente de autorización tras el análisis de consumo; no se activaron servicios de pago.
 
 La versión 0.13.0 implementa **Exportar mapa PDF** con vista previa, calles públicas vectoriales, fuentes incorporadas, mapa general A1, sectores A2 e índice de territorios y manzanas. El permiso `maps.export_pdf` se administra por separado en Perfiles: el administrador lo tiene y otros usuarios solo acceden mediante asignación explícita. El servidor revalida permiso y contenido antes de descargar; la descarga queda auditada. Los PDFs se generan localmente, sin almacenar los archivos en Supabase ni contratar servicios de pago.
+
+La versión 0.14.0 hace visible la lista de abiertos pendientes de programar, admite salidas sin conductor con confirmación previa a la generación (sin imprimir avisos), y usa un selector de conductores activos/inactivos únicamente para corregir responsables históricos. Nuevas funciones privadas y RPC públicos invocadores conservan permisos, validación de fechas, auditoría y concurrencia. No se cambian registros existentes al instalar la actualización.

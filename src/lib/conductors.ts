@@ -1,12 +1,16 @@
 import type { Conductor, ConductorAction } from "./types";
 import { normalizeName } from "./dates";
 
-export function assignableConductors(rows: Conductor[], query = "") {
+export function assignableConductors(
+  rows: Conductor[],
+  query = "",
+  includeInactive = false,
+) {
   const search = normalizeName(query.trim());
   return rows
     .filter(
       (row) =>
-        row.active &&
+        (includeInactive || row.active) &&
         !row.deleted_at &&
         (!search ||
           normalizeName(
@@ -17,6 +21,18 @@ export function assignableConductors(rows: Conductor[], query = "") {
       (a, b) =>
         a.display_name.localeCompare(b.display_name, "es") || a.code - b.code,
     );
+}
+
+export function requireCorrectionConductor(
+  rows: Conductor[],
+  personId: string,
+) {
+  const selected = rows.find(
+    (row) => row.person_id === personId && !row.deleted_at,
+  );
+  if (!selected)
+    throw new Error("Seleccione un conductor del maestro, activo o inactivo.");
+  return selected;
 }
 
 export function requireAssignableConductor(

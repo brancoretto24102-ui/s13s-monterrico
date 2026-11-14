@@ -32,6 +32,8 @@ import {
   sortedPreachingRows,
   territoryPlanStatus,
   unplannedTerritories,
+  unplannedOpenAssignments,
+  outingsWithoutConductor,
   type PreachingContext,
   type PreachingRow,
   type PreachingWeek,
@@ -392,6 +394,11 @@ export default function PreachingSchedulePanel({
   const [context, setContext] = useState<PreachingContext | null>(null),
     [rows, setRows] = useState<PreachingRow[]>([]),
     [saved, setSaved] = useState<PreachingWeek | null>(null);
+  const [pendingGeneration, setPendingGeneration] = useState<{
+    publishers: boolean;
+    week: PreachingWeek;
+    context: PreachingContext;
+  } | null>(null);
   const [days, setDays] = useState<number[]>([]),
     [focused, setFocused] = useState(""),
     [tab, setTab] = useState("edit"),
@@ -424,6 +431,7 @@ export default function PreachingSchedulePanel({
     setDirty(true);
     setMessage("");
     setExported(null);
+    setPendingGeneration(null);
   }
   function changeWeek(value: string) {
     if (value === weekStart || busy) return;
@@ -536,16 +544,9 @@ export default function PreachingSchedulePanel({
       )
     : [];
   const unplaced = context
-    ? context.assignments.filter(
-        (a) =>
-          !a.completed_at &&
-          !a.voided_at &&
-          a.assigned_at <= dates[6] &&
-          !activeRows.some((r) =>
-            r.territories.some((t) => t.territory_id === a.territory_id),
-          ),
-      )
+    ? unplannedOpenAssignments(context, activeRows, weekStart)
     : [];
+  const missingConductors = outingsWithoutConductor(activeRows);
   const target = activeRows.find((r) => r.id === focused) ?? activeRows[0];
   function updateRow(id: string, update: Partial<PreachingRow>) {
     if (busy) return;
@@ -640,7 +641,10 @@ export default function PreachingSchedulePanel({
       setBusy(false);
     }
   }
-  async function prepareImages(publishers: boolean) {
+  async function prepareImages(
+    publishers: boolean,
+    approvedWeek?: PreachingWeek,
+  ) {
     if (!saved || dirty || busy || conflict || !canExport) return;
     setBusy(true);
     setExported(null);
@@ -662,6 +666,16 @@ export default function PreachingSchedulePanel({
         week = fresh.schedule;
         setContext(fresh);
       }
+      if (
+        outingsWithoutConductor(week.rows).length &&
+        (!approvedWeek ||
+          approvedWeek.id !== week.id ||
+          approvedWeek.version !== week.version)
+      ) {
+        setPendingGeneration({ publishers, week, context: context! });
+        return;
+      }
+      setPendingGeneration(null);
       const { generatePreachingImages } = await import("../lib/preachingImage");
       const images = await generatePreachingImages(
         week,
@@ -941,34 +955,34 @@ export default function PreachingSchedulePanel({
                   No hay territorios pendientes de sugerir para esta semana.
                 </p>
               )}
-              {!!unplaced.length && (
-                <details className="preaching-unplaced">
-                  <summary>
-                    {unplaced.length} territorios abiertos sin ubicación en este
-                    cronograma
-                  </summary>
-                  <p className="small muted">
-                    Selecciona una salida arriba para ubicarlos. Los registros
-                    antiguos pueden no tener horario asociado.
-                  </p>
-                  <div className="preaching-suggestions">
-                    {unplaced.map((a) => {
-                      const t = context.territories.find(
-                        (t) => t.id === a.territory_id,
-                      );
-                      return (
+              <section
+                className="preaching-unplaced"
+                aria-label="Territorios abiertos pendientes de programar"
+              >
+                <h3>
+                  Territorios abiertos pendientes de programar{" "}
+                  <span className="soft-tag">{unplaced.length}</span>
+                </h3>
+                <p className="small muted">
+                  Selecciona una salida arriba y pulsa un territorio para
+                  agregarlo. Desaparece de esta lista al programarlo y vuelve si
+                  lo retiras.
+                </p>
+                <div className="preaching-suggestions">
+                  {unplaced.map((a) => {
+                    const t = context.territories.find(
+                      (t) => t.id === a.territory_id,
+                    );
+                    const blocked =
+                      territoryPlanStatus(
+                        context.assignments,
+                        a.territory_id,
+                        target ? dates[target.day] : today,
+                      ).kind === "blocked";
+                    return (
+                      <article className="preaching-open-territory" key={a.id}>
                         <button
-                          key={a.id}
-                          disabled={
-                            !writable ||
-                            busy ||
-                            !target ||
-                            territoryPlanStatus(
-                              context.assignments,
-                              a.territory_id,
-                              target ? dates[target.day] : today,
-                            ).kind === "blocked"
-                          }
+                          disabled={!writable || busy || !target || blocked}
                           onClick={() =>
                             target && addTerritory(target.id, a.territory_id)
                           }
@@ -977,12 +991,37 @@ export default function PreachingSchedulePanel({
                           <small>
                             Abierto desde {displayDate(a.assigned_at)}
                           </small>
+                          {blocked && (
+                            <small>Cerrar primero: supera los 3 meses</small>
+                          )}
                         </button>
-                      );
-                    })}
-                  </div>
-                </details>
-              )}
+                        {blocked && can(profile, "territories.view") && (
+                          <button
+                            type="button"
+                            className="text-button"
+                            onClick={() => {
+                              if (
+                                !dirty ||
+                                confirm(
+                                  "Hay cambios sin guardar. ¿Abrir el historial del territorio?",
+                                )
+                              )
+                                onTerritory(a.territory_id);
+                            }}
+                          >
+                            Revisar historial
+                          </button>
+                        )}
+                      </article>
+                    );
+                  })}
+                </div>
+                {!unplaced.length && (
+                  <p className="small muted">
+                    No hay territorios abiertos pendientes de programar.
+                  </p>
+                )}
+              </section>
             </section>
             <div
               className="preaching-tabs"
@@ -1150,6 +1189,7 @@ export default function PreachingSchedulePanel({
                                       (c) => !r.conductor_ids.includes(c.id),
                                     )}
                                     value=""
+                                    required={false}
                                     disabled={
                                       busy || r.conductor_ids.length >= 8
                                     }
@@ -1309,6 +1349,20 @@ export default function PreachingSchedulePanel({
                 />
               </section>
             )}
+            {!!missingConductors.length && (
+              <div className="notice preaching-conductor-warning" role="status">
+                <strong>
+                  {missingConductors.length}{" "}
+                  {missingConductors.length === 1
+                    ? "salida sin conductor"
+                    : "salidas sin conductor"}
+                  .
+                </strong>{" "}
+                Puedes guardar el cronograma. Antes de generar se te pedirá
+                revisar estas salidas; el aviso no aparecerá en el archivo
+                exportado.
+              </div>
+            )}
             <div className="preaching-bottom-actions">
               <span className="small muted">
                 {activeRows.length} salidas · {days.length} días
@@ -1352,6 +1406,70 @@ export default function PreachingSchedulePanel({
                 Primero revisa la previsualización. Puedes descargar después el
                 JPG o PNG más ligero.
               </p>
+            )}
+            {pendingGeneration && (
+              <Modal
+                title="Hay salidas sin conductor"
+                onClose={() => setPendingGeneration(null)}
+              >
+                <p>
+                  Revisa si es un error de planificación o si el cronograma debe
+                  quedar así. Puedes generarlo de todos modos; el campo del
+                  conductor quedará vacío y este aviso no se incluirá en el
+                  archivo.
+                </p>
+                <ul className="preaching-missing-conductors">
+                  {outingsWithoutConductor(pendingGeneration.week.rows).map(
+                    (r) => (
+                      <li key={r.id}>
+                        <strong>
+                          {preachingDays[r.day]} {scheduleTime(r.time)}
+                        </strong>{" "}
+                        · {r.meeting_point}
+                        {r.territories.length > 0 && (
+                          <>
+                            {" "}
+                            · Territorios:{" "}
+                            {r.territories
+                              .map(
+                                (t) =>
+                                  pendingGeneration.context.territories.find(
+                                    (x) => x.id === t.territory_id,
+                                  )?.territory_number,
+                              )
+                              .join(", ")}
+                          </>
+                        )}
+                      </li>
+                    ),
+                  )}
+                </ul>
+                <div className="modal-actions">
+                  <button
+                    type="button"
+                    className="secondary"
+                    onClick={() => {
+                      setTab("edit");
+                      setPendingGeneration(null);
+                    }}
+                  >
+                    Volver a revisar
+                  </button>
+                  <button
+                    type="button"
+                    className="primary"
+                    disabled={busy}
+                    onClick={() =>
+                      void prepareImages(
+                        pendingGeneration.publishers,
+                        pendingGeneration.week,
+                      )
+                    }
+                  >
+                    Generar de todos modos
+                  </button>
+                </div>
+              </Modal>
             )}
             {exported &&
               !dirty &&

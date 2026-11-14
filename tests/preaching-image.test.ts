@@ -53,6 +53,19 @@ const week: PreachingWeek = {
 };
 const measure = (text: string) => Array.from(text).length * 8;
 describe("Imagen del cronograma", () => {
+  it("exporta el campo del conductor vacío sin incluir advertencias para ambas audiencias", () => {
+    const emptyWeek = {
+      ...week,
+      rows: [{ ...week.rows[0], conductor_ids: [], conductor_names: [] }],
+    };
+    for (const audience of ["conductors", "publishers"] as const) {
+      const doc = preachingDocument(emptyWeek, audience, measure);
+      expect(doc.rows[0].values.at(-1)).toBe("");
+      expect(JSON.stringify(doc)).not.toMatch(
+        /sin conductor|advertencia|pendiente/i,
+      );
+    }
+  });
   it("calcula cada ancho con el texto visualmente más ancho, aunque tenga menos letras", () => {
     const proportional = (text: string) =>
       [...text].reduce((w, c) => w + (c === "W" ? 15 : c === "i" ? 1 : 4), 0);

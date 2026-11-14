@@ -88,7 +88,10 @@ import {
   validTimingReason,
   TIMING_OVERRIDE_PERMISSION,
 } from "./lib/assignmentTiming";
-import { requireAssignableConductor } from "./lib/conductors";
+import {
+  requireAssignableConductor,
+  requireCorrectionConductor,
+} from "./lib/conductors";
 import { AuditPanel, SettingsPanel } from "./components/AdminPanels";
 import { getProfile, loadSnapshot, rpc, supabase } from "./lib/client";
 import { demoProfile, demoSnapshot } from "./lib/demo";
@@ -524,6 +527,11 @@ export default function App() {
               values.personId,
             )
           : null;
+      if (demo && kind === "correct" && values.personId)
+        values.name = requireCorrectionConductor(
+          snapshot.conductors ?? [],
+          values.personId,
+        ).display_name;
       if (demo) {
         if (kind === "observe") {
           setDemoObservations((prev) => [
@@ -564,9 +572,8 @@ export default function App() {
                       {
                         ...x,
                         person_id:
-                          kind === "correct" &&
-                          values.name.trim() !== x.assigned_name_snapshot
-                            ? null
+                          kind === "correct"
+                            ? values.personId || x.person_id
                             : x.person_id,
                         assigned_name_snapshot:
                           kind === "correct"
@@ -630,7 +637,18 @@ export default function App() {
             p_completed_at: values.completed,
             p_exception_reason: values.reason || null,
           });
-        if (kind === "correct" || voiding)
+        if (kind === "correct")
+          await rpc("correct_assignment_with_conductor", {
+            p_id: a!.id,
+            p_expected_version: a!.version,
+            p_territory_version: t.version,
+            p_name: values.name,
+            p_person_id: values.personId || null,
+            p_assigned_at: values.date,
+            p_completed_at: values.completed || null,
+            p_reason: values.reason,
+          });
+        if (voiding)
           await rpc("correct_assignment", {
             p_id: a!.id,
             p_expected_version: a!.version,
@@ -1733,6 +1751,7 @@ export default function App() {
       )}
       {action && (
         <ActionModal
+          demo={demo}
           action={action}
           busy={busy}
           message={notice}
@@ -1747,11 +1766,6 @@ export default function App() {
           visitCounts={visitCounts}
           canViewVisits={canViewVisits}
           today={today}
-          names={[
-            ...new Set(
-              snapshot.assignments.map((a) => a.assigned_name_snapshot),
-            ),
-          ]}
         />
       )}
     </div>
@@ -1838,7 +1852,7 @@ function ActionModal({
   message,
   onClose,
   onSave,
-  names,
+  demo,
   conductors,
   timingHistory,
   canOverrideTiming,
@@ -1858,7 +1872,7 @@ function ActionModal({
   message: string;
   onClose: () => void;
   onSave: (v: any) => Promise<void>;
-  names: string[];
+  demo: boolean;
   conductors: Conductor[];
 }) {
   const a = action.assignment;
@@ -1870,13 +1884,61 @@ function ActionModal({
     ),
     [reason, setReason] = useState(""),
     [body, setBody] = useState("");
+  const [correctionConductors, setCorrectionConductors] = useState<Conductor[]>(
+    [],
+  );
+  const [conductorsLoading, setConductorsLoading] = useState(
+    action.kind === "correct",
+  );
+  const [conductorError, setConductorError] = useState("");
+  const [conductorLoadAttempt, setConductorLoadAttempt] = useState(0);
+  useEffect(() => {
+    if (action.kind !== "correct") return;
+    let cancelled = false;
+    setConductorsLoading(true);
+    setConductorError("");
+    const load = async () => {
+      try {
+        const choices = demo
+          ? conductors
+          : await rpc<Conductor[]>("get_correction_conductors");
+        if (cancelled) return;
+        setCorrectionConductors(choices);
+        const linked = choices.find(
+          (c) => c.person_id === a?.person_id && !c.deleted_at,
+        );
+        const matching = choices.filter(
+          (c) =>
+            !c.deleted_at &&
+            normalizeName(c.display_name) ===
+              normalizeName(a?.assigned_name_snapshot ?? ""),
+        );
+        const initial =
+          linked ?? (matching.length === 1 ? matching[0] : undefined);
+        if (initial) {
+          setPersonId(initial.person_id);
+          setName(initial.display_name);
+        }
+      } catch (e) {
+        if (!cancelled) setConductorError((e as Error).message);
+      } finally {
+        if (!cancelled) setConductorsLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, [action.kind, demo, conductorLoadAttempt]);
   const voided = action.kind === "void";
   useEffect(() => {
     if (personId) {
-      const selected = conductors.find((c) => c.person_id === personId);
+      const selected = (
+        action.kind === "correct" ? correctionConductors : conductors
+      ).find((c) => c.person_id === personId);
       if (selected) setName(selected.display_name);
     }
-  }, [personId, conductors]);
+  }, [personId, conductors, correctionConductors, action.kind]);
   const datesChanged =
     a && (date !== a.assigned_at || (completed || null) !== a.completed_at);
   const timingIssues =
@@ -1996,22 +2058,44 @@ function ActionModal({
                     }}
                   />
                 ) : (
-                  <label>
-                    Nombre del responsable
-                    <input
-                      list="responsibles"
-                      required
-                      maxLength={200}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder="Escribe o selecciona un nombre"
+                  <>
+                    <ConductorSelect
+                      conductors={correctionConductors}
+                      value={personId}
+                      fallbackName={name}
+                      includeInactive
+                      disabled={busy || conductorsLoading || !!conductorError}
+                      onChange={(id, displayName) => {
+                        setPersonId(id);
+                        setName(displayName);
+                      }}
                     />
-                    <datalist id="responsibles">
-                      {names.map((n) => (
-                        <option key={n} value={n} />
-                      ))}
-                    </datalist>
-                  </label>
+                    {conductorsLoading && (
+                      <p className="small muted" role="status">
+                        Cargando conductores activos e inactivos…
+                      </p>
+                    )}
+                    {conductorError && (
+                      <p className="error" role="alert">
+                        {conductorError}{" "}
+                        <button
+                          type="button"
+                          className="text-button"
+                          onClick={() => setConductorLoadAttempt((n) => n + 1)}
+                        >
+                          Reintentar
+                        </button>
+                      </p>
+                    )}
+                    {!conductorsLoading &&
+                      !personId &&
+                      name === a?.assigned_name_snapshot && (
+                        <p className="small muted">
+                          Se conservará el responsable histórico actual. Para
+                          cambiarlo, selecciona un conductor del maestro.
+                        </p>
+                      )}
+                  </>
                 )}
                 <label>
                   Fecha de Inicio
@@ -2135,6 +2219,15 @@ function ActionModal({
               timingBlocked ||
               ((action.kind === "correct" || voided) &&
                 !validTimingReason(reason)) ||
+              (action.kind === "correct" &&
+                (conductorsLoading ||
+                  !!conductorError ||
+                  !name ||
+                  (personId
+                    ? !correctionConductors.some(
+                        (c) => c.person_id === personId && !c.deleted_at,
+                      )
+                    : name !== a?.assigned_name_snapshot))) ||
               (action.kind === "assign" &&
                 !conductors.some(
                   (c) => c.person_id === personId && c.active && !c.deleted_at,

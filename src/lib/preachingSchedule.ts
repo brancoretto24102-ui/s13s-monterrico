@@ -205,8 +205,8 @@ export function scheduleErrors(
       errors.push(
         `${label}: indica el punto de reunión (máximo 300 caracteres).`,
       );
-    if (!r.conductor_ids.length || r.conductor_ids.length > 8)
-      errors.push(`${label}: selecciona entre 1 y 8 conductores.`);
+    if (r.conductor_ids.length > 8)
+      errors.push(`${label}: selecciona hasta 8 conductores.`);
     for (const id of r.conductor_ids) {
       if (
         !context.conductors.some(
@@ -273,6 +273,35 @@ export function unplannedTerritories(
     rows.flatMap((r) => r.territories.map((t) => t.territory_id)),
   );
   return territories.filter((t) => !included.has(t.id));
+}
+export function unplannedOpenAssignments(
+  context: Pick<PreachingContext, "assignments" | "territories">,
+  rows: readonly PreachingRow[],
+  monday: string,
+) {
+  const end = preachingWeekDates(monday)[6];
+  const pending = new Map(
+    unplannedTerritories(context.territories, rows)
+      .filter((t) => t.active)
+      .map((t) => [t.id, t.territory_number]),
+  );
+  return context.assignments
+    .filter(
+      (a) =>
+        !a.voided_at &&
+        !a.completed_at &&
+        a.assigned_at <= end &&
+        pending.has(a.territory_id),
+    )
+    .sort(
+      (a, b) => pending.get(a.territory_id)! - pending.get(b.territory_id)!,
+    );
+}
+
+export function outingsWithoutConductor(rows: readonly PreachingRow[]) {
+  return sortedPreachingRows(rows).filter(
+    (row) => row.conductor_ids.length === 0,
+  );
 }
 export function scheduleExceptionBody(
   monday: string,
