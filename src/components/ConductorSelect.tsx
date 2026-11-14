@@ -224,7 +224,11 @@ export default function ConductorSelect({
               ref={list}
               id={`${id}-list`}
               role="listbox"
-              aria-label="Conductores activos"
+              aria-label={
+                includeInactive
+                  ? "Conductores activos e inactivos"
+                  : "Conductores activos"
+              }
               className="conductor-options-list"
               style={{ maxHeight: placement.height }}
             >
