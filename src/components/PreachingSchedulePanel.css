@@ -501,6 +501,31 @@
 .preaching-missing-conductors li {
   margin: 8px 0;
 }
+.preaching-visit-message h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.preaching-visit-message textarea {
+  width: 100%;
+  box-sizing: border-box;
+  resize: vertical;
+  min-height: 125px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 600px) {
+  .preaching-visit-message .panel-heading {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .preaching-visit-message .panel-heading button {
+    width: 100%;
+    justify-content: center;
+  }
+}
 @media (max-width: 800px) {
   .preaching-outing-details {
     grid-template-columns: 1fr;

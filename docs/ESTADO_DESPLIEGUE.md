@@ -1,4 +1,4 @@
-# Estado funcional — versión 0.14.0
+# Estado funcional — versión 0.14.1
 
 Aplicación: [Territorios · Monterrico](https://brancoretto24102-ui.github.io/s13s-monterrico/).
 
@@ -12,7 +12,7 @@ Se avisa del descanso de 14 días y se permite justificar la programación antic
 
 ## Validación
 
-- 203 pruebas unitarias y 620 comprobaciones PostgreSQL aprobadas con datos sintéticos.
+- 212 pruebas unitarias y 620 comprobaciones PostgreSQL aprobadas con datos sintéticos.
 - Conflictos de creación y edición verificados con conexiones independientes.
 - Imágenes de conductores y publicadores descargadas desde la interfaz y revisadas visualmente, con el diseño compacto solicitado.
 - Navegador de escritorio y vista estrecha; no se probó un teléfono físico.
@@ -39,3 +39,5 @@ La versión 0.12.0 añade el modo inicial **Estado de asignación** en el mapa: 
 La versión 0.13.0 implementa **Exportar mapa PDF** con vista previa, calles públicas vectoriales, fuentes incorporadas, mapa general A1, sectores A2 e índice de territorios y manzanas. El permiso `maps.export_pdf` se administra por separado en Perfiles: el administrador lo tiene y otros usuarios solo acceden mediante asignación explícita. El servidor revalida permiso y contenido antes de descargar; la descarga queda auditada. Los PDFs se generan localmente, sin almacenar los archivos en Supabase ni contratar servicios de pago.
 
 La versión 0.14.0 hace visible la lista de abiertos pendientes de programar, admite salidas sin conductor con confirmación previa a la generación (sin imprimir avisos), y usa un selector de conductores activos/inactivos únicamente para corregir responsables históricos. Nuevas funciones privadas y RPC públicos invocadores conservan permisos, validación de fechas, auditoría y concurrencia. No se cambian registros existentes al instalar la actualización.
+
+La versión 0.14.1 añade un mensaje dinámico **Casas No Tocar** para copiar a WhatsApp desde el cronograma, con fecha de salida, territorio, conductores opcionales y avisos vigentes. Mantiene el permiso de consulta de domicilios y muestra el texto vacío solicitado para las semanas sin avisos. No requiere cambios de base de datos.

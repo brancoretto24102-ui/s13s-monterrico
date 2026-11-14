@@ -40,6 +40,7 @@ import {
 } from "../lib/preachingSchedule";
 import type { Profile, Snapshot } from "../lib/types";
 import ConductorSelect from "./ConductorSelect";
+import PreachingVisitMessage from "./PreachingVisitMessage";
 import { CoverageDate } from "./TerritoryCoverage";
 import Modal from "./Modal";
 import {
@@ -1349,6 +1350,14 @@ export default function PreachingSchedulePanel({
                 />
               </section>
             )}
+            <PreachingVisitMessage
+              weekStart={weekStart}
+              rows={preview.rows}
+              context={context}
+              restrictions={snapshot.visit_restrictions}
+              canView={can(profile, "visits.view")}
+              dirty={dirty}
+            />
             {!!missingConductors.length && (
               <div className="notice preaching-conductor-warning" role="status">
                 <strong>
