@@ -1154,6 +1154,17 @@ export default function PreachingSchedulePanel({
                                             type="time"
                                             value={time}
                                             aria-label={`Horario adicional ${index + 2} de ${r.id}`}
+                                            onInput={(e) =>
+                                              updateRow(r.id, {
+                                                additional_times: (
+                                                  r.additional_times ?? []
+                                                ).map((t, i) =>
+                                                  i === index
+                                                    ? e.currentTarget.value
+                                                    : t,
+                                                ),
+                                              })
+                                            }
                                             onChange={(e) =>
                                               updateRow(r.id, {
                                                 additional_times: (
