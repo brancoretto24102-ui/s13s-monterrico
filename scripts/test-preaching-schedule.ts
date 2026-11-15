@@ -533,5 +533,92 @@ export async function testPreachingSchedule({
       exportedEmpty.rows[0].conductor_names.length === 0,
   );
   ok((await fingerprint()) === beforeConductorless);
+  const multipleWeek = addDays(monday, 49);
+  const grouped = {
+    ...rows(tids[3], "", 3)[0],
+    time: "19:10",
+    additional_times: ["18:00"],
+  };
+  const multiple = await save(admin, crypto.randomUUID(), 0, multipleWeek, [
+    grouped,
+  ]);
+  ok(
+    multiple.rows.length === 1 &&
+      multiple.rows[0].time === "18:00" &&
+      JSON.stringify(multiple.rows[0].additional_times) === '["19:10"]',
+  );
+  ok(
+    multiple.rows[0].conductor_ids.length === 1 &&
+      multiple.rows[0].territories.length === 1,
+  );
+  const reopened = await scalar(admin, "select get_preaching_context($1)", [
+    multipleWeek,
+  ]);
+  ok(reopened.schedule.rows[0].additional_times[0] === "19:10");
+  const groupedExport = await scalar(
+    admin,
+    "select export_preaching_schedule($1,1)",
+    [multiple.id],
+  );
+  ok(groupedExport.rows[0].additional_times[0] === "19:10");
+  for (const invalid of [
+    ["19:10"],
+    [""],
+    ["24:00"],
+    null,
+    "18:00",
+    [null],
+    [123],
+    Array(8).fill("18:00"),
+  ]) {
+    await denied(
+      save(admin, multiple.id, 1, multipleWeek, [
+        { ...grouped, additional_times: invalid },
+      ]),
+      /hora|horario/,
+    );
+  }
+  await denied(
+    save(admin, multiple.id, 1, multipleWeek, [
+      grouped,
+      { ...rows("", "", 3)[0], time: "18:00" },
+    ]),
+    /conductor tiene dos salidas/,
+  );
+  await denied(
+    save(admin, multiple.id, 1, multipleWeek, [
+      grouped,
+      { ...rows("", "", 3)[0], time: "20:00", additional_times: ["18:00"] },
+    ]),
+    /conductor tiene dos salidas/,
+  );
+  await denied(
+    save(admin, multiple.id, 1, multipleWeek, [
+      grouped,
+      {
+        ...rows(tids[3], "", 3)[0],
+        time: "18:00",
+        conductor_ids: [secondConductor],
+      },
+    ]),
+    /territorio.*se repite/i,
+  );
+  await denied(save(reader, multiple.id, 1, multipleWeek, [grouped]));
+  await denied(save(anon, multiple.id, 1, multipleWeek, [grouped]));
+  const withoutAdditional = await save(admin, multiple.id, 1, multipleWeek, [
+    { ...grouped, additional_times: [] },
+  ]);
+  ok(
+    withoutAdditional.rows[0].time === "19:10" &&
+      withoutAdditional.rows[0].additional_times.length === 0,
+  );
+  const noConductorMultiple = await save(admin, multiple.id, 2, multipleWeek, [
+    { ...grouped, conductor_ids: [] },
+  ]);
+  ok(
+    noConductorMultiple.rows[0].conductor_ids.length === 0 &&
+      noConductorMultiple.rows[0].additional_times.length === 1,
+  );
+  ok((await fingerprint()) === beforeConductorless);
   return checks;
 }

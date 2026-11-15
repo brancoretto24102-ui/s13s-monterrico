@@ -28,7 +28,8 @@ import {
   preachingWeekDates,
   scheduleDefaults,
   scheduleErrors,
-  scheduleTime,
+  scheduleRowTime,
+  preachingTimes,
   sortedPreachingRows,
   territoryPlanStatus,
   unplannedTerritories,
@@ -164,7 +165,12 @@ export function PreachingPreview({
                     </>
                   )}
                   {r.values.slice(2).map((value, col) => (
-                    <td key={col}>{value}</td>
+                    <td
+                      key={col}
+                      className={col === 0 ? "preaching-time-cell" : undefined}
+                    >
+                      {value}
+                    </td>
                   ))}
                 </tr>
               );
@@ -597,6 +603,8 @@ export default function PreachingSchedulePanel({
             updated_at: new Date().toISOString(),
             rows: activeRows.map((r) => ({
               ...r,
+              time: preachingTimes(r)[0],
+              additional_times: preachingTimes(r).slice(1),
               conductor_names: r.conductor_ids.map(
                 (id) =>
                   context.conductors.find((c) => c.id === id)!.display_name,
@@ -917,7 +925,7 @@ export default function PreachingSchedulePanel({
                   >
                     {activeRows.map((r) => (
                       <option key={r.id} value={r.id}>
-                        {preachingDays[r.day]} {scheduleTime(r.time)} ·{" "}
+                        {preachingDays[r.day]} {scheduleRowTime(r)} ·{" "}
                         {r.meeting_point || "Punto pendiente"}
                       </option>
                     ))}
@@ -1112,25 +1120,95 @@ export default function PreachingSchedulePanel({
                               onFocus={() => setFocused(r.id)}
                             >
                               <legend>
-                                Salida de {day} · {scheduleTime(r.time)}
+                                Salida de {day} · {scheduleRowTime(r)}
                               </legend>
                               <div className="preaching-outing-fields">
-                                <label>
-                                  Hora
-                                  <input
-                                    type="time"
-                                    aria-label={`Hora de salida ${r.id}`}
-                                    value={r.time}
-                                    onInput={(e) =>
+                                <div className="preaching-times">
+                                  <label>
+                                    Hora
+                                    <input
+                                      type="time"
+                                      aria-label={`Hora de salida ${r.id}`}
+                                      value={r.time}
+                                      onInput={(e) =>
+                                        updateRow(r.id, {
+                                          time: e.currentTarget.value,
+                                        })
+                                      }
+                                      onChange={(e) =>
+                                        updateRow(r.id, {
+                                          time: e.target.value,
+                                        })
+                                      }
+                                    />
+                                  </label>
+                                  {(r.additional_times ?? []).map(
+                                    (time, index) => (
+                                      <div
+                                        className="preaching-additional-time"
+                                        key={`${r.id}-${index}`}
+                                      >
+                                        <label>
+                                          Horario {index + 2}
+                                          <input
+                                            type="time"
+                                            value={time}
+                                            aria-label={`Horario adicional ${index + 2} de ${r.id}`}
+                                            onChange={(e) =>
+                                              updateRow(r.id, {
+                                                additional_times: (
+                                                  r.additional_times ?? []
+                                                ).map((t, i) =>
+                                                  i === index
+                                                    ? e.target.value
+                                                    : t,
+                                                ),
+                                              })
+                                            }
+                                          />
+                                        </label>
+                                        <button
+                                          type="button"
+                                          className="text-button"
+                                          aria-label={`Quitar horario ${index + 2} de ${r.id}`}
+                                          onClick={() =>
+                                            updateRow(r.id, {
+                                              additional_times: (
+                                                r.additional_times ?? []
+                                              ).filter((_, i) => i !== index),
+                                            })
+                                          }
+                                        >
+                                          <X size={13} />
+                                        </button>
+                                      </div>
+                                    ),
+                                  )}
+                                  <button
+                                    type="button"
+                                    className="text-button"
+                                    disabled={
+                                      busy ||
+                                      (r.additional_times?.length ?? 0) >= 7
+                                    }
+                                    onClick={() =>
                                       updateRow(r.id, {
-                                        time: e.currentTarget.value,
+                                        additional_times: [
+                                          ...(r.additional_times ?? []),
+                                          "",
+                                        ],
                                       })
                                     }
-                                    onChange={(e) =>
-                                      updateRow(r.id, { time: e.target.value })
-                                    }
-                                  />
-                                </label>
+                                  >
+                                    <Plus size={13} /> Agregar horario
+                                  </button>
+                                  {!!r.additional_times?.length && (
+                                    <p className="small muted">
+                                      Todos los horarios comparten el punto, los
+                                      territorios y los conductores.
+                                    </p>
+                                  )}
+                                </div>
                                 <label>
                                   Punto de Reunión
                                   <input
@@ -1432,7 +1510,7 @@ export default function PreachingSchedulePanel({
                     (r) => (
                       <li key={r.id}>
                         <strong>
-                          {preachingDays[r.day]} {scheduleTime(r.time)}
+                          {preachingDays[r.day]} {scheduleRowTime(r)}
                         </strong>{" "}
                         · {r.meeting_point}
                         {r.territories.length > 0 && (

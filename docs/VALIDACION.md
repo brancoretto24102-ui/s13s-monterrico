@@ -186,3 +186,9 @@ La nueva consulta y corrección histórica rechazan anónimo y usuarios sin perm
 ## Mensaje semanal de Casas No Tocar (0.14.1)
 
 212 pruebas unitarias. Las nueve pruebas nuevas cubren el formato exacto del título y del mensaje vacío, varios avisos y conductores, omisión de nombres antiguos cuando la lista está vacía, fechas de salida y aniversario, orden y eliminación de duplicados, días y territorios retirados, referencias con acentos y saltos de línea, fichas archivadas/eliminadas, datos aún no cargados y ausencia de direcciones en el HTML para perfiles sin permiso. No se modifican SQL ni políticas; las 620 comprobaciones de base de datos se mantienen en la validación de publicación.
+
+## Varios horarios por salida (0.15.0)
+
+219 pruebas unitarias y 640 comprobaciones PostgreSQL con datos sintéticos. Se verificaron compatibilidad con una sola hora, orden cronológico sin mutar entradas, conservación en semanas siguientes, horarios opcionales agrupados con conductor vacío, rechazo de horas vacías/repetidas/inválidas y límite de ocho. La composición de ambos documentos produce una sola fila con dos líneas en Hora y altura suficiente, manteniendo únicos el punto, los territorios y los conductores. El mensaje Casas No Tocar no se duplica.
+
+La base de pruebas confirma persistencia, consulta y exportación de las horas adicionales, eliminación individual, orden canónico, reservas duplicadas tanto con horas principales como adicionales de otra salida, rechazo de tipos JSON inválidos y permisos de lectura/escritura conservados. Ningún registro oficial de asignación cambia al planificar horarios. La migración modifica únicamente la función de normalización, manteniendo su firma y privilegios.

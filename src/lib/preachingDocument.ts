@@ -2,6 +2,8 @@ import {
   preachingDays,
   preachingWeekDates,
   sortedPreachingRows,
+  preachingTimes,
+  validPreachingTime,
   type PreachingWeek,
 } from "./preachingSchedule";
 
@@ -96,7 +98,13 @@ export function preachingDocument(
     values: [
       preachingDays[r.day],
       scheduleShortDate(dates[r.day]),
-      scheduleDocumentTime(r.time),
+      preachingTimes(r)
+        .map((time) =>
+          validPreachingTime(time)
+            ? scheduleDocumentTime(time)
+            : "Hora pendiente",
+        )
+        .join("\n"),
       r.meeting_point,
       ...(conductors
         ? [

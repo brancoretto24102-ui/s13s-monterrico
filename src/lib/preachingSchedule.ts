@@ -33,6 +33,7 @@ export interface PreachingRow {
   id: string;
   day: number;
   time: string;
+  additional_times?: string[];
   meeting_point: string;
   conductor_ids: string[];
   conductor_names?: string[];
@@ -196,11 +197,16 @@ export function scheduleErrors(
       errors.push("Día de salida no válido.");
       continue;
     }
-    const label = `${preachingDays[r.day]} ${r.time}`;
+    const times = preachingTimes(r);
+    const label = `${preachingDays[r.day]} ${times.join(" y ")}`;
     if (ids.has(r.id)) errors.push(`${label}: salida duplicada.`);
     ids.add(r.id);
-    if (!/^(?:[01]\d|2[0-3]):[0-5]\d$/.test(r.time))
+    if (times.some((time) => !validPreachingTime(time)))
       errors.push(`${label}: indica una hora válida.`);
+    if (times.length > 8)
+      errors.push(`${label}: cada salida admite hasta 8 horarios.`);
+    if (new Set(times).size !== times.length)
+      errors.push(`${label}: no repitas un horario en la misma salida.`);
     if (!r.meeting_point.trim() || r.meeting_point.length > 300)
       errors.push(
         `${label}: indica el punto de reunión (máximo 300 caracteres).`,
@@ -214,12 +220,14 @@ export function scheduleErrors(
         )
       )
         errors.push(`${label}: el conductor ya no está activo en el maestro.`);
-      const key = `${r.day}|${r.time}|${id}`;
-      if (booked.has(key))
-        errors.push(
-          `${label}: un conductor tiene dos salidas a la misma hora.`,
-        );
-      booked.add(key);
+      for (const time of times) {
+        const key = `${r.day}|${time}|${id}`;
+        if (booked.has(key))
+          errors.push(
+            `${label}: un conductor tiene dos salidas a la misma hora.`,
+          );
+        booked.add(key);
+      }
     }
     if (r.territories.length > 64)
       errors.push(`${label}: demasiados territorios en una salida.`);
@@ -229,12 +237,14 @@ export function scheduleErrors(
         errors.push(`${label}: territorio no disponible.`);
         continue;
       }
-      const key = `${r.day}|${r.time}|${t.territory_id}`;
-      if (territories.has(key))
-        errors.push(
-          `${label}: el territorio ${target.territory_number} se repite a la misma hora.`,
-        );
-      territories.add(key);
+      for (const time of times) {
+        const key = `${r.day}|${time}|${t.territory_id}`;
+        if (territories.has(key))
+          errors.push(
+            `${label}: el territorio ${target.territory_number} se repite a la misma hora.`,
+          );
+        territories.add(key);
+      }
       const status = territoryPlanStatus(
         context.assignments,
         t.territory_id,
@@ -253,14 +263,29 @@ export function scheduleErrors(
   return [...new Set(errors)];
 }
 export function scheduleTime(time: string) {
+  if (!validPreachingTime(time)) return "Hora pendiente";
   const [h, m] = time.split(":").map(Number);
   return `${h % 12 || 12}:${String(m).padStart(2, "0")} ${h < 12 ? "a.m." : "p.m."}`;
+}
+export const validPreachingTime = (time: string) =>
+  /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(time);
+export function preachingTimes(
+  row: Pick<PreachingRow, "time" | "additional_times">,
+) {
+  return [row.time, ...(row.additional_times ?? [])].sort(
+    (a, b) => Number(!a) - Number(!b) || a.localeCompare(b),
+  );
+}
+export function scheduleRowTime(
+  row: Pick<PreachingRow, "time" | "additional_times">,
+) {
+  return preachingTimes(row).map(scheduleTime).join(" y ");
 }
 export function sortedPreachingRows(rows: readonly PreachingRow[]) {
   return [...rows].sort(
     (a, b) =>
       a.day - b.day ||
-      a.time.localeCompare(b.time) ||
+      (preachingTimes(a)[0] ?? "").localeCompare(preachingTimes(b)[0] ?? "") ||
       a.meeting_point.localeCompare(b.meeting_point) ||
       a.id.localeCompare(b.id),
   );
@@ -309,5 +334,5 @@ export function scheduleExceptionBody(
   t: PlannedTerritory,
   status: PlanStatus,
 ) {
-  return `Excepción de cronograma · ${displayDate(addDays(monday, row.day))} ${row.time}\n${status.message}\nMotivo: ${t.reason.trim()}`;
+  return `Excepción de cronograma · ${displayDate(addDays(monday, row.day))} ${preachingTimes(row).join(" y ")}\n${status.message}\nMotivo: ${t.reason.trim()}`;
 }

@@ -177,13 +177,39 @@
 }
 .preaching-outing-fields {
   display: grid;
-  grid-template-columns: 130px 1fr auto;
+  grid-template-columns: 180px 1fr auto;
   gap: 12px;
-  align-items: flex-end;
+  align-items: flex-start;
 }
 .preaching-outing-fields label {
   margin: 0;
   font-size: 11px;
+}
+.preaching-times {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+.preaching-times input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.preaching-additional-time {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+}
+.preaching-additional-time label {
+  flex: 1;
+  min-width: 0;
+}
+.preaching-times > button {
+  justify-self: start;
+  padding: 4px 0;
+}
+.enterprise-shell .preaching-preview td.preaching-time-cell {
+  white-space: pre-line;
 }
 .preaching-outing input,
 .preaching-outing textarea {

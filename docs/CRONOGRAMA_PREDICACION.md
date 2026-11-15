@@ -67,3 +67,11 @@ Al pie del cronograma aparece **Casas No Tocar**, con un texto seleccionable y e
 Se excluyen fichas archivadas/eliminadas, avisos informados después de la salida y solicitudes cuyo aniversario ya se cumplió ese día. Si no hay avisos en los territorios programados, el texto es exactamente «No tenemos en el cronograma de esta semana.». Los perfiles necesitan el permiso existente **Domicilios que no desean visitas → Visualizar**; sin él, no se muestran las direcciones ni se afirma que no haya avisos. No se conceden permisos adicionales.
 
 El botón copia al portapapeles del dispositivo; el usuario lo pega y envía por su cuenta. Si el navegador no permite copiar automáticamente, el texto queda seleccionado y se indica usar Copiar. Este mensaje no se incorpora a las imágenes ni al formulario S-13-S. Se utilizan los datos ya consultados por la aplicación; no requiere migración, servicios externos ni envío automático de mensajes.
+
+## Varios horarios en una misma salida (0.15.0)
+
+Dentro de cada salida, **Agregar horario** permite introducir otra hora compartiendo punto de reunión, territorios y conductores. Por ejemplo, el jueves se pueden registrar **18:00** y **19:10** en la misma salida. La vista previa y las imágenes de Conductores/Publicadores muestran **6:00 p.m** y **7:10 p.m** en dos líneas de una sola celda, con los datos compartidos una sola vez. Día y Fecha mantienen su agrupación habitual.
+
+Se admiten hasta ocho horarios por salida. Cada horario debe ser válido y diferente; se pueden quitar individualmente los adicionales. El sistema ordena cronológicamente las horas al guardar y comprueba conflictos de conductor y territorio en todas ellas. Las salidas simultáneas de grupos diferentes siguen permitidas. Los cronogramas de un solo horario continúan funcionando y los horarios adicionales se conservan al usar una semana previa como base.
+
+Los avisos de conductor faltante muestran todas las horas de la salida. El mensaje Casas No Tocar conserva una línea por fecha, territorio y grupo, sin duplicarla por cada hora. Los horarios agrupados corresponden al mismo día; para días, puntos, territorios o responsables distintos se deben utilizar salidas separadas.
