@@ -48,6 +48,7 @@ import { can } from "./lib/permissions";
 import type { MapShape } from "./lib/territoryMap";
 const TerritoryMapPanel = lazy(() => import("./components/TerritoryMapPanel"));
 import Access from "./components/Access";
+import InstallApp from "./components/InstallApp";
 import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
 import ImportPanel from "./components/ImportPanel";
@@ -941,6 +942,7 @@ export default function App() {
             </span>
           </div>
           <div className="topbar-right">
+            <InstallApp compact />
             <span className={`sync ${sync === "offline" ? "warning" : ""}`}>
               <i />
               {demo

@@ -1,0 +1,84 @@
+.pwa-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 18px;
+  margin: 0 0 25px;
+  max-width: 390px;
+  border: 1px solid #cadcc6;
+  border-radius: 12px;
+  background: #ffffffd9;
+  color: #2c5933;
+}
+.pwa-card strong {
+  font-size: 14px;
+}
+.pwa-card p {
+  margin: 6px 0 12px;
+  font-size: 12px;
+  line-height: 1.5;
+}
+.pwa-card button {
+  min-height: 44px;
+}
+.pwa-card > svg {
+  flex: 0 0 auto;
+}
+.pwa-dialog {
+  max-width: 510px;
+}
+.pwa-identity {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  margin: 8px 0 22px;
+}
+.pwa-identity img {
+  border-radius: 12px;
+}
+.pwa-identity p {
+  margin: 6px 0 0;
+  font-size: 13px;
+}
+.pwa-steps {
+  padding-left: 22px;
+  margin: 24px 0;
+}
+.pwa-steps li {
+  padding-left: 5px;
+  margin: 0 0 18px;
+}
+.pwa-steps p {
+  font-size: 13px;
+  line-height: 1.65;
+  margin: 6px 0 0;
+}
+.pwa-connection {
+  padding: 12px;
+  background: #f1f7ef;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.pwa-dialog > .muted {
+  font-size: 12px;
+  line-height: 1.6;
+  margin-top: 14px;
+}
+@media (max-width: 580px) {
+  .pwa-card {
+    margin: 22px 0 0;
+    padding: 14px;
+    max-width: none;
+  }
+  .pwa-dialog {
+    width: calc(100% - 24px);
+    max-height: calc(100dvh - 30px);
+  }
+  .enterprise-shell .pwa-compact {
+    min-width: 36px;
+    min-height: 40px;
+  }
+}

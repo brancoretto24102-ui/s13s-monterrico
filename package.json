@@ -1,6 +1,6 @@
 {
   "name": "s13s-monterrico",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
     "test:db": "node --import tsx scripts/test-db.ts",
     "test:db:local": "bash scripts/test-db-local.sh",
     "verify:private": "node --import tsx scripts/verify-private.ts",
-    "check:public": "node scripts/check-public.mjs"
+    "check:public": "node scripts/check-public.mjs && node scripts/check-pwa.mjs"
   },
   "dependencies": {
     "@pdf-lib/fontkit": "1.1.1",

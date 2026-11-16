@@ -7,6 +7,7 @@ import {
   validateNewPassword,
 } from "../lib/passwordPolicy";
 import PasswordRequirements from "./PasswordRequirements";
+import InstallApp from "./InstallApp";
 export default function Access({
   onDemo,
   recovery,
@@ -100,6 +101,7 @@ export default function Access({
             <span>Acceso reservado para usuarios autorizados</span>
           </div>
         </div>
+        <InstallApp />
         <span className="access-footer">
           Organización sencilla, información al día.
         </span>
