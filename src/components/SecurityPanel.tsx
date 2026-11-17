@@ -31,6 +31,8 @@ import DataPager from "./DataPager";
 import Modal from "./Modal";
 import ProfilePermissions from "./ProfilePermissions";
 import { MIN_PASSWORD_LENGTH } from "../lib/passwordPolicy";
+import { temporarySecret } from "../../supabase/functions/_shared/temporary-secret";
+import type { TemporaryCredential } from "../lib/temporaryPassword";
 export interface DemoSecurity {
   profiles: AccessProfile[];
   users: ManagedUser[];
@@ -152,6 +154,9 @@ export default function SecurityPanel({
     [desc, setDesc] = useState(false);
   const [form, setForm] = useState<Form | null>(null),
     [tab, setTab] = useState("general");
+  const [temporary, setTemporary] = useState<TemporaryCredential | null>(null);
+  const [copiedTemporary, setCopiedTemporary] = useState(false);
+  const [temporaryError, setTemporaryError] = useState("");
   const data = useMemo(
       () =>
         demo
@@ -415,6 +420,15 @@ export default function SecurityPanel({
           });
       } else if (form.mode === "create" || form.mode === "reset") {
         if (demo) {
+          if (form.mode === "reset") {
+            setTemporary({
+              email: form.email,
+              temporary_password: temporarySecret(),
+              expires_at: new Date(Date.now() + 24 * 60 * 60_000).toISOString(),
+            });
+            setCopiedTemporary(false);
+            setTemporaryError("");
+          }
           if (form.mode === "create") {
             onDemoChange({
               ...data,
@@ -443,7 +457,7 @@ export default function SecurityPanel({
           const { data: result, error: invokeError } =
             await supabase!.functions.invoke("invite-user", {
               body: {
-                action: form.mode === "reset" ? "reset" : "invite",
+                action: form.mode === "reset" ? "temporary" : "invite",
                 user_id: form.id,
                 expected_version: form.version,
                 email: form.email,
@@ -458,11 +472,38 @@ export default function SecurityPanel({
                 redirectTo: location.origin + location.pathname,
               },
             });
-          if (invokeError || result?.error)
+          if (invokeError || result?.error) {
+            let detail = result?.error;
+            if (
+              !detail &&
+              invokeError &&
+              "context" in invokeError &&
+              invokeError.context instanceof Response
+            ) {
+              try {
+                detail = (await invokeError.context.json()).error;
+              } catch {
+                /* Usar el mensaje general. */
+              }
+            }
             throw new Error(
-              result?.error ??
-                "No se pudo completar el envío. Revisa Usuarios antes de volver a intentarlo.",
+              detail ||
+                "No se pudo completar la operación. Revisa Usuarios antes de volver a intentarlo.",
             );
+          }
+          if (form.mode === "reset") {
+            if (
+              !result?.temporary_password ||
+              !result?.expires_at ||
+              !result?.email
+            )
+              throw new Error(
+                "La respuesta no contiene una clave temporal válida.",
+              );
+            setTemporary(result as TemporaryCredential);
+            setCopiedTemporary(false);
+            setTemporaryError("");
+          }
         }
       } else {
         if (demo) {
@@ -531,7 +572,7 @@ export default function SecurityPanel({
           : form.mode === "create" && !profiles
             ? "Invitación enviada. La persona establecerá su contraseña de forma privada."
             : form.mode === "reset"
-              ? "Correo de recuperación solicitado y registrado en auditoría."
+              ? "Clave temporal generada. Cópiala antes de cerrar la ventana."
               : "Cambio guardado y registrado en auditoría.",
       );
       setForm(null);
@@ -1159,7 +1200,7 @@ export default function SecurityPanel({
                 : form.mode === "restore"
                   ? "Se restaurará en estado inactivo. Actívalo después de revisar sus permisos."
                   : form.mode === "reset"
-                    ? "Se enviará un enlace de recuperación al correo de la cuenta. Su contraseña actual no se mostrará ni se cambiará desde esta pantalla."
+                    ? "Se generará una clave temporal válida durante 24 horas. Solo permite crear la contraseña personal; no abre los datos. La contraseña actual se sustituye al completar el cambio. Si la cuenta también se usa en S-21, la nueva contraseña personal servirá allí."
                     : form.mode === "deactivate"
                       ? "Los usuarios vinculados dejarán de recibir los permisos de este perfil."
                       : "El perfil volverá a conceder sus permisos a los usuarios vinculados."}
@@ -1193,11 +1234,86 @@ export default function SecurityPanel({
                 {busy
                   ? "Guardando…"
                   : form.mode === "reset"
-                    ? "Enviar enlace"
+                    ? "Generar clave temporal"
                     : labels[form.mode]}
               </button>
             </div>
           </form>
+        </Modal>
+      )}
+      {temporary && (
+        <Modal
+          title="Clave temporal generada"
+          onClose={() => {
+            setTemporary(null);
+            setCopiedTemporary(false);
+            setTemporaryError("");
+          }}
+        >
+          <p>
+            <strong>{temporary.email}</strong>
+          </p>
+          {demo && (
+            <p className="notice">
+              Ejemplo ficticio. Esta clave no sirve para entrar a una cuenta
+              real.
+            </p>
+          )}
+          <label>
+            Clave temporal
+            <input
+              readOnly
+              autoComplete="off"
+              value={temporary.temporary_password}
+            />
+          </label>
+          <p className="small muted">
+            Vence: {date(temporary.expires_at)}. No se volverá a mostrar después
+            de cerrar. Una nueva generación sustituye la anterior.
+          </p>
+          <p>
+            La persona debe elegir <strong>Tengo una clave temporal</strong> en
+            el acceso y crear su contraseña antes de entrar.
+          </p>
+          {copiedTemporary && <p role="status">Datos de acceso copiados.</p>}
+          {temporaryError && (
+            <p className="error" role="alert">
+              {temporaryError}
+            </p>
+          )}
+          <div className="modal-actions">
+            <button
+              type="button"
+              className="secondary"
+              onClick={() => setTemporary(null)}
+            >
+              Cerrar
+            </button>
+            <button
+              type="button"
+              className="primary"
+              onClick={() => {
+                void navigator.clipboard
+                  .writeText(
+                    `Territorios Monterrico\n${location.origin}${location.pathname}\nCorreo: ${temporary.email}\nClave temporal: ${temporary.temporary_password}\nVence: ${date(temporary.expires_at)}\nElige «Tengo una clave temporal» y crea tu contraseña personal.`,
+                  )
+                  .then(() => {
+                    setCopiedTemporary(true);
+                    setTemporaryError("");
+                  })
+                  .catch(() => {
+                    setCopiedTemporary(false);
+                    setTemporaryError("");
+                    setTemporaryError(
+                      "No se pudo copiar. Selecciona la clave y cópiala manualmente.",
+                    );
+                  });
+              }}
+            >
+              <Copy size={16} />
+              Copiar datos de acceso
+            </button>
+          </div>
         </Modal>
       )}
     </>

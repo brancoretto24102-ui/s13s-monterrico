@@ -1,4 +1,5 @@
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
+import { temporarySecret, secretHash } from "../_shared/temporary-secret.ts";
 // Deployed only after the owner approves external configuration.
 // Service credentials stay in the function environment, never in VITE_* vars.
 Deno.serve(async (req: Request) => {
@@ -15,6 +16,7 @@ Deno.serve(async (req: Request) => {
       "authorization, x-client-info, apikey, content-type",
     Vary: "Origin",
     "Content-Type": "application/json",
+    "Cache-Control": "no-store",
   };
   const response = (status: number, data: unknown) =>
     new Response(JSON.stringify(data), { status, headers });
@@ -57,7 +59,7 @@ Deno.serve(async (req: Request) => {
       body.reason ?? "Invitación autorizada por administrador",
     ).trim();
     if (
-      !["invite", "reset"].includes(action) ||
+      !["invite", "reset", "temporary"].includes(action) ||
       reason.length < 8 ||
       reason.length > 2000
     )
@@ -136,7 +138,7 @@ Deno.serve(async (req: Request) => {
     const admin = createClient(url, secret, {
       auth: { persistSession: false },
     });
-    if (action === "reset") {
+    if (action === "reset" || action === "temporary") {
       const targetId = String(body.user_id ?? "");
       if (
         !/^[0-9a-f-]{36}$/i.test(targetId) ||
@@ -145,7 +147,7 @@ Deno.serve(async (req: Request) => {
         return response(400, { error: "Usuario o versión no válidos." });
       const { data: target, error: targetError } = await caller
         .from("profiles")
-        .select("id,version,deleted_at")
+        .select("id,version,active,deleted_at")
         .eq("id", targetId)
         .single();
       if (
@@ -163,6 +165,40 @@ Deno.serve(async (req: Request) => {
         return response(400, {
           error: "No se pudo localizar el correo autorizado.",
         });
+      if (action === "temporary") {
+        if (!target.active || targetId === user.id)
+          return response(400, {
+            error: !target.active
+              ? "Activa al usuario antes de generar una clave."
+              : "Otro administrador debe generar tu clave temporal. También puedes usar Olvidé mi contraseña.",
+          });
+        const password = temporarySecret();
+        const expires = new Date(Date.now() + 24 * 60 * 60_000).toISOString();
+        const { error } = await admin.from("temporary_password_setups").upsert(
+          {
+            user_id: targetId,
+            generation: crypto.randomUUID(),
+            token_hash: await secretHash(password),
+            challenge_hash: null,
+            challenge_expires_at: null,
+            state: "pending",
+            expires_at: expires,
+            created_by: user.id,
+            reason,
+          },
+          { onConflict: "user_id" },
+        );
+        if (error)
+          return response(409, {
+            error:
+              "No se pudo generar la clave temporal. Comprueba si hay un cambio de contraseña en curso y actualiza Usuarios.",
+          });
+        return response(200, {
+          temporary_password: password,
+          expires_at: expires,
+          email: account.user.email,
+        });
+      }
       const { error: resetError } = await admin.auth.resetPasswordForEmail(
         account.user.email,
         { redirectTo: redirect.href },

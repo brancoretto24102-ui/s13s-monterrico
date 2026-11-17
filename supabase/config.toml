@@ -2,3 +2,8 @@
 # function before checking the administrator's active database profile.
 [functions.invite-user]
 verify_jwt = true
+
+# Kept enabled while the anonymous password-setup route awaits explicit approval.
+# Do not activate this draft route or publish its UI before that decision.
+[functions.temporary-password]
+verify_jwt = true
