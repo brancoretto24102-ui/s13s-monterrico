@@ -9,21 +9,24 @@ import {
 import PasswordRequirements from "./PasswordRequirements";
 import InstallApp from "./InstallApp";
 import { temporaryPasswordRequest } from "../lib/temporaryPassword";
+import GoogleSignIn from "./GoogleSignIn";
 export default function Access({
   onDemo,
   recovery,
   onRecovered,
   onPasswordUpdateRequired,
+  authNotice = "",
 }: {
   onDemo: () => void;
   recovery: boolean;
   onRecovered: () => void;
   onPasswordUpdateRequired: () => void;
+  authNotice?: string;
 }) {
   const [email, setEmail] = useState(""),
     [password, setPassword] = useState(""),
     [confirmation, setConfirmation] = useState(""),
-    [notice, setNotice] = useState(""),
+    [notice, setNotice] = useState(authNotice),
     [busy, setBusy] = useState(false),
     [reset, setReset] = useState(false),
     [temporary, setTemporary] = useState(false),
@@ -159,6 +162,9 @@ export default function Access({
                   : "Ingresa con el correo autorizado por tu administrador."
               : "La aplicación está lista para conectar con tu proyecto Supabase."}
           </p>
+          {!changing && !reset && !temporary && (
+            <GoogleSignIn disabled={busy} onError={setNotice} />
+          )}
           <form onSubmit={submit}>
             {!changing && (
               <label>

@@ -48,6 +48,7 @@ import { can } from "./lib/permissions";
 import type { MapShape } from "./lib/territoryMap";
 const TerritoryMapPanel = lazy(() => import("./components/TerritoryMapPanel"));
 import Access from "./components/Access";
+import { closeAppSession } from "./lib/sessionScope";
 import InstallApp from "./components/InstallApp";
 import Modal from "./components/Modal";
 import ExportPanel from "./components/ExportPanel";
@@ -124,7 +125,10 @@ const empty: Snapshot = {
   people: [],
   revision: "",
 };
-export default function App() {
+export default function App({
+  authNotice,
+  initialRecovery = false,
+}: { authNotice?: string; initialRecovery?: boolean } = {}) {
   const [profile, setProfile] = useState<Profile | null>(null),
     [snapshot, setSnapshot] = useState<Snapshot>(empty),
     [demo, setDemo] = useState(false),
@@ -132,8 +136,8 @@ export default function App() {
     [view, setView] = useState<View>("overview"),
     [sync, setSync] = useState("connecting"),
     [notice, setNotice] = useState(""),
-    [recovery, setRecovery] = useState(() =>
-      /type=(invite|recovery)/.test(location.hash),
+    [recovery, setRecovery] = useState(
+      () => initialRecovery || /type=(invite|recovery)/.test(location.hash),
     ),
     [menu, setMenu] = useState(false);
   const [query, setQuery] = useState(""),
@@ -415,7 +419,7 @@ export default function App() {
       return;
     }
     clear();
-    await supabase?.auth.signOut();
+    if (supabase) await closeAppSession(supabase);
   }
   function startDemo() {
     epoch.current++;
@@ -707,6 +711,7 @@ export default function App() {
     return (
       <Access
         recovery={false}
+        authNotice={authNotice}
         onRecovered={() => {}}
         onPasswordUpdateRequired={() => setRecovery(true)}
         onDemo={startDemo}

@@ -1,10 +1,14 @@
 import { createClient } from "@supabase/supabase-js";
 import type { Snapshot, Profile } from "./types";
 import publicConfiguration from "../../config/public.json";
+import { AUTH_STORAGE_KEY, isPasswordLink } from "./oauthFlow";
 const url = (import.meta.env.VITE_SUPABASE_URL ||
   publicConfiguration.supabaseUrl) as string | undefined;
 const key = (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
   publicConfiguration.supabasePublishableKey) as string | undefined;
+export { url as supabaseUrl, key as publishableKey };
+export const initialPasswordReturn =
+  typeof window !== "undefined" && isPasswordLink(window.location.href);
 export const configured =
   !!url && !!key && !url.includes("YOUR-PROJECT") && !key.includes("REPLACE");
 if (
@@ -28,8 +32,9 @@ export const supabase = configured
   ? createClient(url!, key!, {
       auth: {
         persistSession: false,
+        storageKey: AUTH_STORAGE_KEY,
         autoRefreshToken: true,
-        detectSessionInUrl: true,
+        detectSessionInUrl: initialPasswordReturn,
         flowType: "implicit",
       },
     })
