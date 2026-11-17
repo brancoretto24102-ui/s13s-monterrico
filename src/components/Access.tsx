@@ -8,6 +8,7 @@ import {
 } from "../lib/passwordPolicy";
 import PasswordRequirements from "./PasswordRequirements";
 import InstallApp from "./InstallApp";
+import { temporaryPasswordRequest } from "../lib/temporaryPassword";
 export default function Access({
   onDemo,
   recovery,
@@ -24,7 +25,10 @@ export default function Access({
     [confirmation, setConfirmation] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false),
-    [reset, setReset] = useState(false);
+    [reset, setReset] = useState(false),
+    [temporary, setTemporary] = useState(false),
+    [challenge, setChallenge] = useState<string | null>(null);
+  const changing = recovery || !!challenge;
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -34,7 +38,33 @@ export default function Access({
         throw new Error(
           "La conexión con Supabase está pendiente de configuración.",
         );
-      if (recovery) {
+      if (challenge) {
+        validateNewPassword(password, confirmation);
+        await temporaryPasswordRequest({
+          action: "complete",
+          challenge,
+          password,
+          confirmation,
+        });
+        setChallenge(null);
+        setTemporary(false);
+        setPassword("");
+        setConfirmation("");
+        setNotice(
+          "Contraseña personal guardada. Inicia sesión con tu nueva contraseña.",
+        );
+      } else if (temporary && !reset) {
+        const result = await temporaryPasswordRequest<{ challenge: string }>({
+          action: "start",
+          email,
+          temporary_password: password,
+        });
+        if (!/^[0-9a-f]{64}$/.test(result.challenge))
+          throw new Error("No se pudo iniciar el cambio de contraseña.");
+        setChallenge(result.challenge);
+        setPassword("");
+        setConfirmation("");
+      } else if (recovery) {
         validateNewPassword(password, confirmation);
         const { error } = await supabase.auth.updateUser({ password });
         if (error) throw error;
@@ -112,21 +142,25 @@ export default function Access({
             <LockKeyhole size={25} />
           </span>
           <h2>
-            {recovery
+            {changing
               ? "Establece tu contraseña"
               : reset
                 ? "Recupera tu acceso"
-                : "Bienvenido de nuevo"}
+                : temporary
+                  ? "Ingresa con tu clave temporal"
+                  : "Bienvenido de nuevo"}
           </h2>
           <p>
             {configured
-              ? recovery
+              ? changing
                 ? "Define una contraseña personal y confirma que coincida."
-                : "Ingresa con el correo autorizado por tu administrador."
+                : temporary
+                  ? "Esta clave solo permite crear tu contraseña personal; todavía no da acceso a los datos."
+                  : "Ingresa con el correo autorizado por tu administrador."
               : "La aplicación está lista para conectar con tu proyecto Supabase."}
           </p>
           <form onSubmit={submit}>
-            {!recovery && (
+            {!changing && (
               <label>
                 Correo electrónico
                 <input
@@ -141,13 +175,24 @@ export default function Access({
             )}
             {!reset && (
               <label>
-                Contraseña
+                {changing
+                  ? "Nueva contraseña"
+                  : temporary
+                    ? "Clave temporal"
+                    : "Contraseña"}
                 <input
                   type="password"
-                  autoComplete={recovery ? "new-password" : "current-password"}
-                  minLength={recovery ? MIN_PASSWORD_LENGTH : 1}
+                  autoComplete={
+                    changing
+                      ? "new-password"
+                      : temporary
+                        ? "off"
+                        : "current-password"
+                  }
+                  minLength={changing ? MIN_PASSWORD_LENGTH : 1}
+                  maxLength={changing || temporary ? 128 : undefined}
                   aria-describedby={
-                    recovery ? "password-requirements" : undefined
+                    changing ? "password-requirements" : undefined
                   }
                   required
                   value={password}
@@ -156,7 +201,7 @@ export default function Access({
                 />
               </label>
             )}
-            {recovery && (
+            {changing && (
               <>
                 <PasswordRequirements password={password} />
                 <label>
@@ -191,17 +236,19 @@ export default function Access({
               disabled={
                 busy ||
                 !configured ||
-                (recovery &&
+                (changing &&
                   (!validPassword(password) || password !== confirmation))
               }
             >
               {busy
                 ? "Procesando…"
-                : recovery
+                : changing
                   ? "Guardar contraseña"
                   : reset
                     ? "Enviar enlace"
-                    : "Iniciar sesión"}
+                    : temporary
+                      ? "Validar clave temporal"
+                      : "Iniciar sesión"}
               <ArrowRight size={17} />
             </button>
           </form>
@@ -210,15 +257,38 @@ export default function Access({
               {notice}
             </p>
           )}
-          {!recovery && (
+          {!changing && (
             <button
               className="text-button"
               onClick={() => {
                 setReset(!reset);
+                setTemporary(false);
+                setPassword("");
+                setConfirmation("");
                 setNotice("");
               }}
             >
               {reset ? "Volver al inicio de sesión" : "Olvidé mi contraseña"}
+            </button>
+          )}
+          {!recovery && (
+            <button
+              className="text-button"
+              disabled={busy}
+              onClick={() => {
+                setChallenge(null);
+                setTemporary(!temporary);
+                setReset(false);
+                setPassword("");
+                setConfirmation("");
+                setNotice("");
+              }}
+            >
+              {challenge
+                ? "Cancelar cambio"
+                : temporary
+                  ? "Volver al inicio de sesión"
+                  : "Tengo una clave temporal"}
             </button>
           )}
           <div className="login-divider" />

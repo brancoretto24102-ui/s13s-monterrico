@@ -2,3 +2,8 @@
 # function before checking the administrator's active database profile.
 [functions.invite-user]
 verify_jwt = true
+
+# Explicitly authorized for this route only. It authenticates a high-entropy,
+# expiring setup secret and challenge; no Auth session or data is issued.
+[functions.temporary-password]
+verify_jwt = false

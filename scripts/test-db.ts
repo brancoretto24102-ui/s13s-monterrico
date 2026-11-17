@@ -3,6 +3,7 @@ import { bootstrapTestDb } from "./bootstrap-test-db";
 import { testConductors } from "./test-conductors";
 import { testHistoricalCorrections } from "./test-historical-corrections";
 import { testAccess } from "./test-access";
+import { testTemporaryPassword } from "./test-temporary-password";
 import { testAssignmentTiming } from "./test-assignment-timing";
 import { testPreachingSchedule } from "./test-preaching-schedule";
 import { testVisitRestrictions } from "./test-visit-restrictions";
@@ -345,6 +346,7 @@ try {
     /row-level security/,
   );
   const admin2 = await connection("authenticated", ids.admin);
+  checks += await testTemporaryPassword({ root, admin, reader, anon });
   checks += await testConductors({
     root,
     admin,
