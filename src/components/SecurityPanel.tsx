@@ -25,6 +25,7 @@ import {
   permissionKeys,
   permissionLabel,
   readerPermissions,
+  guestPermissions,
 } from "../lib/permissions";
 import type { AccessProfile, ManagedUser, Role } from "../lib/types";
 import DataPager from "./DataPager";
@@ -33,6 +34,12 @@ import ProfilePermissions from "./ProfilePermissions";
 import { MIN_PASSWORD_LENGTH } from "../lib/passwordPolicy";
 import { temporarySecret } from "../../supabase/functions/_shared/temporary-secret";
 import type { TemporaryCredential } from "../lib/temporaryPassword";
+import {
+  aliasOccupied,
+  deletedAccountForEmail,
+  normalizedAlias,
+  restoredAlias,
+} from "../lib/userLifecycle";
 export interface DemoSecurity {
   profiles: AccessProfile[];
   users: ManagedUser[];
@@ -40,8 +47,8 @@ export interface DemoSecurity {
 export function initialDemoSecurity(): DemoSecurity {
   const now = new Date().toISOString();
   return {
-    profiles: (["administrador", "editor", "lector"] as Role[]).map(
-      (role, i) => ({
+    profiles: [
+      ...(["administrador", "editor", "lector"] as Role[]).map((role, i) => ({
         id: `demo-profile-${i}`,
         code: i + 1,
         name: role[0].toUpperCase() + role.slice(1),
@@ -58,8 +65,21 @@ export function initialDemoSecurity(): DemoSecurity {
               ? editorPermissions
               : readerPermissions,
         users_count: i === 0 ? 1 : 0,
-      }),
-    ),
+      })),
+      {
+        id: "demo-profile-guest",
+        code: 4,
+        name: "Invitado",
+        system_key: null,
+        active: true,
+        deleted_at: null,
+        version: 1,
+        created_at: now,
+        updated_at: now,
+        permissions: guestPermissions,
+        users_count: 0,
+      },
+    ],
     users: [
       {
         id: "demo",
@@ -354,6 +374,7 @@ export default function SecurityPanel({
     if (!form || busy) return;
     setBusy(true);
     setError("");
+    let reusedAccess = false;
     try {
       if (form.reason.trim().length < 8)
         throw new Error("Describe el motivo con al menos 8 caracteres.");
@@ -430,27 +451,36 @@ export default function SecurityPanel({
             setTemporaryError("");
           }
           if (form.mode === "create") {
+            const previous = deletedAccountForEmail(data.users, form.email);
+            if (aliasOccupied(data.users, form.username, previous?.id))
+              throw new Error(
+                "El alias ya está utilizado por otro acceso vigente.",
+              );
+            reusedAccess = !!previous;
+            const created: ManagedUser = {
+              id: previous?.id ?? form.id,
+              code:
+                previous?.code ??
+                Math.max(0, ...data.users.map((u) => u.code)) + 1,
+              display_name: form.name.trim(),
+              username: normalizedAlias(form.username),
+              email: previous?.email ?? form.email.trim().toLowerCase(),
+              role: form.access_mode === "custom" ? "lector" : form.role,
+              active: form.active,
+              can_export:
+                form.access_mode === "custom" ? false : form.can_export,
+              access_mode: form.access_mode,
+              access_profile_ids: form.profile_ids,
+              created_at: previous?.created_at ?? now,
+              last_sign_in_at: previous?.last_sign_in_at ?? null,
+              version: (previous?.version ?? 0) + 1,
+              deleted_at: null,
+            };
             onDemoChange({
               ...data,
-              users: [
-                ...data.users,
-                {
-                  id: form.id,
-                  code: Math.max(0, ...data.users.map((u) => u.code)) + 1,
-                  display_name: form.name.trim(),
-                  username: form.username || null,
-                  email: form.email,
-                  role: form.access_mode === "custom" ? "lector" : form.role,
-                  active: form.active,
-                  can_export: form.can_export,
-                  access_mode: form.access_mode,
-                  access_profile_ids: form.profile_ids,
-                  created_at: now,
-                  last_sign_in_at: null,
-                  version: 1,
-                  deleted_at: null,
-                },
-              ],
+              users: previous
+                ? data.users.map((u) => (u.id === previous.id ? created : u))
+                : [...data.users, created],
             });
           }
         } else {
@@ -491,6 +521,7 @@ export default function SecurityPanel({
                 "No se pudo completar la operación. Revisa Usuarios antes de volver a intentarlo.",
             );
           }
+          reusedAccess = result?.reused === true;
           if (form.mode === "reset") {
             if (
               !result?.temporary_password ||
@@ -510,6 +541,14 @@ export default function SecurityPanel({
           const old = data.users.find((u) => u.id === form.id);
           if (!old || old.version !== form.version)
             throw new Error("El usuario cambió; vuelve a abrirlo.");
+          if (
+            form.mode !== "delete" &&
+            form.mode !== "restore" &&
+            aliasOccupied(data.users, form.username, form.id)
+          )
+            throw new Error(
+              "El alias ya está utilizado por otro acceso vigente.",
+            );
           if (
             old.active &&
             old.role === "administrador" &&
@@ -535,10 +574,14 @@ export default function SecurityPanel({
                     ...(form.mode === "delete"
                       ? { active: false, deleted_at: now }
                       : form.mode === "restore"
-                        ? { active: false, deleted_at: null }
+                        ? {
+                            active: false,
+                            deleted_at: null,
+                            username: restoredAlias(data.users, u),
+                          }
                         : {
                             display_name: form.name.trim(),
-                            username: form.username || null,
+                            username: normalizedAlias(form.username),
                             role:
                               form.access_mode === "custom"
                                 ? "lector"
@@ -570,7 +613,9 @@ export default function SecurityPanel({
         demo
           ? "Cambio temporal aplicado. No se enviaron correos ni se guardaron datos reales."
           : form.mode === "create" && !profiles
-            ? "Invitación enviada. La persona establecerá su contraseña de forma privada."
+            ? reusedAccess
+              ? "Acceso de Territorios recuperado con los permisos elegidos. Conserva su contraseña y su acceso a S-21; no se envió otra invitación."
+              : "Invitación enviada. La persona establecerá su contraseña de forma privada."
             : form.mode === "reset"
               ? "Clave temporal generada. Cópiala antes de cerrar la ventana."
               : "Cambio guardado y registrado en auditoría.",
@@ -1015,7 +1060,7 @@ export default function SecurityPanel({
                     </p>
                     <p>
                       {form.mode === "create"
-                        ? "Guardar enviará una invitación al correo indicado."
+                        ? "Si el correo está en Papelera, Guardar recupera su acceso a Territorios con estos permisos y conserva su contraseña. Si es nuevo, envía una invitación. El acceso a S-21 se mantiene."
                         : "El correo de la cuenta se mantiene protegido. Puedes solicitar un enlace de recuperación desde el listado."}
                     </p>
                   </aside>
@@ -1204,7 +1249,9 @@ export default function SecurityPanel({
                   ? "Se enviará a Papelera y dejará de conceder acceso. El historial y la auditoría se conservan."
                   : "Se retirará únicamente su acceso a Territorios (S-13) y se moverá a Papelera. Su acceso a S-21 se conserva. No se eliminan su identidad compartida, el historial ni la auditoría."
                 : form.mode === "restore"
-                  ? "Se restaurará en estado inactivo. Actívalo después de revisar sus permisos."
+                  ? profiles
+                    ? "Se restaurará en estado inactivo. Actívalo después de revisar sus permisos."
+                    : "Se restaurará en estado inactivo. Si su alias fue reutilizado, quedará sin alias. Revisa sus permisos antes de activarlo."
                   : form.mode === "reset"
                     ? "Se generará una clave temporal válida durante 24 horas. Solo permite crear la contraseña personal; no abre los datos. La contraseña actual se sustituye al completar el cambio. Si la cuenta también se usa en S-21, la nueva contraseña personal servirá allí."
                     : form.mode === "deactivate"

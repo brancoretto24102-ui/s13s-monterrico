@@ -5,6 +5,7 @@ import { testHistoricalCorrections } from "./test-historical-corrections";
 import { testAccess } from "./test-access";
 import { testTemporaryPassword } from "./test-temporary-password";
 import { testEcosystemIsolation } from "./test-ecosystem-isolation";
+import { testUserReuse } from "./test-user-reuse";
 import { testAssignmentTiming } from "./test-assignment-timing";
 import { testPreachingSchedule } from "./test-preaching-schedule";
 import { testVisitRestrictions } from "./test-visit-restrictions";
@@ -406,6 +407,14 @@ try {
   checks += await testEcosystemIsolation({
     root,
     admin,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testUserReuse({
+    root,
+    admin,
+    admin2,
+    reader,
+    anon,
     connect: (uid) => connection("authenticated", uid),
   });
   checks += await testHistoricalCorrections({
