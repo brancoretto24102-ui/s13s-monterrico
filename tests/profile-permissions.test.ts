@@ -6,6 +6,7 @@ import {
   completePermissions,
   permissionKeys,
   can,
+  guestPermissions,
 } from "../src/lib/permissions";
 import { TIMING_OVERRIDE_PERMISSION } from "../src/lib/assignmentTiming";
 import type { Profile } from "../src/lib/types";
@@ -24,6 +25,19 @@ const render = (selected: string[] = []) =>
   );
 
 describe("Editor de accesos de perfiles", () => {
+  it("el invitado consulta los tres módulos y exporta solo el formulario S-13-S", () => {
+    const guest = { ...profile, permissions: guestPermissions };
+    expect(permissionKeys.filter((key) => can(guest, key)).sort()).toEqual([
+      "maps.view",
+      "reports.export",
+      "reports.view",
+      "territories.view",
+    ]);
+    expect(can({ ...guest, active: false }, "reports.export")).toBe(false);
+    expect(can({ ...guest, deleted_at: "2026-01-01" }, "maps.view")).toBe(
+      false,
+    );
+  });
   it("ofrece una casilla por cada permiso del catálogo, incluido el cronograma y la excepción", () => {
     const html = render();
     const rendered = [...html.matchAll(/<input\b[^>]*value="([^"]+)"/g)].map(

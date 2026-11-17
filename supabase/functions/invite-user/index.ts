@@ -1,5 +1,6 @@
 import { createClient } from "npm:@supabase/supabase-js@2.119.0";
 import { temporarySecret, secretHash } from "../_shared/temporary-secret.ts";
+import { InvitationFailure, provisionTerritoriesAccess } from "./provision.ts";
 // Deployed only after the owner approves external configuration.
 // Service credentials stay in the function environment, never in VITE_* vars.
 Deno.serve(async (req: Request) => {
@@ -44,10 +45,14 @@ Deno.serve(async (req: Request) => {
     if (authError || !user) return response(401, { error: "Sesión inválida." });
     const { data: profile } = await caller
       .from("profiles")
-      .select("role,active")
+      .select("role,active,deleted_at")
       .eq("id", user.id)
       .single();
-    if (!profile?.active || profile.role !== "administrador")
+    if (
+      !profile?.active ||
+      profile.deleted_at ||
+      profile.role !== "administrador"
+    )
       return response(403, {
         error: "Solo el administrador puede invitar usuarios.",
       });
@@ -110,17 +115,6 @@ Deno.serve(async (req: Request) => {
         return response(400, {
           error:
             "Hay perfiles inactivos, eliminados o no disponibles. Revise la selección.",
-        });
-    }
-    if (action === "invite" && username) {
-      const { data: existing, error: aliasError } = await caller
-        .from("profiles")
-        .select("id")
-        .eq("username", username.toLowerCase())
-        .limit(1);
-      if (aliasError || existing?.length)
-        return response(400, {
-          error: "El alias ya está utilizado o no se pudo validar.",
         });
     }
     const redirect = new URL(String(body.redirectTo));
@@ -222,36 +216,69 @@ Deno.serve(async (req: Request) => {
         });
       return response(200, { recovery_requested: true });
     }
-    const { data: invitation, error: inviteError } =
-      await admin.auth.admin.inviteUserByEmail(email, {
-        data: { display_name: displayName },
-        redirectTo: redirect.href,
-      });
-    if (inviteError || !invitation.user)
-      return response(400, {
-        error:
-          "No se pudo invitar. Revise si el correo ya existe y los límites de envío.",
-      });
-    const { error: roleError } = await caller.rpc("manage_user", {
-      p_id: invitation.user.id,
-      p_expected_version: 1,
-      p_name: displayName,
-      p_username: username,
-      p_role: role,
-      p_active: body.active !== false,
-      p_can_export: !!body.can_export,
-      p_access_mode: accessMode,
-      p_profile_ids: accessMode === "custom" ? selected : [],
-      p_action: "update",
-      p_reason: reason,
+    const result = await provisionTerritoriesAccess({
+      lookup: async () => {
+        const { data, error } = await caller.rpc("get_invitation_target", {
+          p_email: email,
+          p_username: username,
+        });
+        if (error) {
+          const known = [
+            "El alias ya está utilizado por otro acceso vigente.",
+            "El correo ya tiene un acceso de Territorios. Búscalo en Usuarios para editarlo o activarlo.",
+            "La identidad existe, pero su acceso de Territorios requiere revisión administrativa.",
+          ];
+          throw new InvitationFailure(
+            409,
+            known.includes(error.message)
+              ? error.message
+              : "No se pudo validar el correo y el alias. Actualiza Usuarios e inténtalo nuevamente.",
+          );
+        }
+        return data;
+      },
+      invite: async () => {
+        const { data, error } = await admin.auth.admin.inviteUserByEmail(
+          email,
+          {
+            data: { display_name: displayName },
+            redirectTo: redirect.href,
+          },
+        );
+        if (error || !data.user)
+          throw new InvitationFailure(
+            400,
+            "No se pudo invitar. El correo pudo cambiar durante la operación; revisa Usuarios y los límites de envío.",
+          );
+        return { id: data.user.id, version: 1 };
+      },
+      save: async (target, reused) => {
+        const { error } = await caller.rpc("manage_user", {
+          p_id: target.id,
+          p_expected_version: target.version,
+          p_name: displayName,
+          p_username: username,
+          p_role: role,
+          p_active: body.active !== false,
+          p_can_export: !!body.can_export,
+          p_access_mode: accessMode,
+          p_profile_ids: accessMode === "custom" ? selected : [],
+          p_action: reused ? "recreate" : "update",
+          p_reason: reason,
+        });
+        if (error)
+          throw new InvitationFailure(
+            409,
+            reused
+              ? "No se pudo recuperar el acceso. El usuario, el alias o los perfiles cambiaron; actualiza Usuarios y revisa los datos."
+              : "La invitación fue enviada; el usuario sigue inactivo. Revíselo en Usuarios antes de reenviar.",
+          );
+      },
     });
-    if (roleError)
-      return response(409, {
-        error:
-          "La invitación fue enviada; el usuario sigue inactivo. Revíselo en Usuarios antes de reenviar.",
-      });
-    return response(200, { invited: true });
-  } catch {
+    return response(200, result);
+  } catch (error) {
+    if (error instanceof InvitationFailure)
+      return response(error.status, { error: error.message });
     return response(400, { error: "No se pudo procesar la invitación." });
   }
 });

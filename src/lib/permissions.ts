@@ -108,6 +108,12 @@ export const editorPermissions = [
   "reports.view",
 ];
 export const readerPermissions = ["territories.view", "reports.view"];
+export const guestPermissions = [
+  "maps.view",
+  "reports.export",
+  "reports.view",
+  "territories.view",
+];
 export function can(profile: Profile | null, permission: string): boolean {
   if (
     !profile?.active ||
