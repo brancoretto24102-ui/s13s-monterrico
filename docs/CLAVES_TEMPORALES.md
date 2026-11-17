@@ -1,6 +1,6 @@
 # Claves temporales · Territorios Monterrico
 
-**Estado:** propuesta preparada y validada, pendiente de activación. No se publicaron cambios de autenticación ni se modificaron contraseñas reales. La configuración mantiene la verificación JWT de la nueva función. La ruta de cambio necesita autorización explícita para aceptar solicitudes sin una sesión previa y autenticar en su lugar la clave temporal y el desafío limitado; la revisión automática bloqueó esa activación. No publicar la interfaz ni desplegar la función antes de resolverlo.
+**Activación autorizada:** únicamente la función `temporary-password` acepta solicitudes sin una sesión previa; autentica la clave temporal y el desafío limitado. La generación administrativa conserva la verificación JWT y exige administrador activo. La autorización explícita del propietario resuelve el bloqueo anterior de la revisión automática. La activación requiere aplicar la migración, desplegar las funciones y publicar esta versión; no se restablecen contraseñas reales para probarla.
 
 ## Administrador
 

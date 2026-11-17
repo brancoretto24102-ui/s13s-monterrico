@@ -18,6 +18,9 @@ create index temporary_password_creator_idx on public.temporary_password_setups(
 alter table public.temporary_password_setups enable row level security;
 revoke all on public.temporary_password_setups from public,anon,authenticated;
 grant select,insert,update on public.temporary_password_setups to service_role;
+-- The setup endpoint checks only identity and active/deleted status.
+-- No role, name, alias or other profile data is granted to this service query.
+grant select(id,active,deleted_at) on public.profiles to service_role;
 -- No public policy: only the trusted Edge Functions can handle credential hashes.
 create function private.password_setup_guard() returns trigger language plpgsql security definer set search_path='' as $$
 begin

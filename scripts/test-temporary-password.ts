@@ -94,5 +94,21 @@ export async function testTemporaryPassword({
   ).rows;
   assert(grants.allowed && !grants.exposed);
   checks++;
+  await root.query("set role service_role");
+  try {
+    const result = await root.query(
+      "select id,active,deleted_at from profiles where id=$1",
+      [target],
+    );
+    assert.equal(result.rowCount, 1);
+    checks++;
+    await assert.rejects(
+      root.query("select role,display_name from profiles"),
+      /permission denied/,
+    );
+    checks++;
+  } finally {
+    await root.query("reset role");
+  }
   return checks;
 }

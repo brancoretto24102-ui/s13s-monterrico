@@ -3,7 +3,7 @@
 [functions.invite-user]
 verify_jwt = true
 
-# Kept enabled while the anonymous password-setup route awaits explicit approval.
-# Do not activate this draft route or publish its UI before that decision.
+# Explicitly authorized for this route only. It authenticates a high-entropy,
+# expiring setup secret and challenge; no Auth session or data is issued.
 [functions.temporary-password]
-verify_jwt = true
+verify_jwt = false
