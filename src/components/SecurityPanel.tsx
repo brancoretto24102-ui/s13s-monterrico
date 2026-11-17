@@ -1179,7 +1179,11 @@ export default function SecurityPanel({
       )}
       {form && !full && (
         <Modal
-          title={`${labels[form.mode]}${form.mode === "reset" ? "" : profiles ? " perfil" : " usuario"}`}
+          title={
+            !profiles && form.mode === "delete"
+              ? "Eliminar acceso a Territorios"
+              : `${labels[form.mode]}${form.mode === "reset" ? "" : profiles ? " perfil" : " usuario"}`
+          }
           onClose={() => {
             if (!busy) setForm(null);
           }}
@@ -1196,7 +1200,9 @@ export default function SecurityPanel({
             </div>
             <p className="small muted">
               {form.mode === "delete"
-                ? "Se enviará a Papelera y dejará de conceder acceso. El historial y la auditoría se conservan."
+                ? profiles
+                  ? "Se enviará a Papelera y dejará de conceder acceso. El historial y la auditoría se conservan."
+                  : "Se retirará únicamente su acceso a Territorios (S-13) y se moverá a Papelera. Su acceso a S-21 se conserva. No se eliminan su identidad compartida, el historial ni la auditoría."
                 : form.mode === "restore"
                   ? "Se restaurará en estado inactivo. Actívalo después de revisar sus permisos."
                   : form.mode === "reset"

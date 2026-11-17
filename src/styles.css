@@ -1314,6 +1314,27 @@ pre {
   min-height: 100vh;
   background: #fff;
 }
+.google-entry {
+  margin: 18px 0 24px;
+}
+.google-login {
+  min-height: 44px;
+  gap: 12px;
+  background: #fff;
+}
+.google-letter {
+  color: #4285f4;
+  font:
+    600 20px Arial,
+    sans-serif;
+}
+.google-entry small {
+  display: block;
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 10px;
+  color: #71836e;
+}
 .access-story {
   padding: 48px 65px;
   background: #edf3e9;

@@ -4,6 +4,7 @@ import { testConductors } from "./test-conductors";
 import { testHistoricalCorrections } from "./test-historical-corrections";
 import { testAccess } from "./test-access";
 import { testTemporaryPassword } from "./test-temporary-password";
+import { testEcosystemIsolation } from "./test-ecosystem-isolation";
 import { testAssignmentTiming } from "./test-assignment-timing";
 import { testPreachingSchedule } from "./test-preaching-schedule";
 import { testVisitRestrictions } from "./test-visit-restrictions";
@@ -400,6 +401,11 @@ try {
     editor: ed1,
     inactive,
     anon,
+    connect: (uid) => connection("authenticated", uid),
+  });
+  checks += await testEcosystemIsolation({
+    root,
+    admin,
     connect: (uid) => connection("authenticated", uid),
   });
   checks += await testHistoricalCorrections({
